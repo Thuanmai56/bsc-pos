@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>干城鹹水雞 點餐</title>
+    <title>Benmi 點餐</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
     <style>
 :root {
@@ -753,7 +753,20 @@ select:focus {
     <div id="custom-alert" class="custom-alert-overlay">
         <div class="custom-alert-box">
             <div class="custom-alert-header">提醒</div>
-            <div id="custom-alert-message" cl        // --- MENU DATA ---
+            <div id="custom-alert-message" class="custom-alert-body"></div>
+            <button class="custom-alert-btn" onclick="closeCustomAlert()">確定</button>
+        </div>
+    </div>
+
+    <div id="image-lightbox" class="custom-alert-overlay" style="display:none; z-index: 2000;"
+        onclick="closeImageLightbox()">
+        <img id="lightbox-img" src=""
+            style="max-width: 90%; max-height: 90%; border-radius: 16px; object-fit: contain; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+    </div>
+
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script>
+        // --- MENU DATA ---
         const WORKER_BASE = "https://bsc.thuanmnc.workers.dev";
         let menu = { meat: {}, side50: {}, side30: {}, side25: {}, side35: {}, topping: {} };
         let imageList = [];
@@ -761,16 +774,24 @@ select:focus {
 
         async function fetchMenu() {
             try {
-                const [resMenu, resImage, resConfig] = await Promise.all([
-                    fetch(`${WORKER_BASE}/api/menu?_t=${Date.now()}`, { cache: 'no-store' }),
-                    fetch(`${WORKER_BASE}/api/image_list?_t=${Date.now()}`, { cache: 'no-store' }),
-                    fetch(`${WORKER_BASE}/api/config?_t=${Date.now()}`, { cache: 'no-store' })
-                ]);
-                if (resMenu.ok) menu = await resMenu.json();
-                if (resImage.ok) imageList = await resImage.json();
-                if (resConfig.ok) storeConfig = await resConfig.json();
+                const resMenu = await fetch(`${WORKER_BASE}/api/menu?_t=${Date.now()}`, { cache: 'no-store' }).catch(() => null);
+                if (resMenu && resMenu.ok) menu = await resMenu.json();
             } catch (e) {
-                console.error("Failed to fetch menu or config", e);
+                console.error("Failed to fetch menu", e);
+            }
+
+            try {
+                const resImage = await fetch(`${WORKER_BASE}/api/image_list?_t=${Date.now()}`, { cache: 'no-store' }).catch(() => null);
+                if (resImage && resImage.ok) imageList = await resImage.json();
+            } catch (e) {
+                console.error("Failed to fetch image list", e);
+            }
+
+            try {
+                const resConfig = await fetch(`${WORKER_BASE}/api/config?_t=${Date.now()}`, { cache: 'no-store' }).catch(() => null);
+                if (resConfig && resConfig.ok) storeConfig = await resConfig.json();
+            } catch (e) {
+                console.error("Failed to fetch config", e);
             }
         }
 
@@ -1114,14 +1135,8 @@ select:focus {
                     displayHoursMsg = shifts.map(s => `${s.start} - ${s.end}`).join(", ");
                 }
             } else {
-                const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-                if (isWeekend) {
-                    if (timeValue >= 9 && timeValue <= 21) isValidTime = true;
-                    displayHoursMsg = "9:00 - 21:00";
-                } else {
-                    if (timeValue >= 11 && timeValue <= 21) isValidTime = true;
-                    displayHoursMsg = "11:00 - 21:00";
-                }
+                if (timeValue >= 16.5 && timeValue <= 21.5) isValidTime = true;
+                displayHoursMsg = "16:30 - 21:30";
             }
 
             if (!isValidTime) {
@@ -1314,11 +1329,7 @@ select:focus {
                 const hours = twTime.getHours();
                 const minutes = twTime.getMinutes();
                 const timeValue = hours + minutes / 60;
-                if (day >= 1 && day <= 5) {
-                    return (timeValue >= 11 && timeValue < 21);
-                } else {
-                    return (timeValue >= 9 && timeValue < 21);
-                }
+                return (timeValue >= 16.5 && timeValue < 21.5);
             }
 
             const day = twTime.getDay();
@@ -1393,8 +1404,7 @@ select:focus {
                 }
                 displayEl.innerHTML = html;
             } else {
-                displayEl.innerHTML = `<div>週一~週五&nbsp;&nbsp;11:00-21:00</div>
-                                       <div>週六、週日&nbsp;&nbsp;9:00-21:00</div>`;
+                displayEl.innerHTML = `<div>週一~週日&nbsp;&nbsp;16:30-21:30</div>`;
             }
         }
 
