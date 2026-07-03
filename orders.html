@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>12月早午餐 Dashboard</title>
+  <title>土城鹽水雞 系統後台</title>
   <style>
     :root {
       --primary: #00b900;
@@ -362,9 +362,9 @@
 
     .detail-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-      margin-top: 18px;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
     }
 
     .detail-box {
@@ -468,7 +468,7 @@
       accent-color: var(--primary);
     }
 
-    @media (max-width: 960px) {
+    @media (max-width: 767px) {
       .split {
         grid-template-columns: 1fr;
       }
@@ -481,92 +481,18 @@
 </head>
 
 <body>
-
-  <!-- ====== LOGIN OVERLAY ====== -->
-  <div id="auth-overlay"
-    style="display:none; position:fixed; inset:0; background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%); z-index:99999; align-items:center; justify-content:center;">
-    <div
-      style="background:#fff; border-radius:24px; padding:40px 32px; width:90%; max-width:340px; text-align:center; box-shadow:0 24px 80px rgba(0,0,0,0.5);">
-      <div style="font-size:52px; margin-bottom:12px;">🔐</div>
-      <div style="font-size:22px; font-weight:900; color:#111; margin-bottom:4px;">12月早午餐 後台</div>
-      <div style="font-size:13px; color:#999; margin-bottom:28px;">請輸入密碼以進入</div>
-      <input type="password" id="auth-pw-input" placeholder="密碼"
-        style="width:100%; padding:14px; border:2px solid #e5e7eb; border-radius:12px; font-size:18px; text-align:center; outline:none; font-family:inherit; box-sizing:border-box; letter-spacing:4px;"
-        onkeydown="if(event.key==='Enter') doLogin()">
-      <div id="auth-error" style="color:#d32f2f; font-size:13px; font-weight:800; margin-top:10px; min-height:18px;">
-      </div>
-      <button onclick="doLogin()" id="auth-login-btn"
-        style="width:100%; margin-top:14px; background:var(--primary); color:white; border:none; padding:16px; border-radius:12px; font-size:16px; font-weight:900; cursor:pointer; transition:opacity 0.2s;">
-        進入 →
-      </button>
-    </div>
-  </div>
-
-  <!-- ====== SETTINGS MODAL ====== -->
-  <div id="settings-modal"
-    style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9998; align-items:center; justify-content:center;">
-    <div
-      style="background:#fff; border-radius:20px; padding:28px; width:90%; max-width:400px; box-shadow:0 12px 40px rgba(0,0,0,0.3);">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <span style="font-size:18px; font-weight:900;">⚙️ 設定</span>
-        <span onclick="closeSettings()" style="cursor:pointer; font-size:22px; color:#999;">✕</span>
-      </div>
-
-      <!-- Change Password -->
-      <div style="background:#f9fafb; border-radius:14px; padding:16px; margin-bottom:14px;">
-        <div style="font-weight:900; font-size:15px; margin-bottom:12px;">🔑 更換密碼</div>
-        <input type="password" id="chpw-current" placeholder="目前密碼"
-          style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-bottom:8px; font-size:14px; box-sizing:border-box; font-family:inherit;">
-        <input type="password" id="chpw-new" placeholder="新密碼"
-          style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-bottom:8px; font-size:14px; box-sizing:border-box; font-family:inherit;">
-        <input type="password" id="chpw-confirm" placeholder="確認新密碼"
-          style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-bottom:8px; font-size:14px; box-sizing:border-box; font-family:inherit;">
-        <div id="chpw-msg" style="font-size:13px; font-weight:800; min-height:16px; margin-bottom:8px;"></div>
-        <button onclick="doChangePassword()"
-          style="width:100%; padding:10px; background:var(--primary); color:#fff; border:none; border-radius:8px; font-weight:900; cursor:pointer; font-size:14px;">儲存新密碼</button>
-      </div>
-
-      <!-- Temp Link -->
-      <div style="background:#f9fafb; border-radius:14px; padding:16px;">
-        <div style="font-weight:900; font-size:15px; margin-bottom:12px;">🔗 生成臨時連結</div>
-        <div style="display:flex; gap:8px; margin-bottom:8px;">
-          <select id="templink-hours"
-            style="flex:1; padding:10px; border:1px solid #ddd; border-radius:8px; font-size:14px; font-family:inherit;">
-            <option value="2">2 小時</option>
-            <option value="6">6 小時</option>
-            <option value="24" selected>24 小時</option>
-            <option value="72">3 天</option>
-            <option value="168">7 天</option>
-          </select>
-          <button onclick="doCreateTempLink()"
-            style="padding:10px 16px; background:#3b82f6; color:#fff; border:none; border-radius:8px; font-weight:900; cursor:pointer; font-size:14px;">生成</button>
-        </div>
-        <div id="templink-result"
-          style="font-size:12px; word-break:break-all; background:#eff6ff; padding:10px; border-radius:8px; display:none;">
-          <div style="font-weight:900; margin-bottom:4px; color:#1d4ed8;">临時連結（點擊復製）：</div>
-          <div id="templink-url" style="color:#1e40af; cursor:pointer; text-decoration:underline;"
-            onclick="copyTempLink()"></div>
-          <div id="templink-expiry" style="color:#6b7280; margin-top:4px;"></div>
-        </div>
-      </div>
-
-      <button onclick="doLogout()"
-        style="width:100%; margin-top:14px; padding:10px; background:#fee2e2; color:#d32f2f; border:none; border-radius:10px; font-weight:900; cursor:pointer; font-size:14px;">🚪
-        登出</button>
-    </div>
-  </div>
   <div class="app">
     <div class="topbar">
       <div class="brand">
-        <div class="brand-title">🥖 12月早午餐</div>
+        <div class="brand-title">🐔 土城鹽水雞 Dashboard</div>
         <div class="brand-sub">Live orders</div>
       </div>
       <div class="tabs">
         <button class="tab active" id="tab-live" onclick="switchTab('live')">Live</button>
-        <button class="tab" id="tab-history" onclick="switchTab('history')">歷史訂單</button>
-        <button class="tab" id="tab-menu" onclick="switchTab('menu')" style="color: var(--brand-red);">菜單管理</button>
+        <button class="tab" id="tab-history" onclick="switchTab('history')">Lịch sử</button>
         <button class="mini-btn" onclick="testSound()">Test Sound</button>
-        <button class="mini-btn" onclick="openSettings()" style="background:#f3f4f6;">⚙️</button>
+        <button class="mini-btn" onclick="openMenuSettings()">Menu</button>
+        <button class="mini-btn" onclick="openSettings()">Cài đặt</button>
       </div>
     </div>
 
@@ -575,26 +501,26 @@
         <div class="panel">
           <div class="panel-header">
             <div>
-              <div class="panel-title">準備中</div>
-              <div class="panel-sub">按取餐時間排序</div>
+              <div class="panel-title">Đang chuẩn bị</div>
+              <div class="panel-sub">Gần → xa (theo giờ lấy)</div>
             </div>
             <div class="badge wait" id="count-left">0</div>
           </div>
           <div class="panel-body" id="list-left">
-            <div style="text-align:center; padding: 22px; color:#999;">載入中...</div>
+            <div style="text-align:center; padding: 22px; color:#999;">Đang tải...</div>
           </div>
         </div>
 
         <div class="panel">
           <div class="panel-header">
             <div>
-              <div class="panel-title">待領取</div>
-              <div class="panel-sub">已完成</div>
+              <div class="panel-title">Chờ lấy</div>
+              <div class="panel-sub">Đã chuẩn bị xong</div>
             </div>
             <div class="badge done" id="count-right">0</div>
           </div>
           <div class="panel-body" id="list-right">
-            <div style="text-align:center; padding: 22px; color:#999;">無</div>
+            <div style="text-align:center; padding: 22px; color:#999;">Chưa có</div>
           </div>
         </div>
       </div>
@@ -604,24 +530,47 @@
       <div class="panel" style="height: 100%;">
         <div class="panel-header">
           <div>
-            <div class="panel-title">歷史訂單</div>
-            <div class="panel-sub">按日期</div>
+            <div class="panel-title">Lịch sử đơn hàng</div>
+            <div class="panel-sub">Theo ngày</div>
           </div>
         </div>
         <div class="panel-body" id="list-history">
-          <div style="text-align:center; padding: 22px; color:#999;">載入中...</div>
+          <div style="text-align:center; padding: 22px; color:#999;">Đang tải...</div>
         </div>
       </div>
     </div>
 
-    <!-- Menu Editor View -->
+    <!-- Settings Panel -->
+    <div class="content" id="view-settings" style="display:none; max-width: 860px; margin: 0 auto; width: 100%;">
+      <div class="panel" style="height: auto; padding-bottom: 24px;">
+        <div class="panel-header">
+          <div class="panel-title">Cài đặt hệ thống (Settings)</div>
+        </div>
+        <div class="panel-body" style="padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+
+          <!-- Operating Hours -->
+          <div style="border: 1px solid var(--border); border-radius: 12px; overflow: hidden;">
+            <div style="padding: 16px 20px; background: #f3f4f6; border-bottom: 1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+              <div style="font-weight: 1100; font-size: 18px;">⏰ 營業時間 (Giờ hoạt động)</div>
+              <button class="btn btn-primary" style="padding: 10px 20px; font-size: 15px; border-radius: 8px;" onclick="saveOperatingHours()" id="btn-save-hours">儲存時間</button>
+            </div>
+            <div id="settings-hours-container" style="padding: 16px; display: flex; flex-direction: column; gap: 10px;">
+              <div style="text-align:center; font-size:14px; color:#999;">載入中...</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Menu Editor -->
     <div class="content" id="view-menu" style="display:none;">
-      <div class="split" style="grid-template-columns: 280px 1fr;">
+      <div class="split" style="grid-template-columns: 260px 1fr;">
         <div class="panel">
           <div class="panel-header">
             <div>
               <div class="panel-title">菜單分類</div>
-              <div class="panel-sub">選擇以編輯價格</div>
+              <div class="panel-sub" style="color: var(--brand-red); margin-top:4px;">6 nhóm cố định của quán</div>
             </div>
             <button class="mini-btn" onclick="loadMenuData()">重整</button>
           </div>
@@ -634,13 +583,12 @@
           <div class="panel-header">
             <div>
               <div class="panel-title" id="menu-editor-title">分類項目</div>
-              <div class="panel-sub">編輯價格 (留白表示隱藏)</div>
+              <div class="panel-sub">拖曳排序 ✦ 點擊欄位直接修改</div>
             </div>
-            <div>
-              <button class="btn btn-yellow" style="padding: 8px 16px; font-size: 14px;" onclick="addNewMenuItem()">+
-                新增項目</button>
-              <button class="btn btn-primary" style="padding: 8px 16px; font-size: 14px; margin-left: 8px;"
-                onclick="saveMenuData()">儲存變更</button>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-ghost" style="padding: 8px 16px; font-size: 14px; color: var(--brand-red);" onclick="restoreDefaultMenu()">Khôi phục Menu gốc</button>
+              <button class="btn btn-yellow" style="padding: 8px 16px; font-size: 14px;" onclick="addNewMenuItem()">+ 新增項目</button>
+              <button class="btn btn-primary" style="padding: 8px 16px; font-size: 14px;" onclick="saveMenuData()">儲存變更</button>
             </div>
           </div>
           <div class="panel-body" id="menu-editor-body" style="background: #f9fafb;">
@@ -651,14 +599,16 @@
     </div>
   </div>
 
+
+
   <!-- Fullscreen new order alert -->
   <div class="new-alert" id="new-alert">
     <div class="new-alert-box">
       <h1 class="new-alert-title" id="new-alert-title">1 單 新訂單</h1>
-      <div class="new-alert-sub">點擊 “Review 訂單” 查看詳細並接單</div>
+      <div class="new-alert-sub">Nhấn “Review 訂單” để xem chi tiết và nhận đơn</div>
       <div class="new-alert-actions">
         <button class="btn btn-primary btn-block" onclick="reviewNextNewOrder()">Review 訂單</button>
-        <button class="btn btn-ghost btn-block" onclick="dismissNewAlert()">稍後</button>
+        <button class="btn btn-ghost btn-block" onclick="dismissNewAlert()">Tạm ẩn</button>
       </div>
     </div>
   </div>
@@ -667,7 +617,7 @@
   <div id="reviewModal" class="modal">
     <div class="modal-content">
       <div class="modal-title">
-        <h3 style="display:flex; align-items:center;">Review 訂單</h3>
+        <h3>Review 訂單</h3>
         <div class="modal-close" onclick="closeModal()">✕</div>
       </div>
 
@@ -697,30 +647,30 @@
       <div class="detail-content" id="review-content">-</div>
 
       <div class="modal-actions" id="review-actions">
-        <button class="btn btn-primary" onclick="reviewAccept(this)">接單</button>
+        <button class="btn btn-primary" onclick="reviewAccept(this)">接單 (Nhận đơn)</button>
         <button class="btn btn-yellow" onclick="reviewOpenChange()">需要更改</button>
         <button class="btn btn-danger" onclick="reviewOpenReject()">無法接單</button>
       </div>
 
       <div class="modal-actions" id="review-actions-accepted" style="display:none;">
-        <button class="btn btn-primary" onclick="markReadyFromReview(this)">準備好了</button>
+        <button class="btn btn-primary" onclick="markReadyFromReview(this)">准备好了</button>
         <button class="btn btn-danger"
-          onclick="if(confirm('您確定要取消此訂單嗎？不會通知客戶。')){ updateStatus(reviewingOrder.key, 'REJECTED', { reason: '取消並不回復客戶' }, this).then(() => closeModal()); }">取消訂單</button>
-        <button class="btn btn-ghost" onclick="closeModal()">關閉</button>
+          onclick="if(confirm('Bạn có chắc muốn hủy đơn này? Khách sẽ KHÔNG nhận được thông báo.')){ updateStatus(reviewingOrder.key, 'REJECTED', { reason: '取消並不回復客戶' }, this).then(() => closeModal()); }">取消訂單</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Đóng</button>
       </div>
 
       <div class="modal-actions" id="review-actions-done" style="display:none;">
         <button class="btn btn-primary"
           onclick="updateStatus(reviewingOrder.key, 'PICKED_UP', {}, this).then(() => closeModal());">已取餐</button>
         <button class="btn btn-danger"
-          onclick="if(confirm('您確定要取消此訂單嗎？不會通知客戶。')){ updateStatus(reviewingOrder.key, 'REJECTED', { reason: '取消並不回復客戶' }, this).then(() => closeModal()); }">取消訂單</button>
-        <button class="btn btn-ghost" onclick="closeModal()">關閉</button>
+          onclick="if(confirm('Bạn có chắc muốn hủy đơn này? Khách sẽ KHÔNG nhận được thông báo.')){ updateStatus(reviewingOrder.key, 'REJECTED', { reason: '取消並不回復客戶' }, this).then(() => closeModal()); }">取消訂單</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Đóng</button>
       </div>
 
       <div class="modal-actions" id="review-actions-waiting" style="display:none;">
-        <button class="btn btn-primary" onclick="reviewAccept(this)">接單</button>
-        <button class="btn btn-danger" onclick="reviewForceCancel(this)">取消訂單</button>
-        <button class="btn btn-ghost" onclick="closeModal()">關閉</button>
+        <button class="btn btn-primary" onclick="reviewAccept(this)">接單 (Nhận đơn)</button>
+        <button class="btn btn-danger" onclick="reviewForceCancel(this)">取消訂單 (Hủy)</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Đóng</button>
       </div>
     </div>
   </div>
@@ -729,7 +679,7 @@
   <div id="changeModal" class="modal">
     <div class="modal-content">
       <div class="modal-title">
-        <h3>需要更改</h3>
+        <h3>需要更改 (Yêu cầu thay đổi)</h3>
         <div class="modal-close" onclick="closeModal()">✕</div>
       </div>
       <label style="display:block; margin-top: 10px; font-weight: 1100; font-size: 20px;">原因 / 建議:</label>
@@ -739,53 +689,24 @@
         <option value="時間需調整">時間太趕，需延後</option>
         <option value="口味售完">該口味已售完</option>
       </select>
-      <textarea id="change-note" rows="3" placeholder="建議時間 (例如: 11:00)"
+      <textarea id="change-note" rows="3" placeholder="建議時間/Gợi ý thời gian mới (VD: 11:00)"
         style="width:100%; padding: 16px; margin-top: 16px; border-radius: 12px; border: 1px solid var(--border); font-size: 22px;"></textarea>
 
       <div id="change-items-div" style="display: none;">
-        <div style="margin-top: 16px; font-weight: 1000; font-size: 18px; margin-bottom: 12px;">選擇已售完或缺貨的品項 :</div>
-
-        <div style="font-weight: 900; font-size: 16px; margin-bottom: 8px; color: #555;">🍞 麵包 / 餅皮</div>
-        <div class="checkbox-grid" style="margin-top: 0; margin-bottom: 16px;">
-          <label class="checkbox-label"><input type="checkbox" value="吐司" class="sold-item"> 吐司</label>
-          <label class="checkbox-label"><input type="checkbox" value="漢堡" class="sold-item"> 漢堡</label>
-          <label class="checkbox-label"><input type="checkbox" value="滿福堡" class="sold-item"> 滿福堡</label>
-          <label class="checkbox-label"><input type="checkbox" value="乳酪堡" class="sold-item"> 乳酪堡</label>
-          <label class="checkbox-label"><input type="checkbox" value="可頌" class="sold-item"> 可頌</label>
-          <label class="checkbox-label"><input type="checkbox" value="厚片" class="sold-item"> 厚片</label>
-          <label class="checkbox-label"><input type="checkbox" value="蛋餅" class="sold-item"> 蛋餅</label>
-          <label class="checkbox-label"><input type="checkbox" value="蔥抓餅" class="sold-item"> 蔥抓餅</label>
-        </div>
-
-        <div style="font-weight: 900; font-size: 16px; margin-bottom: 8px; color: #555;">🥩 主食 / 肉類</div>
-        <div class="checkbox-grid" style="margin-top: 0; margin-bottom: 16px;">
-          <label class="checkbox-label"><input type="checkbox" value="煎蛋" class="sold-item"> 煎蛋</label>
+        <div style="margin-top: 16px; font-weight: 1000; font-size: 18px; margin-bottom: 12px;">Chọn món đã hết:</div>
+        <div class="checkbox-grid">
+          <label class="checkbox-label"><input type="checkbox" value="燒肉" class="sold-item"> 燒肉</label>
           <label class="checkbox-label"><input type="checkbox" value="火腿" class="sold-item"> 火腿</label>
-          <label class="checkbox-label"><input type="checkbox" value="香雞" class="sold-item"> 香雞</label>
-          <label class="checkbox-label"><input type="checkbox" value="培根" class="sold-item"> 培根</label>
-          <label class="checkbox-label"><input type="checkbox" value="豬排" class="sold-item"> 豬排</label>
-          <label class="checkbox-label"><input type="checkbox" value="厚牛" class="sold-item"> 厚牛</label>
-          <label class="checkbox-label"><input type="checkbox" value="卡拉雞" class="sold-item"> 卡拉雞</label>
-        </div>
-
-        <div style="font-weight: 900; font-size: 16px; margin-bottom: 8px; color: #555;">🍝 麵類 / 飯類 / 沙拉</div>
-        <div class="checkbox-grid" style="margin-top: 0; margin-bottom: 16px;">
-          <label class="checkbox-label"><input type="checkbox" value="義大利麵" class="sold-item"> 義大利麵</label>
-          <label class="checkbox-label"><input type="checkbox" value="燉飯" class="sold-item"> 燉飯</label>
-          <label class="checkbox-label"><input type="checkbox" value="蛋包飯" class="sold-item"> 蛋包飯</label>
-          <label class="checkbox-label"><input type="checkbox" value="炒泡麵" class="sold-item"> 炒泡麵</label>
-          <label class="checkbox-label"><input type="checkbox" value="沙拉" class="sold-item"> 沙拉</label>
-          <label class="checkbox-label"><input type="checkbox" value="鬆餅" class="sold-item"> 鬆餅</label>
-        </div>
-
-        <div style="font-weight: 900; font-size: 16px; margin-bottom: 8px; color: #555;">🥤 飲品 & 加料</div>
-        <div class="checkbox-grid" style="margin-top: 0;">
+          <label class="checkbox-label"><input type="checkbox" value="雞肉" class="sold-item"> 雞肉</label>
+          <label class="checkbox-label"><input type="checkbox" value="烤肉" class="sold-item"> 烤肉</label>
+          <label class="checkbox-label"><input type="checkbox" value="雙層烤肉" class="sold-item"> 雙層烤肉</label>
+          <label class="checkbox-label"><input type="checkbox" value="綜合" class="sold-item"> 綜合</label>
           <label class="checkbox-label"><input type="checkbox" value="起司" class="sold-item"> 起司</label>
+          <label class="checkbox-label"><input type="checkbox" value="越南咖啡" class="sold-item"> 越南咖啡</label>
           <label class="checkbox-label"><input type="checkbox" value="豆漿" class="sold-item"> 豆漿</label>
           <label class="checkbox-label"><input type="checkbox" value="紅茶" class="sold-item"> 紅茶</label>
-          <label class="checkbox-label"><input type="checkbox" value="咖啡" class="sold-item"> 咖啡</label>
-          <label class="checkbox-label"><input type="checkbox" value="奶茶" class="sold-item"> 奶茶</label>
-          <label class="checkbox-label"><input type="checkbox" value="果醬" class="sold-item"> 果醬</label>
+          <label class="checkbox-label"><input type="checkbox" value="可樂" class="sold-item"> 可樂</label>
+          <label class="checkbox-label"><input type="checkbox" value="雪碧" class="sold-item"> 雪碧</label>
         </div>
       </div>
 
@@ -800,7 +721,7 @@
   <div id="rejectModal" class="modal">
     <div class="modal-content">
       <div class="modal-title">
-        <h3>無法接單</h3>
+        <h3>無法接單 (Không thể nhận đơn)</h3>
         <div class="modal-close" onclick="closeModal()">✕</div>
       </div>
       <select id="reject-reason"
@@ -808,7 +729,7 @@
         <option value="今日已售完">今日已售完</option>
         <option value="訂單過多">訂單過多，暫不接單</option>
         <option value="已過營業時間">已過營業時間</option>
-        <option value="取消並不回復客戶">取消並不回復客戶</option>
+        <option value="取消並不回復客戶">取消並不回復客戶 / Hủy không báo khách</option>
       </select>
       <div class="modal-actions two">
         <button class="btn btn-danger" onclick="confirmAction('REJECT', this)">確認拒絕</button>
@@ -817,134 +738,30 @@
     </div>
   </div>
 
+  <!-- Image Manage Modal -->
+  <div id="imageModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-title">
+        <h3 id="image-modal-title">Quản lý Ảnh</h3>
+        <div class="modal-close" onclick="closeModal()">✕</div>
+      </div>
+      <div style="margin-top: 16px; text-align: center;">
+        <img id="image-preview" src="" style="max-width: 100%; max-height: 200px; border-radius: 12px; display: none; margin: 0 auto 16px; object-fit: cover; border: 1px solid #eee;">
+        <div id="image-status" style="margin-bottom: 16px; font-weight: 900; color: #666;">Đang kiểm tra ảnh...</div>
+      </div>
+      <input type="file" id="image-file-input" accept="image/png, image/jpeg, image/webp" style="display: none;" onchange="handleImageSelect(event)">
+      <div class="modal-actions two">
+        <button class="btn btn-primary" onclick="document.getElementById('image-file-input').click()">Chọn Ảnh</button>
+        <button class="btn btn-danger" id="btn-delete-image" style="display: none;" onclick="deleteItemImage()">Xóa Ảnh</button>
+      </div>
+      <div class="modal-actions" style="grid-template-columns: 1fr; margin-top: 10px;">
+        <button class="btn btn-ghost btn-block" onclick="closeModal()">Đóng</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    const WORKER_BASE = "https://12cuobian.thuanmnc.workers.dev";
-
-    // ====== AUTH ======
-    async function checkAuth() {
-      const overlay = document.getElementById("auth-overlay");
-      const errEl = document.getElementById("auth-error");
-      overlay.style.display = "flex";
-
-      // 1. Check URL temp token
-      const urlParams = new URLSearchParams(window.location.search);
-      const token = urlParams.get("t");
-      if (token) {
-        try {
-          const res = await fetch(`${WORKER_BASE}/api/auth/templink?t=${encodeURIComponent(token)}&_t=${Date.now()}`);
-          const data = await res.json();
-          if (data.ok) {
-            grantAccess();
-            return;
-          } else {
-            // Link expired or invalid - FORCE LOGOUT
-            sessionStorage.removeItem("brunch_auth");
-            errEl.innerText = "此臨時連結已過期或無效";
-            setTimeout(() => document.getElementById("auth-pw-input").focus(), 100);
-            return;
-          }
-        } catch (e) {
-          console.error("Auth check failed", e);
-        }
-      }
-
-      // 2. Check sessionStorage (already logged in this tab)
-      if (sessionStorage.getItem("brunch_auth") === "1") {
-        grantAccess();
-        return;
-      }
-
-      // Show login overlay
-      setTimeout(() => document.getElementById("auth-pw-input").focus(), 100);
-    }
-
-    function grantAccess() {
-      sessionStorage.setItem("brunch_auth", "1");
-      const overlay = document.getElementById("auth-overlay");
-      overlay.style.display = "none";
-    }
-
-    async function doLogin() {
-      const pw = document.getElementById("auth-pw-input").value;
-      const errEl = document.getElementById("auth-error");
-      const btn = document.getElementById("auth-login-btn");
-      if (!pw) { errEl.innerText = "請輸入密碼"; return; }
-      btn.innerText = "驗證中..."; btn.disabled = true;
-      try {
-        const res = await fetch(`${WORKER_BASE}/api/auth`, {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ password: pw })
-        });
-        const data = await res.json();
-        if (data.ok) { grantAccess(); }
-        else { errEl.innerText = "密碼錯誤，請重試"; document.getElementById("auth-pw-input").value = ""; }
-      } catch (e) { errEl.innerText = "網路錯誤，請重試"; }
-      btn.innerText = "進入 →"; btn.disabled = false;
-    }
-
-    function doLogout() {
-      sessionStorage.removeItem("brunch_auth");
-      window.location.reload();
-    }
-
-    function openSettings() {
-      const m = document.getElementById("settings-modal");
-      m.style.display = "flex";
-      // Reset fields
-      ["chpw-current", "chpw-new", "chpw-confirm"].forEach(id => document.getElementById(id).value = "");
-      document.getElementById("chpw-msg").innerText = "";
-      document.getElementById("templink-result").style.display = "none";
-    }
-    function closeSettings() { document.getElementById("settings-modal").style.display = "none"; }
-
-    async function doChangePassword() {
-      const current = document.getElementById("chpw-current").value;
-      const newPw = document.getElementById("chpw-new").value;
-      const confirm = document.getElementById("chpw-confirm").value;
-      const msg = document.getElementById("chpw-msg");
-      if (!current || !newPw) { msg.style.color = "#d32f2f"; msg.innerText = "請填寫所有欄位"; return; }
-      if (newPw !== confirm) { msg.style.color = "#d32f2f"; msg.innerText = "新密碼不一致"; return; }
-      if (newPw.length < 4) { msg.style.color = "#d32f2f"; msg.innerText = "密碼至少4碼"; return; }
-      try {
-        const res = await fetch(`${WORKER_BASE}/api/auth/change`, {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ current, newPassword: newPw })
-        });
-        const data = await res.json();
-        if (data.ok) { msg.style.color = "#00b900"; msg.innerText = "密碼已更新！"; }
-        else { msg.style.color = "#d32f2f"; msg.innerText = data.error || "失敗"; }
-      } catch (e) { msg.style.color = "#d32f2f"; msg.innerText = "網路錯誤"; }
-    }
-
-    let _tempLinkPw = null;
-    async function doCreateTempLink() {
-      // Re-use the session to get password - ask for it once
-      const pw = prompt("請輸入目前密碼以生成臨時連結：");
-      if (!pw) return;
-      const hours = parseInt(document.getElementById("templink-hours").value);
-      try {
-        const res = await fetch(`${WORKER_BASE}/api/auth/templink`, {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ password: pw, hours })
-        });
-        const data = await res.json();
-        if (!data.ok) { alert("密碼錯誤"); return; }
-        const url = `${window.location.origin}${window.location.pathname}?t=${data.token}`;
-        document.getElementById("templink-url").innerText = url;
-        const expiry = new Date(Date.now() + data.hours * 3600000);
-        document.getElementById("templink-expiry").innerText = `有效至：${expiry.toLocaleString("zh-TW")}`;
-        document.getElementById("templink-result").style.display = "block";
-      } catch (e) { alert("生成失敗"); }
-    }
-
-    function copyTempLink() {
-      const url = document.getElementById("templink-url").innerText;
-      navigator.clipboard.writeText(url).then(() => alert("已復製連結！"));
-    }
-
-    // Run auth check on page load
-    checkAuth();
-
+    const WORKER_BASE = "https://bsc.thuanmnc.workers.dev";
 
     let latestOrders = [];
     let pendingNewOrders = [];
@@ -954,8 +771,6 @@
     let newAlertSnoozeUntilMs = 0;
     let snoozedNewOrderKeys = new Set();
     let localOverrides = {};
-    const historyExpandedDates = new Set(); // persists toggle state across re-renders
-    let historyInitialized = false;
 
     const knownOrderKeys = new Set();
     const processingKeys = new Set();
@@ -1028,217 +843,11 @@
       activeTab = tab;
       document.getElementById("tab-live").classList.toggle("active", tab === "live");
       document.getElementById("tab-history").classList.toggle("active", tab === "history");
-      document.getElementById("tab-menu").classList.toggle("active", tab === "menu");
       document.getElementById("view-live").style.display = tab === "live" ? "block" : "none";
       document.getElementById("view-history").style.display = tab === "history" ? "block" : "none";
-      document.getElementById("view-menu").style.display = tab === "menu" ? "block" : "none";
-
-      if (tab === "menu" && !currentMenuData) {
-        loadMenuData();
-      } else if (tab !== "menu") {
-        renderAll();
-      }
-    }
-
-    // --- Dynamic Menu Editor Logic ---
-    let currentMenuData = null;
-    let activeCategoryIndex = -1;
-
-    async function loadMenuData() {
-      try {
-        const res = await fetch(`${WORKER_BASE}/api/menu?_t=${Date.now()}`);
-        if (!res.ok) throw new Error("Failed to load");
-        currentMenuData = await res.json();
-        renderMenuCategories();
-        if (activeCategoryIndex >= 0) {
-          renderMenuCategoryEditor(activeCategoryIndex);
-        } else {
-          document.getElementById('menu-editor-body').innerHTML = '<div style="text-align:center; padding: 22px; color:#999;">請先從左側選擇分類</div>';
-          document.getElementById('menu-editor-title').innerText = '分類項目';
-        }
-      } catch (e) {
-        alert("無法載入菜單資料：" + e.message);
-      }
-    }
-
-    function renderMenuCategories() {
-      const container = document.getElementById("menu-categories");
-      container.innerHTML = "";
-      if (!currentMenuData || !Array.isArray(currentMenuData)) return;
-
-      currentMenuData.forEach((cat, index) => {
-        const div = document.createElement("div");
-        div.style.cssText = `
-          padding: 16px; border-bottom: 1px solid #eee; cursor: pointer; font-weight: 1000; font-size: 18px;
-          background: ${activeCategoryIndex === index ? '#f3f4f6' : '#fff'};
-          border-left: 4px solid ${activeCategoryIndex === index ? 'var(--brand-red)' : 'transparent'};
-          display: flex; justify-content: space-between; align-items: center;
-        `;
-        div.innerHTML = `
-          <span>${escapeHtml(cat.title)}</span>
-          <span style="font-size: 14px; font-weight: 900; color: var(--muted);">${cat.items.length} 項目</span>
-        `;
-        div.onclick = () => {
-          activeCategoryIndex = index;
-          renderMenuCategories();
-          renderMenuCategoryEditor(index);
-        };
-        container.appendChild(div);
-      });
-    }
-
-    function renderMenuCategoryEditor(index) {
-      if (!currentMenuData || !currentMenuData[index]) return;
-      const cat = currentMenuData[index];
-      document.getElementById("menu-editor-title").innerText = cat.title + " (全部 " + cat.items.length + " 項)";
-
-      const container = document.getElementById("menu-editor-body");
-      container.innerHTML = "";
-
-      let draggedItemIndex = null;
-
-      cat.items.forEach((item, iIdx) => {
-        const row = document.createElement("div");
-        row.style.cssText = "background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; transition: opacity 0.2s; cursor: grab;";
-        row.draggable = true;
-
-        row.addEventListener("dragstart", (e) => {
-          draggedItemIndex = iIdx;
-          e.dataTransfer.effectAllowed = "move";
-          setTimeout(() => row.style.opacity = "0.4", 0);
-        });
-        row.addEventListener("dragend", (e) => {
-          row.style.opacity = "1";
-        });
-        row.addEventListener("dragover", (e) => {
-          e.preventDefault();
-          row.style.border = "2px dashed var(--primary)";
-        });
-        row.addEventListener("dragleave", (e) => {
-          row.style.border = "1px solid var(--border)";
-        });
-        row.addEventListener("drop", (e) => {
-          e.preventDefault();
-          row.style.border = "1px solid var(--border)";
-          if (draggedItemIndex !== null && draggedItemIndex !== iIdx) {
-            syncMenuDataFromDOM();
-            let arr = currentMenuData[index].items;
-            const movedItem = arr.splice(draggedItemIndex, 1)[0];
-            arr.splice(iIdx, 0, movedItem);
-            renderMenuCategoryEditor(index);
-          }
-        });
-
-        let priceInputsHtml = '';
-        if (item.prices) {
-          // Uses pricing array
-          let descriptors = cat.sizes || cat.sauces || [];
-          if (descriptors.length === 0) descriptors = item.prices.map((_, i) => "價格" + (i + 1));
-
-          priceInputsHtml = `<div style="display:flex; gap: 8px; flex-wrap: wrap;">`;
-          for (let i = 0; i < item.prices.length; i++) {
-            const pVal = item.prices[i] !== null && item.prices[i] !== undefined ? item.prices[i] : "";
-            const dLabel = descriptors[i] || "";
-            priceInputsHtml += `<label style="display:flex; flex-direction:column; font-weight: 800; font-size:14px; color:#555;">
-                  ${dLabel}
-                  <input type="number" data-cidx="${index}" data-iidx="${iIdx}" data-pidx="${i}" value="${pVal}" placeholder="不販售" style="padding: 8px; width: 80px; border-radius: 8px; border: 1px solid #ccc; font-weight:800; font-family:inherit;">
-                </label>`;
-          }
-          priceInputsHtml += `</div>`;
-        } else {
-          // Single price
-          const pVal = item.price !== null && item.price !== undefined ? item.price : "";
-          priceInputsHtml = `<label style="display:flex; flex-direction:column; font-weight: 800; font-size:14px; color:#555;">
-              單價
-              <input type="number" data-cidx="${index}" data-iidx="${iIdx}" value="${pVal}" placeholder="不販售" style="padding: 8px; width: 100px; border-radius: 8px; border: 1px solid #ccc; font-weight:800; font-family:inherit;">
-            </label>`;
-        }
-
-        row.innerHTML = `
-          <div style="display:flex; justify-content: space-between; align-items: center;">
-            <div style="display:flex; align-items: center; gap: 8px;">
-              <div style="color: #ccc; font-size: 24px; cursor: grab;">☰</div>
-              <input type="text" value="${escapeHtml(item.name)}" data-name-cidx="${index}" data-name-iidx="${iIdx}" style="font-size: 18px; font-weight: 1000; color: #111; padding: 8px; border: 1px solid #ccc; border-radius: 8px; flex: 1; max-width: 250px;">
-            </div>
-            <button class="btn btn-ghost" style="padding: 6px 12px; color: var(--brand-red); font-size:14px;" onclick="removeMenuItem(${index}, ${iIdx})">刪除</button>
-          </div>
-          ${priceInputsHtml}
-        `;
-        container.appendChild(row);
-      });
-    }
-
-    function removeMenuItem(cIdx, iIdx) {
-      if (confirm("確定要刪除這個項目嗎?")) {
-        currentMenuData[cIdx].items.splice(iIdx, 1);
-        renderMenuCategoryEditor(cIdx);
-      }
-    }
-
-    function addNewMenuItem() {
-      if (activeCategoryIndex < 0 || !currentMenuData) return;
-      syncMenuDataFromDOM(); // Sync first so we don't lose data on re-render
-      const cat = currentMenuData[activeCategoryIndex];
-      let newItem = { name: "新項目" };
-
-      // Determine shape based on existing items
-      if (cat.items.length > 0 && cat.items[0].prices) {
-        newItem.prices = new Array(cat.items[0].prices.length).fill(null);
-      } else {
-        newItem.price = 0;
-      }
-
-      cat.items.unshift(newItem); // Add to the TOP instead of bottom
-      renderMenuCategoryEditor(activeCategoryIndex);
-    }
-
-    function syncMenuDataFromDOM() {
-      document.querySelectorAll('#menu-editor-body input[data-name-cidx]').forEach(inp => {
-        const cIdx = parseInt(inp.getAttribute('data-name-cidx'));
-        const iIdx = parseInt(inp.getAttribute('data-name-iidx'));
-        currentMenuData[cIdx].items[iIdx].name = inp.value;
-      });
-
-      document.querySelectorAll('#menu-editor-body input[data-cidx]').forEach(inp => {
-        const cIdx = parseInt(inp.getAttribute('data-cidx'));
-        const iIdx = parseInt(inp.getAttribute('data-iidx'));
-        const pIdxStr = inp.getAttribute('data-pidx');
-        const val = inp.value.trim() === "" ? null : parseFloat(inp.value);
-
-        if (pIdxStr !== null && pIdxStr !== undefined) {
-          currentMenuData[cIdx].items[iIdx].prices[parseInt(pIdxStr)] = val;
-        } else {
-          currentMenuData[cIdx].items[iIdx].price = val;
-        }
-      });
-    }
-
-    async function saveMenuData() {
-      if (!currentMenuData) return;
-      if (!confirm("確定要儲存所有變更嗎？這會直接實時影響顧客端點餐頁面。")) return;
-
-      syncMenuDataFromDOM();
-
-      const btn = document.querySelector("#view-menu .panel-header .btn-primary");
-      const oldText = btn.innerText;
-      btn.innerText = "儲存中...";
-      btn.disabled = true;
-
-      try {
-        const res = await fetch(`${WORKER_BASE}/api/menu`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(currentMenuData)
-        });
-        if (!res.ok) throw new Error("API returned " + res.status);
-        alert("儲存成功！");
-        renderMenuCategories();
-      } catch (e) {
-        alert("儲存失敗：" + e.message);
-      } finally {
-        btn.innerText = oldText;
-        btn.disabled = false;
-      }
+      document.getElementById("view-settings").style.display = "none";
+      document.getElementById("view-menu").style.display = "none";
+      if (tab === "live" || tab === "history") renderAll();
     }
 
     async function fetchOrders() {
@@ -1268,9 +877,9 @@
         renderAll();
       } catch (e) {
         console.error(e);
-        document.getElementById("list-left").innerHTML = `<div style="text-align:center; padding: 22px; color:#d32f2f;">無法載入: ${escapeHtml(e?.message || e)}</div>`;
-        document.getElementById("list-right").innerHTML = `<div style="text-align:center; padding: 22px; color:#d32f2f;">無法載入</div>`;
-        document.getElementById("list-history").innerHTML = `<div style="text-align:center; padding: 22px; color:#d32f2f;">無法載入</div>`;
+        document.getElementById("list-left").innerHTML = `<div style="text-align:center; padding: 22px; color:#d32f2f;">Không tải được: ${escapeHtml(e?.message || e)}</div>`;
+        document.getElementById("list-right").innerHTML = `<div style="text-align:center; padding: 22px; color:#d32f2f;">Không tải được</div>`;
+        document.getElementById("list-history").innerHTML = `<div style="text-align:center; padding: 22px; color:#d32f2f;">Không tải được</div>`;
       }
     }
 
@@ -1321,7 +930,7 @@
       const container = document.getElementById("list-left");
       container.innerHTML = "";
       if (orders.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">無</div>`;
+        container.innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">Chưa có</div>`;
         return;
       }
 
@@ -1341,7 +950,7 @@
           rightActions = `<button class="btn btn-ghost btn-block" onclick="event.stopPropagation(); openReview('${escapeHtml(order.key)}')">Review</button>`;
         } else if (order.status === "ACCEPTED") {
           badge = `<span class="badge wait">DOING</span>`;
-          rightActions = `<button class="btn btn-primary btn-block" onclick="event.stopPropagation(); updateStatus('${escapeHtml(order.key)}','DONE', {}, this)">準備完成</button>`;
+          rightActions = `<button class="btn btn-primary btn-block" onclick="event.stopPropagation(); updateStatus('${escapeHtml(order.key)}','DONE', {}, this)">准备好了</button>`;
         } else {
           badge = `<span class="badge wait" style="background:#e5e7eb; color:#4b5563;">等客戶確認</span>`;
           rightActions = `<button class="btn btn-block" style="background:#f3f4f6; color:#9ca3af; cursor:not-allowed;" disabled>等待回覆</button>`;
@@ -1350,7 +959,7 @@
         tile.innerHTML = `
           <div>
             <div class="tile-top">
-              <span class="tile-customer">${escapeHtml(order.customer || "客戶")}</span>
+              <span class="tile-customer">${escapeHtml(order.customer || "Khách")}</span>
               ${badge}
               <span class="tile-meta">#${escapeHtml(order.key)}</span>
             </div>
@@ -1373,7 +982,7 @@
       const container = document.getElementById("list-right");
       container.innerHTML = "";
       if (orders.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">無</div>`;
+        container.innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">Chưa có</div>`;
         return;
       }
 
@@ -1386,7 +995,7 @@
         tile.innerHTML = `
           <div>
             <div class="tile-top">
-              <span class="tile-customer">${escapeHtml(order.customer || "客戶")}</span>
+              <span class="tile-customer">${escapeHtml(order.customer || "Khách")}</span>
               <span class="badge done">READY</span>
               <span class="tile-meta">#${escapeHtml(order.key)}</span>
             </div>
@@ -1428,53 +1037,29 @@
       const container = document.getElementById("list-history");
       container.innerHTML = "";
       if (orders.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">歷史訂單無</div>`;
+        container.innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">Chưa có lịch sử</div>`;
         return;
       }
 
       const grouped = groupByDate(orders);
+      // Sort groups by date descending
       const sortedDates = Array.from(grouped.keys()).sort((a, b) => b.localeCompare(a));
 
-      // On first render, auto-expand the latest date only
-      if (!historyInitialized && sortedDates.length > 0) {
-        historyExpandedDates.add(sortedDates[0]);
-        historyInitialized = true;
-      }
-
-      sortedDates.forEach((date, dateIdx) => {
+      for (const date of sortedDates) {
         let items = grouped.get(date);
+        // Sort items: newest picked up at top (descending), fallback to newest created at top
         items.sort((a, b) => {
           const timeA = a.pickedUpAt || a.createdAt || 0;
           const timeB = b.pickedUpAt || b.createdAt || 0;
           return timeB - timeA;
         });
 
-        const isLatest = dateIdx === 0;
-        const isExpanded = historyExpandedDates.has(date);
-        const totalOrders = items.length;
-        const revenue = items.reduce((sum, o) => sum + (parseInt(o.total) || 0), 0);
-
-        // --- Collapsible date header ---
-        const headerRow = document.createElement("div");
-        headerRow.style.cssText = `
-          display:flex; align-items:center; justify-content:space-between;
-          padding:12px 14px; margin-bottom:6px; border-radius:12px;
-          background:#f3f4f6;
-          cursor:pointer; user-select:none;
-        `;
-        headerRow.innerHTML = `
-          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-            <span style="font-size:17px; font-weight:900; color:#111;">${escapeHtml(date)}</span>
-            <span style="font-size:13px; font-weight:800; background:rgba(0,0,0,0.1); padding:2px 8px; border-radius:99px;">${totalOrders} 單</span>
-            ${revenue > 0 ? `<span style="font-size:13px; font-weight:900; color:var(--brand-red);">營收 $${revenue}</span>` : ''}
-          </div>
-          <span class="toggle-icon" style="font-size:18px; line-height:1;">${isExpanded ? '▲' : '▼'}</span>
-        `;
-        container.appendChild(headerRow);
-
-        // --- Order tiles for this date ---
-        const listWrap = document.createElement("div");
-        listWrap.style.display = isExpanded ? "block" : "none";
+        const header = document.createElement("div");
+        header.style.padding = "10px 8px 2px";
+        header.style.fontWeight = "1100";
+        header.style.color = "#111827";
+        header.innerText = `${date} (${items.length})`;
+        container.appendChild(header);
 
         items.forEach(order => {
           const tile = document.createElement("div");
@@ -1482,42 +1067,24 @@
           tile.onclick = () => openReview(order.key);
           const badge = order.status === "PICKED_UP"
             ? `<span class="badge done">PICKED</span>`
-            : `<span class="badge" style="background:#fee2e2;color:#b91c1c;">${escapeHtml(order.status)}</span>`;
+            : `<span class="badge">${escapeHtml(order.status)}</span>`;
 
           tile.innerHTML = `
-            <div style="flex:1; min-width:0;">
+            <div>
               <div class="tile-top">
-                <span class="tile-customer">${escapeHtml(order.customer || "客戶")}</span>
+                <span class="tile-customer">${escapeHtml(order.customer || "Khách")}</span>
                 ${badge}
                 <span class="tile-meta">#${escapeHtml(order.key)}</span>
-              </div>
-              <div style="display:flex; gap:12px; margin-top:4px;">
-                <span class="tile-meta">取餐: ${escapeHtml(order.time || "-")}</span>
-                ${order.total ? `<span class="tile-meta" style="color:var(--primary); font-weight:900;">$${order.total}</span>` : ''}
               </div>
               <div class="tile-items">${escapeHtml(shortItems(order.content))}</div>
             </div>
             <div class="tile-actions">
-              <button class="btn btn-ghost btn-block" onclick="event.stopPropagation(); openReview('${escapeHtml(order.key)}')">查看</button>
+              <button class="btn btn-ghost btn-block" onclick="event.stopPropagation(); openReview('${escapeHtml(order.key)}')">Xem</button>
             </div>
           `;
-          listWrap.appendChild(tile);
+          container.appendChild(tile);
         });
-
-        container.appendChild(listWrap);
-
-        headerRow.addEventListener("click", () => {
-          const isOpen = listWrap.style.display !== "none";
-          listWrap.style.display = isOpen ? "none" : "block";
-          headerRow.querySelector(".toggle-icon").textContent = isOpen ? "▼" : "▲";
-          // Persist toggle state so re-render doesn't reset it
-          if (isOpen) {
-            historyExpandedDates.delete(date);
-          } else {
-            historyExpandedDates.add(date);
-          }
-        });
-      });
+      }
     }
 
     function updateNewAlert() {
@@ -1609,25 +1176,22 @@
     function formatContentHtml(order) {
       const raw = String(order.content || "");
       if (order.reason === "Đơn qua tin nhắn") {
-        return `<div class="detail-lines"><div class="detail-line primary" style="white-space: pre-wrap; display: block;">${escapeHtml(raw)}</div></div>`;
+        return `<div style="background:rgba(0,185,0,0.07); border:1.5px solid rgba(0,185,0,0.25); border-radius:16px; padding:18px; white-space:pre-wrap; line-height:1.7; font-size:22px;">${escapeHtml(raw)}</div>`;
       }
       const lines = raw.split("\n").map(l => l.trimEnd()).filter(l => l.trim() !== "");
-      if (lines.length === 0 && !order.note) return `<div class="detail-lines"><div class="detail-line">-</div></div>`;
+      if (lines.length === 0) return `<div style="background:rgba(0,185,0,0.07); border:1.5px solid rgba(0,185,0,0.25); border-radius:16px; padding:18px;">-</div>`;
 
-      let formattedLines = lines.map(line => {
+      let inner = lines.map(line => {
         const t = line.trimStart();
-        const isSub = t.startsWith("-") || t.startsWith("•") || t.startsWith("－") || t.startsWith("↳") || t.startsWith("↳");
-        if (isSub) {
-          return `<div style="color: #666; font-size: 16px; margin-top: 4px; padding-left: 14px;">${escapeHtml(line)}</div>`;
-        }
-        return `<div style="font-weight: 1100; font-size: 24px; color: #111; margin-top: 12px;">${escapeHtml(line)}</div>`;
+        const isSub = t.startsWith("-") || t.startsWith("•") || t.startsWith("↳") || t.startsWith("－");
+        return `<div style="${isSub ? 'padding-left:16px; color:#4b5563; font-size:20px;' : 'font-weight:800; margin-top:8px; font-size:22px;'}">${escapeHtml(line)}</div>`;
       }).join("");
 
       if (order.note) {
-        formattedLines += `<div style="color: #555; font-size: 16px; margin-top: 12px; padding-left: 2px;">📝 ${escapeHtml(order.note)}</div>`;
+        inner += `<div style="color: #555; font-size: 18px; margin-top: 12px; font-weight: 800;">📝 ${escapeHtml(order.note)}</div>`;
       }
 
-      return `<div class="detail-lines"><div class="detail-line primary" style="display:block; padding: 18px 22px;">${formattedLines}</div></div>`;
+      return `<div style="background:rgba(0,185,0,0.07); border:1.5px solid rgba(0,185,0,0.25); border-radius:16px; padding:18px; line-height:1.7;">${inner}</div>`;
     }
 
     function closeModal() {
@@ -1642,7 +1206,7 @@
       const oldText = btn ? btn.innerText : "";
       if (btn) {
         btn.disabled = true;
-        btn.innerText = "處理中...";
+        btn.innerText = "Đang xử lý...";
       }
 
       try {
@@ -1674,7 +1238,6 @@
     async function reviewAccept(btn) {
       if (!reviewingOrder?.key) return;
       await updateStatus(reviewingOrder.key, "ACCEPTED", {}, btn);
-      printOrder(reviewingOrder);
       closeModal();
       dismissNewAlert();
       switchTab("live");
@@ -1682,20 +1245,44 @@
 
     function reviewOpenChange() {
       if (!reviewingOrder?.key) return;
-      currentOrderKey = reviewingOrder.key;
+      const savedKey = reviewingOrder.key;
+      
+      const items = [];
+      const lines = reviewingOrder.content.split('\n');
+      lines.forEach(line => {
+         const m = line.match(/\d+份 x (.*)/);
+         if (m) {
+            const name = m[1].trim();
+            if (!items.includes(name)) items.push(name);
+         }
+      });
+      
       closeModal();
+      currentOrderKey = savedKey;
       document.getElementById("change-reason").value = "時間需調整";
       document.getElementById("change-note").value = "";
-      const checkboxes = document.querySelectorAll(".sold-item");
-      if (checkboxes) checkboxes.forEach(cb => cb.checked = false);
+      
+      const grid = document.querySelector("#change-items-div .checkbox-grid");
+      if (grid) {
+          grid.innerHTML = "";
+          if (items.length > 0) {
+              items.forEach(item => {
+                  grid.innerHTML += `<label class="checkbox-label"><input type="checkbox" value="${escapeHtml(item)}" class="sold-item"> ${escapeHtml(item)}</label>`;
+              });
+          } else {
+              grid.innerHTML = `<div style="font-size:16px; color:#999;">沒有商品</div>`;
+          }
+      }
+      
       onChangeReasonChange();
       document.getElementById("changeModal").style.display = "flex";
     }
 
     function reviewOpenReject() {
       if (!reviewingOrder?.key) return;
-      currentOrderKey = reviewingOrder.key;
+      const savedKey = reviewingOrder.key;  // Save key BEFORE closeModal wipes it
       closeModal();
+      currentOrderKey = savedKey;           // Restore after closeModal
       document.getElementById("reject-reason").selectedIndex = 0;
       document.getElementById("rejectModal").style.display = "flex";
     }
@@ -1818,86 +1405,494 @@
       await playNewOrderSound();
     }
 
-    setInterval(fetchOrders, 1500);
-    fetchOrders();
+    // --- SETTINGS & OPERATING HOURS ---
+    let storeOperatingHours = null;
+    const DAY_NAMES = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
 
-    // --- Thermal Print Implementation (temporarily disabled) ---
-    function printOrder(order) {
-      // Disabled - uncomment below to re-enable
-      return;
-      /*
-      if (!order) return;
-      let printFrame = document.getElementById('thermal-print-frame');
-      if (!printFrame) {
-        printFrame = document.createElement('iframe');
-        printFrame.id = 'thermal-print-frame';
-        printFrame.style.position = 'fixed';
-        printFrame.style.right = '0';
-        printFrame.style.bottom = '0';
-        printFrame.style.width = '0';
-        printFrame.style.height = '0';
-        printFrame.style.border = '0';
-        document.body.appendChild(printFrame);
+    function openSettings() {
+      activeTab = "settings";
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".content").forEach(c => c.style.display = "none");
+      document.getElementById("view-settings").style.display = "block";
+      loadOperatingHours();
+    }
+
+    async function loadOperatingHours() {
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/config?_t=${Date.now()}`);
+        if (res.ok) {
+          const data = await res.json();
+          storeOperatingHours = data.operatingHours || createDefaultOperatingHours();
+        } else {
+          storeOperatingHours = createDefaultOperatingHours();
+        }
+      } catch (e) {
+        storeOperatingHours = createDefaultOperatingHours();
       }
+      renderOperatingHours();
+    }
 
-      const doc = printFrame.contentWindow.document;
-      
-      const html = `
-        <html>
-          <head>
-            <meta charset="utf-8">
-            <style>
-              body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; margin: 0; padding: 10px; width: 100%; box-sizing: border-box; color: #000; }
-              .center { text-align: center; }
-              .title { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
-              .line { border-bottom: 1px dashed #000; margin: 10px 0; }
-              .bold { font-weight: bold; }
-              .item { margin-bottom: 6px; font-size: 16px; line-height: 1.4; }
-              .meta { font-size: 15px; margin-bottom: 4px; }
-              .highlight-time { font-size: 26px; font-weight: 1200; margin: 8px 0; border: 2px solid #000; padding: 4px; text-align: center; display: inline-block; width: 100%; box-sizing: border-box; }
-              @page { margin: 0; size: auto; }
-            </style>
-          </head>
-          <body>
-            <div class="center title">交易明細</div>
-            <div class="meta">編號: <span class="bold">${order.key}</span></div>
-            <div class="meta">顧客: ${order.customer || '顧客'}</div>
-            <div class="highlight-time">取餐: ${order.time || '-'}</div>
-            <div class="meta" style="font-size: 12px; color: #333;">下單: ${new Date(order.createdAt).toLocaleString('zh-TW')}</div>
-            <div class="line"></div>
-            <div class="items">
-              ${formatItemsForPrint(order)}
-            </div>
-            <div class="line"></div>
-            <div class="bold" style="font-size: 20px; text-align: right;">總計: $${order.total || 0}</div>
-            <div class="line"></div>
-            <div class="center meta">謝謝光臨</div>
-            <div style="height: 40px;"></div> <!-- Extra space for tearing -->
-          </body >
-        </html >
+    function createDefaultOperatingHours() {
+      let hrs = {};
+      for (let i = 0; i < 7; i++) hrs[i] = [{ start: "08:00", end: "21:00" }];
+      return hrs;
+    }
+
+    function renderOperatingHours() {
+      const container = document.getElementById("settings-hours-container");
+      container.innerHTML = "";
+      for (let i = 1; i <= 7; i++) {
+        const dayIdx = i === 7 ? 0 : i;
+        const shifts = storeOperatingHours[dayIdx] || [];
+        const isOpen = shifts.length > 0;
+        const row = document.createElement("div");
+        row.style.cssText = "background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 12px;";
+        let shiftsHtml = "";
+        shifts.forEach((shift, sIdx) => {
+          shiftsHtml += `
+            <div style="display:flex; gap:8px; align-items:center; margin-top:10px;">
+              <input type="time" id="sh-start-${dayIdx}-${sIdx}" value="${shift.start}" style="flex:1; padding:8px; font-family:inherit; border:1px solid #ccc; border-radius:6px; font-size:15px;">
+              <span style="font-weight:900;">-</span>
+              <input type="time" id="sh-end-${dayIdx}-${sIdx}" value="${shift.end}" style="flex:1; padding:8px; font-family:inherit; border:1px solid #ccc; border-radius:6px; font-size:15px;">
+              <button onclick="removeShift(${dayIdx}, ${sIdx})" style="background:none; border:none; color:var(--brand-red); cursor:pointer; font-size:20px; padding:0 4px;">✕</button>
+            </div>`;
+        });
+        row.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:16px;">
+              <input type="checkbox" ${isOpen ? 'checked' : ''} onchange="toggleDayStatus(${dayIdx}, this.checked)" style="width:18px; height:18px;">
+              <span style="font-weight:900; color:${isOpen ? '#111' : '#999'};">${DAY_NAMES[dayIdx]}</span>
+            </label>
+            ${isOpen ? `<button onclick="addShift(${dayIdx})" style="font-size:13px; background:#eff6ff; color:#3b82f6; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:900;">+ 新增時段</button>` : `<span style="font-size:13px; color:var(--brand-red); font-weight:900;">公休</span>`}
+          </div>
+          ${isOpen ? `<div id="shifts-box-${dayIdx}">${shiftsHtml}</div>` : ''}`;
+        container.appendChild(row);
+      }
+    }
+
+    function syncOperatingHoursFromDOM() {
+      for (let i = 0; i < 7; i++) {
+        const shifts = storeOperatingHours[i];
+        if (shifts && shifts.length > 0) {
+          shifts.forEach((shift, sIdx) => {
+            const elStart = document.getElementById(`sh-start-${i}-${sIdx}`);
+            const elEnd = document.getElementById(`sh-end-${i}-${sIdx}`);
+            if (elStart && elEnd) { shift.start = elStart.value; shift.end = elEnd.value; }
+          });
+        }
+      }
+    }
+
+    function toggleDayStatus(dayIdx, isChecked) {
+      storeOperatingHours[dayIdx] = isChecked ? [{ start: "08:00", end: "21:00" }] : [];
+      renderOperatingHours();
+    }
+
+    function addShift(dayIdx) {
+      syncOperatingHoursFromDOM();
+      storeOperatingHours[dayIdx].push({ start: "12:00", end: "13:00" });
+      renderOperatingHours();
+    }
+
+    function removeShift(dayIdx, sIdx) {
+      syncOperatingHoursFromDOM();
+      storeOperatingHours[dayIdx].splice(sIdx, 1);
+      renderOperatingHours();
+    }
+
+    async function saveOperatingHours() {
+      syncOperatingHoursFromDOM();
+      const btn = document.getElementById("btn-save-hours");
+      const oldText = btn.innerText;
+      btn.innerText = "儲存中..."; btn.disabled = true;
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/config`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ operatingHours: storeOperatingHours })
+        });
+        if (!res.ok) throw new Error("API returned " + res.status);
+        alert("營業時間儲存成功！");
+      } catch (e) {
+        alert("儲存失敗：" + e.message);
+      } finally {
+        btn.innerText = oldText; btn.disabled = false;
+      }
+    }
+
+    // --- MENU EDITOR LOGIC (ALing-POS style, Benmi fixed categories) ---
+    // Benmi menu structure: { small:{name:price}, large:{}, combo:{}, drinks:{}, topping:{} }
+    // We convert to array of categories with items for the editor, then convert back on save.
+    let currentMenuData = null;   // Array form for editor
+    let rawMenuData = null;       // Original object form from API
+    let activeCategoryIndex = -1;
+    let isMenuDirty = false;
+
+    function markMenuDirty() {
+      isMenuDirty = true;
+      const btn = document.querySelector("#view-menu .btn-primary");
+      if (btn) {
+        btn.style.backgroundColor = "var(--brand-red)";
+        btn.innerText = "Lưu thay đổi (Chưa lưu *)";
+      }
+    }
+
+    function clearMenuDirty() {
+      isMenuDirty = false;
+      const btn = document.querySelector("#view-menu .btn-primary");
+      if (btn) {
+        btn.style.backgroundColor = ""; // revert to CSS default
+        btn.innerText = "Lưu thay đổi (Lưu Menu)";
+      }
+    }
+
+    const BENMI_CATS = [
+      { id: "meat",    label: "肉類/份 (Thịt)" },
+      { id: "side50",  label: "小菜 $50/份 (Món phụ $50)" },
+      { id: "side30",  label: "小菜 $30/份 (Món phụ $30)" },
+      { id: "side25",  label: "小菜 $25/份 (Món phụ $25)" },
+      { id: "side35",  label: "小菜 1份$35 / 3份$100 (Món phụ $35/3 món $100)" },
+      { id: "topping", label: "加價調味 (Topping)" }
+    ];
+
+    function openMenuSettings() {
+      activeTab = "menu";
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".content").forEach(c => c.style.display = "none");
+      document.getElementById("view-menu").style.display = "block";
+      if (!currentMenuData) loadMenuData();
+    }
+
+    async function loadMenuData() {
+      document.getElementById("menu-editor-body").innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">Đang tải menu...</div>`;
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/menu?_t=${Date.now()}`);
+        if (!res.ok) throw new Error("Failed to load");
+        rawMenuData = await res.json();
+        // Convert object format to editable array format
+        currentMenuData = BENMI_CATS.map(cat => ({
+          id: cat.id,
+          title: cat.label,
+          items: Object.entries(rawMenuData[cat.id] || {}).map(([name, price]) => ({ name, price }))
+        }));
+        activeCategoryIndex = -1;
+        renderMenuCategories();
+        document.getElementById("menu-editor-body").innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">請先從左側選擇分類</div>`;
+        document.getElementById("menu-editor-title").innerText = "分類項目";
+      } catch (e) {
+        alert("無法載入菜單資料：" + e.message);
+      }
+    }
+
+    function renderMenuCategories() {
+      const container = document.getElementById("menu-categories");
+      container.innerHTML = "";
+      if (!currentMenuData) return;
+      currentMenuData.forEach((cat, index) => {
+        const div = document.createElement("div");
+        div.style.cssText = `
+          padding: 16px; border-bottom: 1px solid #eee; cursor: pointer; font-weight: 1000; font-size: 16px;
+          background: ${activeCategoryIndex === index ? '#f3f4f6' : '#fff'};
+          border-left: 4px solid ${activeCategoryIndex === index ? 'var(--brand-red)' : 'transparent'};
+          display: flex; justify-content: space-between; align-items: center;
         `;
-      
-      doc.open();
-      doc.write(html);
-      doc.close();
-
-      setTimeout(() => {
-        printFrame.contentWindow.focus();
-        printFrame.contentWindow.print();
-      }, 300);
-      */
+        div.innerHTML = `
+          <span>${escapeHtml(cat.title)}</span>
+          <span style="font-size: 13px; font-weight: 900; color: var(--muted);">${cat.items.length} 項</span>
+        `;
+        div.onclick = () => {
+          syncMenuDataFromDOM();
+          activeCategoryIndex = index;
+          renderMenuCategories();
+          renderMenuCategoryEditor(index);
+        };
+        container.appendChild(div);
+      });
     }
 
-    function formatItemsForPrint(order) {
-      if (order.reason === "Đơn qua tin nhắn") {
-        return `< pre style = "white-space: pre-wrap; margin:0; font-family: inherit; font-size: 16px;" > ${ escapeHtml(order.content) }</pre > `;
+    function renderMenuCategoryEditor(index) {
+      if (!currentMenuData || !currentMenuData[index]) return;
+      const cat = currentMenuData[index];
+      document.getElementById("menu-editor-title").innerText = cat.title + " (全部 " + cat.items.length + " 項)";
+
+      const container = document.getElementById("menu-editor-body");
+      container.innerHTML = "";
+
+      let draggedItemIndex = null;
+
+      cat.items.forEach((item, iIdx) => {
+        const row = document.createElement("div");
+        row.style.cssText = "background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; transition: opacity 0.2s; cursor: grab;";
+        row.draggable = true;
+
+        row.addEventListener("dragstart", (e) => {
+          draggedItemIndex = iIdx;
+          e.dataTransfer.effectAllowed = "move";
+          setTimeout(() => row.style.opacity = "0.4", 0);
+        });
+        row.addEventListener("dragend", () => { row.style.opacity = "1"; });
+        row.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          row.style.border = "2px dashed var(--primary)";
+        });
+        row.addEventListener("dragleave", () => {
+          row.style.border = "1px solid var(--border)";
+        });
+        row.addEventListener("drop", (e) => {
+          e.preventDefault();
+          row.style.border = "1px solid var(--border)";
+          if (draggedItemIndex !== null && draggedItemIndex !== iIdx) {
+            syncMenuDataFromDOM();
+            const arr = currentMenuData[index].items;
+            const moved = arr.splice(draggedItemIndex, 1)[0];
+            arr.splice(iIdx, 0, moved);
+            markMenuDirty();
+            renderMenuCategoryEditor(index);
+          }
+        });
+
+        row.innerHTML = `
+          <div style="color: #ccc; font-size: 22px; cursor: grab; flex-shrink:0;">☰</div>
+          <input type="text" value="${escapeHtml(item.name)}" data-name-cidx="${index}" data-name-iidx="${iIdx}" oninput="markMenuDirty()"
+            style="flex: 2; min-width: 120px; font-size: 17px; font-weight: 900; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-family:inherit; box-sizing:border-box;">
+          <label style="display:flex; align-items:center; gap:6px; font-weight:900; flex-shrink:0;">
+            <span style="font-size:18px;">$</span>
+            <input type="number" value="${item.price !== null && item.price !== undefined ? item.price : ''}" data-cidx="${index}" data-iidx="${iIdx}" oninput="markMenuDirty()"
+              placeholder="隱藏" style="width: 90px; font-size: 17px; font-weight: 900; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-family:inherit; box-sizing:border-box;">
+          </label>
+          <button class="btn btn-ghost" style="padding: 8px 14px; font-size:14px; flex-shrink:0;" onclick="openImageModal('${cat.id}', '${escapeHtml(item.name)}')">📷 Ảnh</button>
+          <button class="btn btn-ghost" style="padding: 8px 14px; color: var(--brand-red); font-size:14px; flex-shrink:0;" onclick="removeMenuItemAt(${index}, ${iIdx})">刪除</button>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function removeMenuItemAt(cIdx, iIdx) {
+      if (confirm("確定要刪除這個項目嗎?")) {
+        syncMenuDataFromDOM();
+        currentMenuData[cIdx].items.splice(iIdx, 1);
+        markMenuDirty();
+        renderMenuCategoryEditor(cIdx);
+        renderMenuCategories();
       }
-      const lines = String(order.content || "").split("\\n").map(l => l.trimEnd()).filter(l => l.trim() !== "");
-      return lines.map(line => {
-        const isSub = line.trimStart().startsWith("-") || line.trimStart().startsWith("•");
-        return `< div class="item" style = "${isSub ? 'margin-left: 10px; font-size: 14px;' : 'font-weight: bold; margin-top: 8px;'}" > ${ escapeHtml(line) }</div >`;
-      }).join("");
     }
+
+    function addNewMenuItem() {
+      if (activeCategoryIndex < 0 || !currentMenuData) return;
+      syncMenuDataFromDOM();
+      currentMenuData[activeCategoryIndex].items.unshift({ name: "新項目", price: 0 });
+      markMenuDirty();
+      renderMenuCategoryEditor(activeCategoryIndex);
+      renderMenuCategories();
+    }
+
+    function syncMenuDataFromDOM() {
+      document.querySelectorAll("#menu-editor-body input[data-name-cidx]").forEach(inp => {
+        const cIdx = parseInt(inp.getAttribute("data-name-cidx"));
+        const iIdx = parseInt(inp.getAttribute("data-name-iidx"));
+        if (currentMenuData[cIdx] && currentMenuData[cIdx].items[iIdx]) {
+          currentMenuData[cIdx].items[iIdx].name = inp.value;
+        }
+      });
+      document.querySelectorAll("#menu-editor-body input[data-cidx]").forEach(inp => {
+        const cIdx = parseInt(inp.getAttribute("data-cidx"));
+        const iIdx = parseInt(inp.getAttribute("data-iidx"));
+        const val = inp.value.trim() === "" ? null : parseInt(inp.value);
+        if (currentMenuData[cIdx] && currentMenuData[cIdx].items[iIdx]) {
+          currentMenuData[cIdx].items[iIdx].price = val;
+        }
+      });
+    }
+
+    async function saveMenuData() {
+      if (!currentMenuData) return;
+      if (!confirm("確定要儲存所有變更嗎？這會直接即時影響顧客端點餐頁面。")) return;
+      syncMenuDataFromDOM();
+
+      // Convert back to Benmi object format
+      const output = {};
+      currentMenuData.forEach(cat => {
+        output[cat.id] = {};
+        cat.items.forEach(item => {
+          if (item.name && item.name.trim() !== "" && item.price !== null) {
+            output[cat.id][item.name.trim()] = item.price;
+          }
+        });
+      });
+
+      const btn = document.querySelector("#view-menu .btn-primary");
+      const oldText = btn.innerText;
+      btn.innerText = "儲存中..."; btn.disabled = true;
+
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/menu`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(output)
+        });
+        if (!res.ok) throw new Error("API returned " + res.status);
+        clearMenuDirty();
+        alert("儲存成功！");
+        renderMenuCategories();
+      } catch (e) {
+        alert("儲存失敗：" + e.message);
+      } finally {
+        btn.innerText = "Lưu thay đổi (Lưu Menu)"; btn.disabled = false;
+      }
+    }
+
+    async function restoreDefaultMenu() {
+      if (!confirm("Bạn có chắc chắn muốn KHÔI PHỤC MENU về trạng thái gốc mặc định không? Tất cả các món bạn đã sửa sẽ bị ghi đè!")) return;
+      
+      const DEFAULT_MENU = {
+        meat: { "雞胸肉": 60, "雞腿肉": 70, "松坂豬": 70 },
+        side50: { "無骨鳳爪": 50, "日本山藥": 50 },
+        side30: { "煙燻豆包": 30, "茶燻百頁": 30, "鳥蛋(5顆)": 30, "鴨米血": 30, "櫛瓜": 30, "木耳": 30, "蘋果": 30, "筍片": 30 },
+        side25: { "蝦子(一隻)": 25, "大黑豆乾": 25, "竹輪": 25, "皮蛋": 25, "甜不辣": 25 },
+        side35: {
+          "小黃瓜": 35, "高麗菜": 35, "玉米筍": 35, "龍鬚菜": 35, "娃娃菜": 35, "蓮藕片": 35,
+          "豬耳朵": 35, "雞軟骨": 35, "烤馬鈴薯": 35, "腐竹豆皮": 35, "滷蛋白丁": 35, "蘆筍": 35,
+          "花椰菜": 35, "水蓮": 35, "山苦瓜": 35, "秋葵": 35, "芥藍芽": 35, "杏鮑菇": 35,
+          "雞肝": 35, "雞胗": 35, "鴨賞": 35, "雞心": 35, "蕎麥麵": 35, "金針菇": 35
+        },
+        topping: { "加香菜": 15, "檸檬汁": 20 }
+      };
+
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/menu`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(DEFAULT_MENU)
+        });
+        if (!res.ok) throw new Error("API returned " + res.status);
+        alert("Đã khôi phục menu gốc thành công!");
+        loadMenuData(); // Reload from server
+      } catch (e) {
+        alert("Lỗi khi khôi phục menu: " + e.message);
+      }
+    }
+
+    // --- Image Management ---
+    let currentImageItemName = null;
+
+    async function openImageModal(categoryId, itemName) {
+      currentImageItemName = `${categoryId}_${itemName}`;
+      document.getElementById("image-modal-title").innerText = `Ảnh: ${itemName}`;
+      document.getElementById("image-preview").style.display = "none";
+      document.getElementById("btn-delete-image").style.display = "none";
+      document.getElementById("image-status").innerText = "Đang kiểm tra ảnh...";
+      
+      document.getElementById("imageModal").style.display = "flex";
+
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/image_list?_t=${Date.now()}`);
+        if (res.ok) {
+          const list = await res.json();
+          if (list.includes(currentImageItemName)) {
+            document.getElementById("image-preview").src = `${WORKER_BASE}/api/image?name=${encodeURIComponent(currentImageItemName)}&_t=${Date.now()}`;
+            document.getElementById("image-preview").style.display = "block";
+            document.getElementById("btn-delete-image").style.display = "block";
+            document.getElementById("image-status").innerText = "Món này đã có ảnh";
+          } else {
+            document.getElementById("image-status").innerText = "Món này chưa có ảnh";
+          }
+        }
+      } catch (e) {
+        document.getElementById("image-status").innerText = "Lỗi khi tải ảnh";
+      }
+    }
+
+    function handleImageSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = new Image();
+        img.onload = function() {
+          // Resize if too large
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Get base64 (webp is usually smaller)
+          const dataUri = canvas.toDataURL("image/webp", 0.8);
+          uploadImage(dataUri);
+        }
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+      event.target.value = ''; // reset
+    }
+
+    async function uploadImage(dataUri) {
+      document.getElementById("image-status").innerText = "Đang tải ảnh lên...";
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/image`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: currentImageItemName, dataUri })
+        });
+        if (!res.ok) throw new Error("Upload failed");
+        
+        document.getElementById("image-preview").src = dataUri;
+        document.getElementById("image-preview").style.display = "block";
+        document.getElementById("btn-delete-image").style.display = "block";
+        document.getElementById("image-status").innerText = "Tải ảnh thành công!";
+      } catch (e) {
+        alert("Lỗi tải ảnh: " + e.message);
+        document.getElementById("image-status").innerText = "Lỗi khi tải ảnh";
+      }
+    }
+
+    async function deleteItemImage() {
+      if (!confirm("Bạn có chắc muốn xóa ảnh này?")) return;
+      document.getElementById("image-status").innerText = "Đang xóa ảnh...";
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/image`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: currentImageItemName })
+        });
+        if (!res.ok) throw new Error("Delete failed");
+        
+        document.getElementById("image-preview").style.display = "none";
+        document.getElementById("btn-delete-image").style.display = "none";
+        document.getElementById("image-status").innerText = "Món này chưa có ảnh";
+      } catch (e) {
+        alert("Lỗi xóa ảnh: " + e.message);
+      }
+    }
+
+    function closeModal() {
+      document.querySelectorAll(".modal").forEach(m => m.style.display = "none");
+      reviewingOrder = null;
+      currentOrderKey = null;
+    }
+
+    setInterval(() => {
+      if (activeTab === "live" || activeTab === "history") fetchOrders();
+    }, 5000);
+    fetchOrders();
   </script>
 </body>
 
