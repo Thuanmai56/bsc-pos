@@ -561,7 +561,7 @@ select:focus {
                 <img src="./logo.png" alt="Store Logo" class="store-logo">
             </div>
             <div class="store-info">
-                <h1 class="store-name">土城鹽水雞</h1>
+                <h1 class="store-name">干城鹽水雞</h1>
                 <p class="store-subtitle">Boiled Salty Chicken<br>鮮嫩多汁鹽水雞</p>
             </div>
             <div id="store-status" class="store-status">營業中</div>
@@ -569,7 +569,7 @@ select:focus {
         <div class="store-details">
             <div class="store-detail-row">
                 <span class="detail-icon">📍</span>
-                <span>新北市土城區</span>
+                <span>台中市南屯區黎明里干城街302號</span>
             </div>
             <div class="store-detail-row">
                 <span class="detail-icon">🕒</span>
@@ -1180,7 +1180,7 @@ select:focus {
             const orderNum = generateOrderNumber();
 
             // Construct formatted message
-            let msg = `[土城鹽水雞] 訂單編號：${orderNum}\n📦 訂單內容：\n`;
+            let msg = `[干城鹽水雞] 訂單編號：${orderNum}\n📦 訂單內容：\n`;
             for (let key in cart) {
                 if (cart[key] > 0) {
                     let [cat, origName] = key.split('_');
@@ -1248,7 +1248,7 @@ select:focus {
                     userId: profile.userId,
                     customer: profile.displayName,
                     time: `${dateInput} ${timeInput}`,
-                    content: msg.split('\n\n🕒')[0].replace('[土城鹽水雞] 訂單編號：' + orderNum + '\n📦 訂單內容：\n', ''),
+                    content: msg.split('\n\n🕒')[0].replace('[干城鹽水雞] 訂單編號：' + orderNum + '\n📦 訂單內容：\n', ''),
                     total: currentTotal,
                     note: mainNote,
                     liffFallback: false
@@ -1285,7 +1285,7 @@ select:focus {
                             userId: profile.userId,
                             customer: profile.displayName,
                             time: `${dateInput} ${timeInput}`,
-                            content: msg.split('\n\n🕒')[0].replace('[土城鹽水雞] 訂單編號：' + orderNum + '\n📦 訂單內容：\n', ''),
+                            content: msg.split('\n\n🕒')[0].replace('[干城鹽水雞] 訂單編號：' + orderNum + '\n📦 訂單內容：\n', ''),
                             total: currentTotal,
                             note: mainNote,
                             liffFallback: true
