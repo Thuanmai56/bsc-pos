@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Benmi 點餐</title>
+    <title>干城鹹水雞 點餐</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
     <style>
 :root {
@@ -561,15 +561,15 @@ select:focus {
                 <img src="./logo.png" alt="Store Logo" class="store-logo">
             </div>
             <div class="store-info">
-                <h1 class="store-name">干城鹽水雞</h1>
-                <p class="store-subtitle">Boiled Salty Chicken<br>鮮嫩多汁鹽水雞</p>
+                <h1 class="store-name">干城鹹水雞</h1>
+                <p class="store-subtitle">鮮嫩多汁鹹水雞</p>
             </div>
             <div id="store-status" class="store-status">營業中</div>
         </div>
         <div class="store-details">
             <div class="store-detail-row">
                 <span class="detail-icon">📍</span>
-                <span>台中市南屯區黎明里干城街302號</span>
+                <span>新北市土城區</span>
             </div>
             <div class="store-detail-row">
                 <span class="detail-icon">🕒</span>
@@ -843,51 +843,6 @@ select:focus {
         }
 
         // --- MENU RENDER ---
-        const itemTranslations = {
-            "雞胸肉": "Chicken Breast / Ức gà",
-            "雞腿肉": "Chicken Leg / Đùi gà",
-            "松坂豬": "Matsusaka Pork / Thịt heo Matsusaka",
-            "無骨鳳爪": "Boneless Chicken Feet / Chân gà rút xương",
-            "日本山藥": "Japanese Yam / Hoài sơn Nhật",
-            "煙燻豆包": "Smoked Bean Curd / Tàu hũ ky hun khói",
-            "茶燻百頁": "Tea-smoked Tofu / Đậu hũ bách diệp hun khói",
-            "鳥蛋(5顆)": "Bird Eggs (5pcs) / Trứng cút (5 quả)",
-            "鴨米血": "Duck Blood Cake / Huyết nếp vịt",
-            "櫛瓜": "Zucchini / Bí ngòi",
-            "木耳": "Black Fungus / Mộc nhĩ",
-            "蘋果": "Apple / Táo",
-            "筍片": "Bamboo Shoot Slices / Măng lát",
-            "蝦子(一隻)": "Shrimp (1pc) / Tôm (1 con)",
-            "大黑豆乾": "Large Dried Tofu / Đậu hũ khô đen",
-            "竹輪": "Chikuwa / Chikuwa Nhật",
-            "皮蛋": "Century Egg / Trứng bắc thảo",
-            "甜不辣": "Tempura / Chả cá Tempura",
-            "小黃瓜": "Cucumber / Dưa leo",
-            "高麗菜": "Cabbage / Bắp cải",
-            "玉米筍": "Baby Corn / Ngô bao tử",
-            "龍鬚菜": "Chayote Shoots / Đọt su su",
-            "娃娃菜": "Baby Cabbage / Cải thảo bao tử",
-            "蓮藕片": "Lotus Root Slices / Củ sen thái lát",
-            "豬耳朵": "Pig Ears / Tai heo",
-            "雞軟骨": "Chicken Gristle / Sụn gà",
-            "烤馬鈴薯": "Roasted Potato / Khoai tây nướng",
-            "腐竹豆皮": "Yuba Sheets / Tàu hũ ky tươi",
-            "滷蛋白丁": "Marinated Egg White / Lòng trắng trứng kho",
-            "蘆筍": "Asparagus / Măng tây",
-            "花椰菜": "Broccoli / Súp lơ xanh",
-            "水蓮": "White Water Snowflake / Rau thủy liên",
-            "山苦瓜": "Wild Bitter Melon / Mướp đắng rừng",
-            "秋葵": "Okra / Đậu bắp",
-            "芥藍芽": "Chinese Broccoli Shoots / Ngồng cải làn",
-            "杏鮑菇": "King Oyster Mushroom / Nấm đùi gà",
-            "雞肝": "Chicken Liver / Gan gà",
-            "雞胗": "Chicken Gizzard / Mề gà",
-            "鴨賞": "Smoked Duck / Thịt vịt hun khói",
-            "雞心": "Chicken Heart / Tim gà",
-            "蕎麥麵": "Soba Noodles / Mì kiều mạch",
-            "金針菇": "Enoki Mushroom / Nấm kim châm"
-        };
-
         function createItem(displayName, price, category, containerId, origName, isRecommended) {
             const container = document.getElementById(containerId);
             if (!container) return;
@@ -901,16 +856,12 @@ select:focus {
             const hasImage = imageList.includes(imageKey);
             const imgHTML = hasImage ? `<img class="item-img" src="${WORKER_BASE}/api/image?name=${encodeURIComponent(imageKey)}&v=2" alt="${origName}" loading="lazy" onclick="openImageLightbox(this.src)" style="cursor: zoom-in;">` : '';
 
-            const trans = itemTranslations[origName] || '';
-            const transHTML = trans ? `<div style="font-size: 13px; color: #9ca3af; margin-top: 2px;">${trans}</div>` : '';
-
             div.innerHTML = `
         <div class="card-main">
             ${imgHTML}
             <div class="card-info">
                 <div>
                     <div class="card-title">${displayName} ${badgeHTML}</div>
-                    ${transHTML}
                 </div>
                 <div class="card-footer">
                     <div class="card-price">$${price}</div>
@@ -1180,7 +1131,7 @@ select:focus {
             const orderNum = generateOrderNumber();
 
             // Construct formatted message
-            let msg = `[干城鹽水雞] 訂單編號：${orderNum}\n📦 訂單內容：\n`;
+            let msg = `[干城鹹水雞] 訂單編號：${orderNum}\n📦 訂單內容：\n`;
             for (let key in cart) {
                 if (cart[key] > 0) {
                     let [cat, origName] = key.split('_');
@@ -1248,7 +1199,7 @@ select:focus {
                     userId: profile.userId,
                     customer: profile.displayName,
                     time: `${dateInput} ${timeInput}`,
-                    content: msg.split('\n\n🕒')[0].replace('[干城鹽水雞] 訂單編號：' + orderNum + '\n📦 訂單內容：\n', ''),
+                    content: msg.split('\n\n🕒')[0].replace('[干城鹹水雞] 訂單編號：' + orderNum + '\n📦 訂單內容：\n', ''),
                     total: currentTotal,
                     note: mainNote,
                     liffFallback: false
@@ -1285,7 +1236,7 @@ select:focus {
                             userId: profile.userId,
                             customer: profile.displayName,
                             time: `${dateInput} ${timeInput}`,
-                            content: msg.split('\n\n🕒')[0].replace('[干城鹽水雞] 訂單編號：' + orderNum + '\n📦 訂單內容：\n', ''),
+                            content: msg.split('\n\n🕒')[0].replace('[干城鹹水雞] 訂單編號：' + orderNum + '\n📦 訂單內容：\n', ''),
                             total: currentTotal,
                             note: mainNote,
                             liffFallback: true
@@ -1304,9 +1255,9 @@ select:focus {
                     }
 
                     if (liffErr.code === "400" || String(liffErr).includes("liffId")) {
-                        customAlert('⚠️ 傳送失敗：Vui lòng dùng ứng dụng LINE trên điện thoại để đặt hàng, hoặc báo nhân viên xử lý lỗi.');
+                        customAlert('⚠️ 傳送失敗：請使用手機上的 LINE 應用程式進行訂購，或向服務人員回報此錯誤。');
                     } else {
-                        customAlert('傳送失敗，請重試 (Lỗi LIFF)');
+                        customAlert('傳送失敗，請重試 (LIFF 錯誤)');
                     }
                     isSubmitting = false;
                     submitBtn.disabled = false;
