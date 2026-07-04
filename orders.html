@@ -484,15 +484,15 @@
   <div class="app">
     <div class="topbar">
       <div class="brand">
-        <div class="brand-title">🐔 土城鹽水雞 Dashboard</div>
-        <div class="brand-sub">Live orders</div>
+        <div class="brand-title">🐔 土城鹽水雞 後台系統</div>
+        <div class="brand-sub">即時訂單</div>
       </div>
       <div class="tabs">
-        <button class="tab active" id="tab-live" onclick="switchTab('live')">Live</button>
-        <button class="tab" id="tab-history" onclick="switchTab('history')">Lịch sử</button>
-        <button class="mini-btn" onclick="testSound()">Test Sound</button>
-        <button class="mini-btn" onclick="openMenuSettings()">Menu</button>
-        <button class="mini-btn" onclick="openSettings()">Cài đặt</button>
+        <button class="tab active" id="tab-live" onclick="switchTab('live')">即時</button>
+        <button class="tab" id="tab-history" onclick="switchTab('history')">歷史</button>
+        <button class="mini-btn" onclick="testSound()">測試鈴聲</button>
+        <button class="mini-btn" onclick="openMenuSettings()">菜單編輯</button>
+        <button class="mini-btn" onclick="openSettings()">系統設定</button>
       </div>
     </div>
 
@@ -501,26 +501,26 @@
         <div class="panel">
           <div class="panel-header">
             <div>
-              <div class="panel-title">Đang chuẩn bị</div>
-              <div class="panel-sub">Gần → xa (theo giờ lấy)</div>
+              <div class="panel-title">準備中</div>
+              <div class="panel-sub">依取餐時間排序 (近 → 遠)</div>
             </div>
             <div class="badge wait" id="count-left">0</div>
           </div>
           <div class="panel-body" id="list-left">
-            <div style="text-align:center; padding: 22px; color:#999;">Đang tải...</div>
+            <div style="text-align:center; padding: 22px; color:#999;">載入中...</div>
           </div>
         </div>
 
         <div class="panel">
           <div class="panel-header">
             <div>
-              <div class="panel-title">Chờ lấy</div>
-              <div class="panel-sub">Đã chuẩn bị xong</div>
+              <div class="panel-title">待取餐</div>
+              <div class="panel-sub">已準備完成</div>
             </div>
             <div class="badge done" id="count-right">0</div>
           </div>
           <div class="panel-body" id="list-right">
-            <div style="text-align:center; padding: 22px; color:#999;">Chưa có</div>
+            <div style="text-align:center; padding: 22px; color:#999;">暫無資料</div>
           </div>
         </div>
       </div>
@@ -530,12 +530,12 @@
       <div class="panel" style="height: 100%;">
         <div class="panel-header">
           <div>
-            <div class="panel-title">Lịch sử đơn hàng</div>
-            <div class="panel-sub">Theo ngày</div>
+            <div class="panel-title">歷史訂單</div>
+            <div class="panel-sub">依日期顯示</div>
           </div>
         </div>
         <div class="panel-body" id="list-history">
-          <div style="text-align:center; padding: 22px; color:#999;">Đang tải...</div>
+          <div style="text-align:center; padding: 22px; color:#999;">載入中...</div>
         </div>
       </div>
     </div>
@@ -544,14 +544,14 @@
     <div class="content" id="view-settings" style="display:none; max-width: 860px; margin: 0 auto; width: 100%;">
       <div class="panel" style="height: auto; padding-bottom: 24px;">
         <div class="panel-header">
-          <div class="panel-title">Cài đặt hệ thống (Settings)</div>
+          <div class="panel-title">系統設定</div>
         </div>
         <div class="panel-body" style="padding: 24px; display: flex; flex-direction: column; gap: 20px;">
 
           <!-- Operating Hours -->
           <div style="border: 1px solid var(--border); border-radius: 12px; overflow: hidden;">
             <div style="padding: 16px 20px; background: #f3f4f6; border-bottom: 1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
-              <div style="font-weight: 1100; font-size: 18px;">⏰ 營業時間 (Giờ hoạt động)</div>
+              <div style="font-weight: 1100; font-size: 18px;">⏰ 營業時間</div>
               <button class="btn btn-primary" style="padding: 10px 20px; font-size: 15px; border-radius: 8px;" onclick="saveOperatingHours()" id="btn-save-hours">儲存時間</button>
             </div>
             <div id="settings-hours-container" style="padding: 16px; display: flex; flex-direction: column; gap: 10px;">
@@ -570,7 +570,7 @@
           <div class="panel-header">
             <div>
               <div class="panel-title">菜單分類</div>
-              <div class="panel-sub" style="color: var(--brand-red); margin-top:4px;">6 nhóm cố định của quán</div>
+              <div class="panel-sub" style="color: var(--brand-red); margin-top:4px;">店家的 6 個固定分組</div>
             </div>
             <button class="mini-btn" onclick="loadMenuData()">重整</button>
           </div>
@@ -586,7 +586,7 @@
               <div class="panel-sub">拖曳排序 ✦ 點擊欄位直接修改</div>
             </div>
             <div style="display:flex; gap:8px;">
-              <button class="btn btn-ghost" style="padding: 8px 16px; font-size: 14px; color: var(--brand-red);" onclick="restoreDefaultMenu()">Khôi phục Menu gốc</button>
+              <button class="btn btn-ghost" style="padding: 8px 16px; font-size: 14px; color: var(--brand-red);" onclick="restoreDefaultMenu()">恢復預設菜單</button>
               <button class="btn btn-yellow" style="padding: 8px 16px; font-size: 14px;" onclick="addNewMenuItem()">+ 新增項目</button>
               <button class="btn btn-primary" style="padding: 8px 16px; font-size: 14px;" onclick="saveMenuData()">儲存變更</button>
             </div>
@@ -604,11 +604,11 @@
   <!-- Fullscreen new order alert -->
   <div class="new-alert" id="new-alert">
     <div class="new-alert-box">
-      <h1 class="new-alert-title" id="new-alert-title">1 單 新訂單</h1>
-      <div class="new-alert-sub">Nhấn “Review 訂單” để xem chi tiết và nhận đơn</div>
+      <h1 class="new-alert-title" id="new-alert-title">新訂單</h1>
+      <div class="new-alert-sub">點擊「審查訂單」查看詳情並接單</div>
       <div class="new-alert-actions">
-        <button class="btn btn-primary btn-block" onclick="reviewNextNewOrder()">Review 訂單</button>
-        <button class="btn btn-ghost btn-block" onclick="dismissNewAlert()">Tạm ẩn</button>
+        <button class="btn btn-primary btn-block" onclick="reviewNextNewOrder()">審查訂單</button>
+        <button class="btn btn-ghost btn-block" onclick="dismissNewAlert()">暫時隱藏</button>
       </div>
     </div>
   </div>
@@ -617,17 +617,17 @@
   <div id="reviewModal" class="modal">
     <div class="modal-content">
       <div class="modal-title">
-        <h3>Review 訂單</h3>
+        <h3>審查訂單</h3>
         <div class="modal-close" onclick="closeModal()">✕</div>
       </div>
 
       <div class="detail-grid">
         <div class="detail-box">
-          <div class="detail-label">訂單 / Order</div>
+          <div class="detail-label">訂單編號</div>
           <div class="detail-value mono" id="review-order-key">-</div>
         </div>
         <div class="detail-box">
-          <div class="detail-label">LINE 顧客 / Buyer</div>
+          <div class="detail-label">顧客名稱</div>
           <div class="detail-value" id="review-customer">-</div>
         </div>
         <div class="detail-box">
@@ -647,30 +647,30 @@
       <div class="detail-content" id="review-content">-</div>
 
       <div class="modal-actions" id="review-actions">
-        <button class="btn btn-primary" onclick="reviewAccept(this)">接單 (Nhận đơn)</button>
+        <button class="btn btn-primary" onclick="reviewAccept(this)">接單</button>
         <button class="btn btn-yellow" onclick="reviewOpenChange()">需要更改</button>
         <button class="btn btn-danger" onclick="reviewOpenReject()">無法接單</button>
       </div>
 
       <div class="modal-actions" id="review-actions-accepted" style="display:none;">
-        <button class="btn btn-primary" onclick="markReadyFromReview(this)">准备好了</button>
+        <button class="btn btn-primary" onclick="markReadyFromReview(this)">準備好了</button>
         <button class="btn btn-danger"
-          onclick="if(confirm('Bạn có chắc muốn hủy đơn này? Khách sẽ KHÔNG nhận được thông báo.')){ updateStatus(reviewingOrder.key, 'REJECTED', { reason: '取消並不回復客戶' }, this).then(() => closeModal()); }">取消訂單</button>
-        <button class="btn btn-ghost" onclick="closeModal()">Đóng</button>
+          onclick="if(confirm('確定要取消此訂單嗎？顧客將不會收到通知。')){ updateStatus(reviewingOrder.key, 'REJECTED', { reason: '取消並不回復客戶' }, this).then(() => closeModal()); }">取消訂單</button>
+        <button class="btn btn-ghost" onclick="closeModal()">關閉</button>
       </div>
 
       <div class="modal-actions" id="review-actions-done" style="display:none;">
         <button class="btn btn-primary"
           onclick="updateStatus(reviewingOrder.key, 'PICKED_UP', {}, this).then(() => closeModal());">已取餐</button>
         <button class="btn btn-danger"
-          onclick="if(confirm('Bạn có chắc muốn hủy đơn này? Khách sẽ KHÔNG nhận được thông báo.')){ updateStatus(reviewingOrder.key, 'REJECTED', { reason: '取消並不回復客戶' }, this).then(() => closeModal()); }">取消訂單</button>
-        <button class="btn btn-ghost" onclick="closeModal()">Đóng</button>
+          onclick="if(confirm('確定要取消此訂單嗎？顧客將不會收到通知。')){ updateStatus(reviewingOrder.key, 'REJECTED', { reason: '取消並不回復客戶' }, this).then(() => closeModal()); }">取消訂單</button>
+        <button class="btn btn-ghost" onclick="closeModal()">關閉</button>
       </div>
 
       <div class="modal-actions" id="review-actions-waiting" style="display:none;">
-        <button class="btn btn-primary" onclick="reviewAccept(this)">接單 (Nhận đơn)</button>
-        <button class="btn btn-danger" onclick="reviewForceCancel(this)">取消訂單 (Hủy)</button>
-        <button class="btn btn-ghost" onclick="closeModal()">Đóng</button>
+        <button class="btn btn-primary" onclick="reviewAccept(this)">接單</button>
+        <button class="btn btn-danger" onclick="reviewForceCancel(this)">取消訂單</button>
+        <button class="btn btn-ghost" onclick="closeModal()">關閉</button>
       </div>
     </div>
   </div>
@@ -679,34 +679,31 @@
   <div id="changeModal" class="modal">
     <div class="modal-content">
       <div class="modal-title">
-        <h3>需要更改 (Yêu cầu thay đổi)</h3>
+        <h3>需要變更</h3>
         <div class="modal-close" onclick="closeModal()">✕</div>
       </div>
-      <label style="display:block; margin-top: 10px; font-weight: 1100; font-size: 20px;">原因 / 建議:</label>
+      <label style="display:block; margin-top: 10px; font-weight: 1100; font-size: 20px;">變更原因 / 建議:</label>
       <select id="change-reason"
         style="width:100%; padding: 16px; margin-top: 10px; border-radius: 12px; border: 1px solid var(--border); font-size: 22px;"
         onchange="onChangeReasonChange()">
         <option value="時間需調整">時間太趕，需延後</option>
         <option value="口味售完">該口味已售完</option>
       </select>
-      <textarea id="change-note" rows="3" placeholder="建議時間/Gợi ý thời gian mới (VD: 11:00)"
+      <textarea id="change-note" rows="3" placeholder="建議時間 (例如：11:00)"
         style="width:100%; padding: 16px; margin-top: 16px; border-radius: 12px; border: 1px solid var(--border); font-size: 22px;"></textarea>
 
       <div id="change-items-div" style="display: none;">
-        <div style="margin-top: 16px; font-weight: 1000; font-size: 18px; margin-bottom: 12px;">Chọn món đã hết:</div>
+        <div style="margin-top: 16px; font-weight: 1000; font-size: 18px; margin-bottom: 12px;">選擇已售完的商品:</div>
         <div class="checkbox-grid">
-          <label class="checkbox-label"><input type="checkbox" value="燒肉" class="sold-item"> 燒肉</label>
-          <label class="checkbox-label"><input type="checkbox" value="火腿" class="sold-item"> 火腿</label>
-          <label class="checkbox-label"><input type="checkbox" value="雞肉" class="sold-item"> 雞肉</label>
-          <label class="checkbox-label"><input type="checkbox" value="烤肉" class="sold-item"> 烤肉</label>
-          <label class="checkbox-label"><input type="checkbox" value="雙層烤肉" class="sold-item"> 雙層烤肉</label>
-          <label class="checkbox-label"><input type="checkbox" value="綜合" class="sold-item"> 綜合</label>
-          <label class="checkbox-label"><input type="checkbox" value="起司" class="sold-item"> 起司</label>
-          <label class="checkbox-label"><input type="checkbox" value="越南咖啡" class="sold-item"> 越南咖啡</label>
-          <label class="checkbox-label"><input type="checkbox" value="豆漿" class="sold-item"> 豆漿</label>
-          <label class="checkbox-label"><input type="checkbox" value="紅茶" class="sold-item"> 紅茶</label>
-          <label class="checkbox-label"><input type="checkbox" value="可樂" class="sold-item"> 可樂</label>
-          <label class="checkbox-label"><input type="checkbox" value="雪碧" class="sold-item"> 雪碧</label>
+          <label class="checkbox-label"><input type="checkbox" value="雞胸肉" class="sold-item"> 雞胸肉</label>
+          <label class="checkbox-label"><input type="checkbox" value="雞腿肉" class="sold-item"> 雞腿肉</label>
+          <label class="checkbox-label"><input type="checkbox" value="松坂豬" class="sold-item"> 松坂豬</label>
+          <label class="checkbox-label"><input type="checkbox" value="無骨鳳爪" class="sold-item"> 無骨鳳爪</label>
+          <label class="checkbox-label"><input type="checkbox" value="小黃瓜" class="sold-item"> 小黃瓜</label>
+          <label class="checkbox-label"><input type="checkbox" value="花椰菜" class="sold-item"> 花椰菜</label>
+          <label class="checkbox-label"><input type="checkbox" value="玉米筍" class="sold-item"> 玉米筍</label>
+          <label class="checkbox-label"><input type="checkbox" value="鳥蛋(5顆)" class="sold-item"> 鳥蛋(5顆)</label>
+          <label class="checkbox-label"><input type="checkbox" value="甜不辣" class="sold-item"> 甜不辣</label>
         </div>
       </div>
 
@@ -721,7 +718,7 @@
   <div id="rejectModal" class="modal">
     <div class="modal-content">
       <div class="modal-title">
-        <h3>無法接單 (Không thể nhận đơn)</h3>
+        <h3>無法接單</h3>
         <div class="modal-close" onclick="closeModal()">✕</div>
       </div>
       <select id="reject-reason"
@@ -729,7 +726,7 @@
         <option value="今日已售完">今日已售完</option>
         <option value="訂單過多">訂單過多，暫不接單</option>
         <option value="已過營業時間">已過營業時間</option>
-        <option value="取消並不回復客戶">取消並不回復客戶 / Hủy không báo khách</option>
+        <option value="取消並不回復客戶">取消並不回覆客戶</option>
       </select>
       <div class="modal-actions two">
         <button class="btn btn-danger" onclick="confirmAction('REJECT', this)">確認拒絕</button>
@@ -742,20 +739,20 @@
   <div id="imageModal" class="modal">
     <div class="modal-content" style="max-width: 500px;">
       <div class="modal-title">
-        <h3 id="image-modal-title">Quản lý Ảnh</h3>
+        <h3 id="image-modal-title">圖片管理</h3>
         <div class="modal-close" onclick="closeModal()">✕</div>
       </div>
       <div style="margin-top: 16px; text-align: center;">
         <img id="image-preview" src="" style="max-width: 100%; max-height: 200px; border-radius: 12px; display: none; margin: 0 auto 16px; object-fit: cover; border: 1px solid #eee;">
-        <div id="image-status" style="margin-bottom: 16px; font-weight: 900; color: #666;">Đang kiểm tra ảnh...</div>
+        <div id="image-status" style="margin-bottom: 16px; font-weight: 900; color: #666;">正在檢查圖片...</div>
       </div>
       <input type="file" id="image-file-input" accept="image/png, image/jpeg, image/webp" style="display: none;" onchange="handleImageSelect(event)">
       <div class="modal-actions two">
-        <button class="btn btn-primary" onclick="document.getElementById('image-file-input').click()">Chọn Ảnh</button>
-        <button class="btn btn-danger" id="btn-delete-image" style="display: none;" onclick="deleteItemImage()">Xóa Ảnh</button>
+        <button class="btn btn-primary" onclick="document.getElementById('image-file-input').click()">選擇圖片</button>
+        <button class="btn btn-danger" id="btn-delete-image" style="display: none;" onclick="deleteItemImage()">刪除圖片</button>
       </div>
       <div class="modal-actions" style="grid-template-columns: 1fr; margin-top: 10px;">
-        <button class="btn btn-ghost btn-block" onclick="closeModal()">Đóng</button>
+        <button class="btn btn-ghost btn-block" onclick="closeModal()">關閉</button>
       </div>
     </div>
   </div>
@@ -877,9 +874,9 @@
         renderAll();
       } catch (e) {
         console.error(e);
-        document.getElementById("list-left").innerHTML = `<div style="text-align:center; padding: 22px; color:#d32f2f;">Không tải được: ${escapeHtml(e?.message || e)}</div>`;
-        document.getElementById("list-right").innerHTML = `<div style="text-align:center; padding: 22px; color:#d32f2f;">Không tải được</div>`;
-        document.getElementById("list-history").innerHTML = `<div style="text-align:center; padding: 22px; color:#d32f2f;">Không tải được</div>`;
+        document.getElementById("list-left").innerHTML = `<div style="text-align:center; padding: 22px; color:#d32f2f;">載入失敗: ${escapeHtml(e?.message || e)}</div>`;
+        document.getElementById("list-right").innerHTML = `<div style="text-align:center; padding: 22px; color:#d32f2f;">載入失敗</div>`;
+        document.getElementById("list-history").innerHTML = `<div style="text-align:center; padding: 22px; color:#d32f2f;">載入失敗</div>`;
       }
     }
 
@@ -930,7 +927,7 @@
       const container = document.getElementById("list-left");
       container.innerHTML = "";
       if (orders.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">Chưa có</div>`;
+        container.innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">暫無訂單</div>`;
         return;
       }
 
@@ -947,10 +944,10 @@
 
         if (isNew) {
           badge = `<span class="badge new">NEW</span>`;
-          rightActions = `<button class="btn btn-ghost btn-block" onclick="event.stopPropagation(); openReview('${escapeHtml(order.key)}')">Review</button>`;
+          rightActions = `<button class="btn btn-ghost btn-block" onclick="event.stopPropagation(); openReview('${escapeHtml(order.key)}')">審查</button>`;
         } else if (order.status === "ACCEPTED") {
           badge = `<span class="badge wait">DOING</span>`;
-          rightActions = `<button class="btn btn-primary btn-block" onclick="event.stopPropagation(); updateStatus('${escapeHtml(order.key)}','DONE', {}, this)">准备好了</button>`;
+          rightActions = `<button class="btn btn-primary btn-block" onclick="event.stopPropagation(); updateStatus('${escapeHtml(order.key)}','DONE', {}, this)">準備好了</button>`;
         } else {
           badge = `<span class="badge wait" style="background:#e5e7eb; color:#4b5563;">等客戶確認</span>`;
           rightActions = `<button class="btn btn-block" style="background:#f3f4f6; color:#9ca3af; cursor:not-allowed;" disabled>等待回覆</button>`;
@@ -959,7 +956,7 @@
         tile.innerHTML = `
           <div>
             <div class="tile-top">
-              <span class="tile-customer">${escapeHtml(order.customer || "Khách")}</span>
+              <span class="tile-customer">${escapeHtml(order.customer || "顧客")}</span>
               ${badge}
               <span class="tile-meta">#${escapeHtml(order.key)}</span>
             </div>
@@ -982,7 +979,7 @@
       const container = document.getElementById("list-right");
       container.innerHTML = "";
       if (orders.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">Chưa có</div>`;
+        container.innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">暫無資料</div>`;
         return;
       }
 
@@ -995,7 +992,7 @@
         tile.innerHTML = `
           <div>
             <div class="tile-top">
-              <span class="tile-customer">${escapeHtml(order.customer || "Khách")}</span>
+              <span class="tile-customer">${escapeHtml(order.customer || "顧客")}</span>
               <span class="badge done">READY</span>
               <span class="tile-meta">#${escapeHtml(order.key)}</span>
             </div>
@@ -1037,7 +1034,7 @@
       const container = document.getElementById("list-history");
       container.innerHTML = "";
       if (orders.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">Chưa có lịch sử</div>`;
+        container.innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">暫無歷史紀錄</div>`;
         return;
       }
 
@@ -1072,14 +1069,14 @@
           tile.innerHTML = `
             <div>
               <div class="tile-top">
-                <span class="tile-customer">${escapeHtml(order.customer || "Khách")}</span>
+                <span class="tile-customer">${escapeHtml(order.customer || "顧客")}</span>
                 ${badge}
                 <span class="tile-meta">#${escapeHtml(order.key)}</span>
               </div>
               <div class="tile-items">${escapeHtml(shortItems(order.content))}</div>
             </div>
             <div class="tile-actions">
-              <button class="btn btn-ghost btn-block" onclick="event.stopPropagation(); openReview('${escapeHtml(order.key)}')">Xem</button>
+              <button class="btn btn-ghost btn-block" onclick="event.stopPropagation(); openReview('${escapeHtml(order.key)}')">查看</button>
             </div>
           `;
           container.appendChild(tile);
@@ -1175,7 +1172,7 @@
 
     function formatContentHtml(order) {
       const raw = String(order.content || "");
-      if (order.reason === "Đơn qua tin nhắn") {
+      if (order.reason === "訊息訂單" || order.reason === "Đơn qua tin nhắn") {
         return `<div style="background:rgba(0,185,0,0.07); border:1.5px solid rgba(0,185,0,0.25); border-radius:16px; padding:18px; white-space:pre-wrap; line-height:1.7; font-size:22px;">${escapeHtml(raw)}</div>`;
       }
       const lines = raw.split("\n").map(l => l.trimEnd()).filter(l => l.trim() !== "");
@@ -1206,7 +1203,7 @@
       const oldText = btn ? btn.innerText : "";
       if (btn) {
         btn.disabled = true;
-        btn.innerText = "Đang xử lý...";
+        btn.innerText = "處理中...";
       }
 
       try {
@@ -1296,7 +1293,7 @@
 
     async function reviewForceCancel(btn) {
       if (!reviewingOrder?.key) return;
-      if (!confirm("Hủy đơn hàng này do khách không phản hồi?")) return;
+      if (!confirm("因顧客未回應，確定要取消此訂單嗎？")) return;
       await updateStatus(reviewingOrder.key, "FORCE_REJECT", {}, btn);
       closeModal();
       switchTab("live");
@@ -1310,7 +1307,7 @@
       if (reason === "時間需調整") {
         note.style.display = "block";
         itemsDiv.style.display = "none";
-        note.placeholder = "建議時間/Gợi ý thời gian mới (VD: 11:00)";
+        note.placeholder = "建議時間 (例如：11:00)";
       } else {
         note.style.display = "none";
         itemsDiv.style.display = "block";
@@ -1325,14 +1322,14 @@
       let note = isChange ? document.getElementById("change-note").value.trim() : undefined;
 
       if (isChange && reason === "時間需調整" && !note) {
-        alert("Vui lòng nhập thời gian gợi ý mới (Ví dụ: 11:00)!");
+        alert("請輸入新的建議時間 (例如：11:00)！");
         return;
       }
 
       if (isChange && reason === "口味售完") {
         const checked = Array.from(document.querySelectorAll(".sold-item:checked")).map(cb => cb.value);
         if (checked.length === 0) {
-          alert("Vui lòng chọn ít nhất một món đã hết!");
+          alert("請至少選擇一個已售完的商品！");
           return;
         }
         note = checked.join(",");
@@ -1533,7 +1530,7 @@
       const btn = document.querySelector("#view-menu .btn-primary");
       if (btn) {
         btn.style.backgroundColor = "var(--brand-red)";
-        btn.innerText = "Lưu thay đổi (Chưa lưu *)";
+        btn.innerText = "儲存變更 (未儲存 *)";
       }
     }
 
@@ -1542,17 +1539,17 @@
       const btn = document.querySelector("#view-menu .btn-primary");
       if (btn) {
         btn.style.backgroundColor = ""; // revert to CSS default
-        btn.innerText = "Lưu thay đổi (Lưu Menu)";
+        btn.innerText = "儲存變更 (儲存菜單)";
       }
     }
 
     const BENMI_CATS = [
-      { id: "meat",    label: "肉類/份 (Thịt)" },
-      { id: "side50",  label: "小菜 $50/份 (Món phụ $50)" },
-      { id: "side30",  label: "小菜 $30/份 (Món phụ $30)" },
-      { id: "side25",  label: "小菜 $25/份 (Món phụ $25)" },
-      { id: "side35",  label: "小菜 1份$35 / 3份$100 (Món phụ $35/3 món $100)" },
-      { id: "topping", label: "加價調味 (Topping)" }
+      { id: "meat",    label: "肉類/份" },
+      { id: "side50",  label: "小菜 $50/份" },
+      { id: "side30",  label: "小菜 $30/份" },
+      { id: "side25",  label: "小菜 $25/份" },
+      { id: "side35",  label: "小菜 (1份$35 / 3份$100)" },
+      { id: "topping", label: "加價調味" }
     ];
 
     function openMenuSettings() {
@@ -1564,7 +1561,7 @@
     }
 
     async function loadMenuData() {
-      document.getElementById("menu-editor-body").innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">Đang tải menu...</div>`;
+      document.getElementById("menu-editor-body").innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">正在載入菜單...</div>`;
       try {
         const res = await fetch(`${WORKER_BASE}/api/menu?_t=${Date.now()}`);
         if (!res.ok) throw new Error("Failed to load");
@@ -1660,7 +1657,7 @@
             <input type="number" value="${item.price !== null && item.price !== undefined ? item.price : ''}" data-cidx="${index}" data-iidx="${iIdx}" oninput="markMenuDirty()"
               placeholder="隱藏" style="width: 90px; font-size: 17px; font-weight: 900; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-family:inherit; box-sizing:border-box;">
           </label>
-          <button class="btn btn-ghost" style="padding: 8px 14px; font-size:14px; flex-shrink:0;" onclick="openImageModal('${cat.id}', '${escapeHtml(item.name)}')">📷 Ảnh</button>
+          <button class="btn btn-ghost" style="padding: 8px 14px; font-size:14px; flex-shrink:0;" onclick="openImageModal('${cat.id}', '${escapeHtml(item.name)}')">📷 圖片</button>
           <button class="btn btn-ghost" style="padding: 8px 14px; color: var(--brand-red); font-size:14px; flex-shrink:0;" onclick="removeMenuItemAt(${index}, ${iIdx})">刪除</button>
         `;
         container.appendChild(row);
@@ -1737,12 +1734,12 @@
       } catch (e) {
         alert("儲存失敗：" + e.message);
       } finally {
-        btn.innerText = "Lưu thay đổi (Lưu Menu)"; btn.disabled = false;
+        btn.innerText = "儲存變更 (儲存菜單)"; btn.disabled = false;
       }
     }
 
     async function restoreDefaultMenu() {
-      if (!confirm("Bạn có chắc chắn muốn KHÔI PHỤC MENU về trạng thái gốc mặc định không? Tất cả các món bạn đã sửa sẽ bị ghi đè!")) return;
+      if (!confirm("您確定要將菜單恢復為預設狀態嗎？所有修改過的項目都將被覆蓋！")) return;
       
       const DEFAULT_MENU = {
         meat: { "雞胸肉": 60, "雞腿肉": 70, "松坂豬": 70 },
@@ -1765,10 +1762,10 @@
           body: JSON.stringify(DEFAULT_MENU)
         });
         if (!res.ok) throw new Error("API returned " + res.status);
-        alert("Đã khôi phục menu gốc thành công!");
+        alert("已成功恢復預設菜單！");
         loadMenuData(); // Reload from server
       } catch (e) {
-        alert("Lỗi khi khôi phục menu: " + e.message);
+        alert("恢復菜單時出錯：" + e.message);
       }
     }
 
@@ -1777,10 +1774,10 @@
 
     async function openImageModal(categoryId, itemName) {
       currentImageItemName = `${categoryId}_${itemName}`;
-      document.getElementById("image-modal-title").innerText = `Ảnh: ${itemName}`;
+      document.getElementById("image-modal-title").innerText = `圖片: ${itemName}`;
       document.getElementById("image-preview").style.display = "none";
       document.getElementById("btn-delete-image").style.display = "none";
-      document.getElementById("image-status").innerText = "Đang kiểm tra ảnh...";
+      document.getElementById("image-status").innerText = "正在檢查圖片...";
       
       document.getElementById("imageModal").style.display = "flex";
 
@@ -1792,13 +1789,13 @@
             document.getElementById("image-preview").src = `${WORKER_BASE}/api/image?name=${encodeURIComponent(currentImageItemName)}&_t=${Date.now()}`;
             document.getElementById("image-preview").style.display = "block";
             document.getElementById("btn-delete-image").style.display = "block";
-            document.getElementById("image-status").innerText = "Món này đã có ảnh";
+            document.getElementById("image-status").innerText = "此商品已上傳圖片";
           } else {
-            document.getElementById("image-status").innerText = "Món này chưa có ảnh";
+            document.getElementById("image-status").innerText = "此商品尚未上傳圖片";
           }
         }
       } catch (e) {
-        document.getElementById("image-status").innerText = "Lỗi khi tải ảnh";
+        document.getElementById("image-status").innerText = "載入圖片時出錯";
       }
     }
 
@@ -1845,7 +1842,7 @@
     }
 
     async function uploadImage(dataUri) {
-      document.getElementById("image-status").innerText = "Đang tải ảnh lên...";
+      document.getElementById("image-status").innerText = "正在上傳圖片...";
       try {
         const res = await fetch(`${WORKER_BASE}/api/image`, {
           method: "POST",
@@ -1857,16 +1854,16 @@
         document.getElementById("image-preview").src = dataUri;
         document.getElementById("image-preview").style.display = "block";
         document.getElementById("btn-delete-image").style.display = "block";
-        document.getElementById("image-status").innerText = "Tải ảnh thành công!";
+        document.getElementById("image-status").innerText = "圖片上傳成功！";
       } catch (e) {
-        alert("Lỗi tải ảnh: " + e.message);
-        document.getElementById("image-status").innerText = "Lỗi khi tải ảnh";
+        alert("上傳圖片出錯：" + e.message);
+        document.getElementById("image-status").innerText = "上傳圖片時出錯";
       }
     }
 
     async function deleteItemImage() {
-      if (!confirm("Bạn có chắc muốn xóa ảnh này?")) return;
-      document.getElementById("image-status").innerText = "Đang xóa ảnh...";
+      if (!confirm("您確定要刪除這張圖片嗎？")) return;
+      document.getElementById("image-status").innerText = "正在刪除圖片...";
       try {
         const res = await fetch(`${WORKER_BASE}/api/image`, {
           method: "DELETE",
@@ -1877,9 +1874,9 @@
         
         document.getElementById("image-preview").style.display = "none";
         document.getElementById("btn-delete-image").style.display = "none";
-        document.getElementById("image-status").innerText = "Món này chưa có ảnh";
+        document.getElementById("image-status").innerText = "此商品尚未上傳圖片";
       } catch (e) {
-        alert("Lỗi xóa ảnh: " + e.message);
+        alert("刪除圖片出錯：" + e.message);
       }
     }
 
