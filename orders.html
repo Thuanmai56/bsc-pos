@@ -517,7 +517,7 @@
       const container = document.getElementById("list-right");
       container.innerHTML = "";
       if (orders.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">Chưa có</div>`;
+        container.innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">無訂單</div>`;
         return;
       }
 
@@ -530,7 +530,7 @@
         tile.innerHTML = `
           <div>
             <div class="tile-top">
-              <span class="tile-customer">${escapeHtml(order.customer || "Khách")}</span>
+              <span class="tile-customer">${escapeHtml(order.customer || "顧客")}</span>
               <span class="badge done">READY</span>
               <span class="tile-meta">#${escapeHtml(order.key)}</span>
             </div>
@@ -572,7 +572,7 @@
       const container = document.getElementById("list-history");
       container.innerHTML = "";
       if (orders.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">Chưa có lịch sử</div>`;
+        container.innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">無歷史紀錄</div>`;
         return;
       }
 
@@ -607,14 +607,14 @@
           tile.innerHTML = `
             <div>
               <div class="tile-top">
-                <span class="tile-customer">${escapeHtml(order.customer || "Khách")}</span>
+                <span class="tile-customer">${escapeHtml(order.customer || "顧客")}</span>
                 ${badge}
                 <span class="tile-meta">#${escapeHtml(order.key)}</span>
               </div>
               <div class="tile-items">${escapeHtml(shortItems(order.content))}</div>
             </div>
             <div class="tile-actions">
-              <button class="btn btn-ghost btn-block" onclick="event.stopPropagation(); openReview('${escapeHtml(order.key)}')">Xem</button>
+              <button class="btn btn-ghost btn-block" onclick="event.stopPropagation(); openReview('${escapeHtml(order.key)}')">查看</button>
             </div>
           `;
           container.appendChild(tile);
@@ -710,7 +710,7 @@
 
     function formatContentHtml(order) {
       const raw = String(order.content || "");
-      if (order.reason === "Đơn qua tin nhắn") {
+      if (order.reason === "Đơn qua tin nhắn" || order.reason === "訊息下單") {
         return `<div style="background:rgba(0,185,0,0.07); border:1.5px solid rgba(0,185,0,0.25); border-radius:16px; padding:18px; white-space:pre-wrap; line-height:1.7; font-size:22px;">${escapeHtml(raw)}</div>`;
       }
       const lines = raw.split("\n").map(l => l.trimEnd()).filter(l => l.trim() !== "");
@@ -741,7 +741,7 @@
       const oldText = btn ? btn.innerText : "";
       if (btn) {
         btn.disabled = true;
-        btn.innerText = "Đang xử lý...";
+        btn.innerText = "處理中...";
       }
 
       try {
@@ -809,7 +809,7 @@
 
     async function reviewForceCancel(btn) {
       if (!reviewingOrder?.key) return;
-      if (!confirm("Hủy đơn hàng này do khách không phản hồi?")) return;
+      if (!confirm("確定要取消此訂單嗎？（因顧客未回應）")) return;
       await updateStatus(reviewingOrder.key, "FORCE_REJECT", {}, btn);
       closeModal();
       switchTab("live");
@@ -823,7 +823,7 @@
       if (reason === "時間需調整") {
         note.style.display = "block";
         itemsDiv.style.display = "none";
-        note.placeholder = "建議時間/Gợi ý thời gian mới (VD: 11:00)";
+        note.placeholder = "建議新時間 (例如：17:30)";
       } else {
         note.style.display = "none";
         itemsDiv.style.display = "block";
@@ -838,14 +838,14 @@
       let note = isChange ? document.getElementById("change-note").value.trim() : undefined;
 
       if (isChange && reason === "時間需調整" && !note) {
-        alert("Vui lòng nhập thời gian gợi ý mới (Ví dụ: 11:00)!");
+        alert("請輸入建議的新取餐時間 (例如：17:30)！");
         return;
       }
 
       if (isChange && reason === "口味售完") {
         const checked = Array.from(document.querySelectorAll(".sold-item:checked")).map(cb => cb.value);
         if (checked.length === 0) {
-          alert("Vui lòng chọn ít nhất một món đã hết!");
+          alert("請選擇至少一項已售完的商品！");
           return;
         }
         note = checked.join(",");
