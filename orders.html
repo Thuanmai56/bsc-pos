@@ -202,6 +202,7 @@
 
       <div class="modal-actions" id="review-actions-waiting" style="display:none;">
         <button class="btn btn-primary" onclick="reviewAccept(this)">接單 (確認)</button>
+        <button class="btn btn-yellow" onclick="resendPendingMessage(this)">重新傳送訊息</button>
         <button class="btn btn-danger" onclick="reviewForceCancel(this)">取消訂單</button>
         <button class="btn btn-ghost" onclick="closeModal()">關閉</button>
       </div>
@@ -262,7 +263,7 @@
         <option value="今日已售完">今日商品已售完</option>
         <option value="訂單過多">目前訂單過多，暫時不接單</option>
         <option value="已過營業時間">已過營業時間</option>
-        <option value="取消並不回復客戶">取消訂單且不回覆顧客</option>
+        <option value="取消並不回覆客戶">取消訂單且不回覆顧客</option>
       </select>
       <div class="modal-actions two">
         <button class="btn btn-danger" onclick="confirmAction('REJECT', this)">確認拒單</button>
@@ -813,6 +814,21 @@
       await updateStatus(reviewingOrder.key, "FORCE_REJECT", {}, btn);
       closeModal();
       switchTab("live");
+    }
+
+    async function resendPendingMessage(btn) {
+      if (!reviewingOrder?.key) return;
+      const order = reviewingOrder;
+      const isChange = order.status === "WAITING_CUSTOMER_CHANGE";
+      const isReject = order.status === "WAITING_CUSTOMER_REJECT";
+      if (!isChange && !isReject) {
+        alert("目前訂單狀態無法重新傳送訊息。");
+        return;
+      }
+      if (!confirm(`確定要重新傳送訊息給顧客 ${order.customer || ""} 嗎？`)) return;
+      const resendStatus = isChange ? "CHANGED" : "REJECTED";
+      await updateStatus(order.key, resendStatus, { reason: order.reason, note: order.note }, btn);
+      alert("已重新傳送訊息！");
     }
 
     function onChangeReasonChange() {
