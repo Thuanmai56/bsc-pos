@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Benmi 點餐</title>
+    <title>干城鹹水雞 點餐</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="index.css">
 </head>
@@ -17,7 +17,7 @@
                 <img src="./logo.png" alt="Gancheng Logo" class="store-logo">
             </div>
             <div class="store-info">
-                <h1 class="store-name">干城鹽水雞</h1>
+                <h1 class="store-name">干城鹹水雞</h1>
                 <p class="store-subtitle">台中黎明店</p>
             </div>
             <div id="store-status" class="store-status">營業中</div>
@@ -178,7 +178,7 @@
     <script>
 
         // --- MENU DATA ---
-        const WORKER_BASE = "https://benmi-worker-official.thuanmnc.workers.dev";
+        const WORKER_BASE = "https://bsc.thuanmnc.workers.dev";
         let menu = { large: {}, small: {}, combo: {}, drinks: {}, veggie: {}, topping: {} };
         let imageList = [];
         let storeConfig = null;
@@ -546,7 +546,7 @@
 
         async function initApp() {
             try {
-                await liff.init({ liffId: '2009560906-c5taZfiY' });
+                await liff.init({ liffId: '2010595300-DfWko6Bj' });
             } catch(e) {
                 console.error("LIFF Init Error", e);
             }
