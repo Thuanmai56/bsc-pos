@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>干城鹽水雞 管理後台</title>
+  <link rel="stylesheet" href="orders.css" />
+</head>
+
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-title">🍗 干城鹽水雞 後台系統</div>
+        <div class="brand-sub">即時訂單管理</div>
+      </div>
+      <div class="tabs">
+        <button class="tab active" id="tab-live" onclick="switchTab('live')">即時單</button>
+        <button class="tab" id="tab-history" onclick="switchTab('history')">歷史單</button>
+        <button class="mini-btn" onclick="testSound()">測試鈴聲</button>
+        <button class="mini-btn" onclick="openMenuSettings()">菜單</button>
+        <button class="mini-btn" onclick="openSettings()">系統設定</button>
+      </div>
+    </div>
+
+    <div class="content" id="view-live">
+      <div class="split">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">準備中</div>
+              <div class="panel-sub">依取餐時間（由近到遠）</div>
+            </div>
+            <div class="badge wait" id="count-left">0</div>
+          </div>
+          <div class="panel-body" id="list-left">
+            <div style="text-align:center; padding: 22px; color:#999;">載入中...</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">待取餐</div>
+              <div class="panel-sub">已準備完成</div>
+            </div>
+            <div class="badge done" id="count-right">0</div>
+          </div>
+          <div class="panel-body" id="list-right">
+            <div style="text-align:center; padding: 22px; color:#999;">無訂單</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content" id="view-history" style="display:none;">
+      <div class="panel" style="height: 100%;">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">歷史訂單</div>
+            <div class="panel-sub">依日期篩選</div>
+          </div>
+        </div>
+        <div class="panel-body" id="list-history">
+          <div style="text-align:center; padding: 22px; color:#999;">載入中...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="content" id="view-settings" style="display:none; max-width: 860px; margin: 0 auto; width: 100%;">
+      <div class="panel" style="height: auto; padding-bottom: 24px;">
+        <div class="panel-header">
+          <div class="panel-title">系統設定 (Settings)</div>
+        </div>
+        <div class="panel-body" style="padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+
+          <!-- Operating Hours -->
+          <div style="border: 1px solid var(--border); border-radius: 12px; overflow: hidden;">
+            <div
+              style="padding: 16px 20px; background: #f3f4f6; border-bottom: 1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+              <div style="font-weight: 800; font-size: 18px;">⏰ 營業時間設定</div>
+              <button class="btn btn-primary" style="padding: 10px 20px; font-size: 15px; border-radius: 8px;"
+                onclick="saveOperatingHours()" id="btn-save-hours">儲存時間</button>
+            </div>
+            <div id="settings-hours-container" style="padding: 16px; display: flex; flex-direction: column; gap: 10px;">
+              <div style="text-align:center; font-size:14px; color:#999;">載入中...</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Menu Editor -->
+    <div class="content" id="view-menu" style="display:none;">
+      <div class="split" style="grid-template-columns: 260px 1fr;">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">菜單分類</div>
+              <div class="panel-sub" style="color: var(--brand-red); margin-top:4px;">干城鹽水雞 6 大分類</div>
+            </div>
+            <button class="mini-btn" onclick="loadMenuData()">重整</button>
+          </div>
+          <div class="panel-body" id="menu-categories" style="padding: 0; background: #fff;">
+            <!-- Categories rendered here -->
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title" id="menu-editor-title">分類項目</div>
+              <div class="panel-sub">拖曳排序 ✦ 點擊欄位直接修改</div>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-ghost" style="padding: 8px 16px; font-size: 14px; color: var(--brand-red);"
+                onclick="restoreDefaultMenu()">恢復預設菜單</button>
+              <button class="btn btn-yellow" style="padding: 8px 16px; font-size: 14px;" onclick="addNewMenuItem()">+
+                新增項目</button>
+              <button class="btn btn-primary" style="padding: 8px 16px; font-size: 14px;"
+                onclick="saveMenuData()">儲存變更</button>
+            </div>
+          </div>
+          <div class="panel-body" id="menu-editor-body" style="background: #f9fafb;">
+            <div style="text-align:center; padding: 22px; color:#999;">請先從左側選擇分類</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Fullscreen new order alert -->
+  <div class="new-alert" id="new-alert">
+    <div class="new-alert-box">
+      <h1 class="new-alert-title" id="new-alert-title">1 筆新訂單</h1>
+      <div class="new-alert-sub">請點擊「審核訂單」查看詳情並接單</div>
+      <div class="new-alert-actions">
+        <button class="btn btn-primary btn-block" onclick="reviewNextNewOrder()">審核訂單</button>
+        <button class="btn btn-ghost btn-block" onclick="dismissNewAlert()">暫時隱藏</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Review modal -->
+  <div id="reviewModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-title">
+        <h3>審核訂單</h3>
+        <div class="modal-close" onclick="closeModal()">✕</div>
+      </div>
+
+      <div class="detail-grid">
+        <div class="detail-box">
+          <div class="detail-label">訂單編號</div>
+          <div class="detail-value mono" id="review-order-key">-</div>
+        </div>
+        <div class="detail-box">
+          <div class="detail-label">顧客名稱</div>
+          <div class="detail-value" id="review-customer">-</div>
+        </div>
+        <div class="detail-box">
+          <div class="detail-label">取餐時間</div>
+          <div class="detail-value" id="review-pickup">-</div>
+        </div>
+        <div class="detail-box">
+          <div class="detail-label">剩餘時間</div>
+          <div class="detail-value" id="review-eta" style="color: var(--brand-red);">-</div>
+        </div>
+        <div class="detail-box">
+          <div class="detail-label">訂單狀態</div>
+          <div class="detail-value" id="review-status">-</div>
+        </div>
+      </div>
+
+      <div class="detail-content" id="review-content">-</div>
+
+      <div class="modal-actions" id="review-actions">
+        <button class="btn btn-primary" onclick="reviewAccept(this)">接單 (確認)</button>
+        <button class="btn btn-yellow" onclick="reviewOpenChange()">需要修改</button>
+        <button class="btn btn-danger" onclick="reviewOpenReject()">無法接單</button>
+      </div>
+
+      <div class="modal-actions" id="review-actions-accepted" style="display:none;">
+        <button class="btn btn-primary" onclick="markReadyFromReview(this)">準備完成</button>
+        <button class="btn btn-danger"
+          onclick="if(confirm('您確定要取消此訂單嗎？顧客端將不會收到回覆通知。')){ updateStatus(reviewingOrder.key, 'REJECTED', { reason: '取消並不回覆客戶' }, this).then(() => closeModal()); }">取消訂單</button>
+        <button class="btn btn-ghost" onclick="closeModal()">關閉</button>
+      </div>
+
+      <div class="modal-actions" id="review-actions-done" style="display:none;">
+        <button class="btn btn-primary"
+          onclick="updateStatus(reviewingOrder.key, 'PICKED_UP', {}, this).then(() => closeModal());">已交付顧客</button>
+        <button class="btn btn-danger"
+          onclick="if(confirm('您確定要取消此訂單嗎？顧客端將不會收到回覆通知。')){ updateStatus(reviewingOrder.key, 'REJECTED', { reason: '取消並不回覆客戶' }, this).then(() => closeModal()); }">取消訂單</button>
+        <button class="btn btn-ghost" onclick="closeModal()">關閉</button>
+      </div>
+
+      <div class="modal-actions" id="review-actions-waiting" style="display:none;">
+        <button class="btn btn-primary" onclick="reviewAccept(this)">接單 (確認)</button>
+        <button class="btn btn-danger" onclick="reviewForceCancel(this)">取消訂單</button>
+        <button class="btn btn-ghost" onclick="closeModal()">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change modal -->
+  <div id="changeModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-title">
+        <h3>需要修改訂單</h3>
+        <div class="modal-close" onclick="closeModal()">✕</div>
+      </div>
+      <label style="display:block; margin-top: 10px; font-weight: 800; font-size: 20px;">修改原因 / 建議：</label>
+      <select id="change-reason"
+        style="width:100%; padding: 16px; margin-top: 10px; border-radius: 12px; border: 1px solid var(--border); font-size: 22px;"
+        onchange="onChangeReasonChange()">
+        <option value="時間需調整">取餐時間需調整 (延後)</option>
+        <option value="口味售完">商品已售完</option>
+      </select>
+      <textarea id="change-note" rows="3" placeholder="建議新時間 (例如：17:30)"
+        style="width:100%; padding: 16px; margin-top: 16px; border-radius: 12px; border: 1px solid var(--border); font-size: 22px;"></textarea>
+
+      <div id="change-items-div" style="display: none;">
+        <div style="margin-top: 16px; font-weight: 800; font-size: 18px; margin-bottom: 12px;">選擇已售完的商品：</div>
+        <div class="checkbox-grid">
+          <label class="checkbox-label"><input type="checkbox" value="雞胸肉" class="sold-item"> 雞胸肉</label>
+          <label class="checkbox-label"><input type="checkbox" value="雞腿肉" class="sold-item"> 雞腿肉</label>
+          <label class="checkbox-label"><input type="checkbox" value="松阪豬" class="sold-item"> 松阪豬</label>
+          <label class="checkbox-label"><input type="checkbox" value="無骨鳳爪" class="sold-item"> 無骨鳳爪</label>
+          <label class="checkbox-label"><input type="checkbox" value="日本山藥" class="sold-item"> 日本山藥</label>
+          <label class="checkbox-label"><input type="checkbox" value="煙燻豆包" class="sold-item"> 煙燻豆包</label>
+          <label class="checkbox-label"><input type="checkbox" value="茶燻百葉" class="sold-item"> 茶燻百葉</label>
+          <label class="checkbox-label"><input type="checkbox" value="鳥蛋(5顆)" class="sold-item"> 鳥蛋(5顆)</label>
+          <label class="checkbox-label"><input type="checkbox" value="鴨米血" class="sold-item"> 鴨米血</label>
+          <label class="checkbox-label"><input type="checkbox" value="蝦子(一隻)" class="sold-item"> 蝦子(一隻)</label>
+          <label class="checkbox-label"><input type="checkbox" value="甜不辣" class="sold-item"> 甜不辣</label>
+          <label class="checkbox-label"><input type="checkbox" value="其他" class="sold-item"> 其他</label>
+        </div>
+      </div>
+
+      <div class="modal-actions two" style="margin-top: 16px;">
+        <button class="btn btn-yellow" onclick="confirmAction('CHANGE', this)">傳送修改建議</button>
+        <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reject modal -->
+  <div id="rejectModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-title">
+        <h3>拒單 / 無法接單</h3>
+        <div class="modal-close" onclick="closeModal()">✕</div>
+      </div>
+      <select id="reject-reason"
+        style="width:100%; padding: 16px; margin-top: 16px; border-radius: 12px; border: 1px solid var(--border); font-size: 22px;">
+        <option value="今日已售完">今日商品已售完</option>
+        <option value="訂單過多">目前訂單過多，暫時不接單</option>
+        <option value="已過營業時間">已過營業時間</option>
+        <option value="取消並不回復客戶">取消訂單且不回覆顧客</option>
+      </select>
+      <div class="modal-actions two">
+        <button class="btn btn-danger" onclick="confirmAction('REJECT', this)">確認拒單</button>
+        <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Manage Modal -->
+  <div id="imageModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-title">
+        <h3 id="image-modal-title">圖片管理</h3>
+        <div class="modal-close" onclick="closeModal()">✕</div>
+      </div>
+      <div style="margin-top: 16px; text-align: center;">
+        <img id="image-preview" src=""
+          style="max-width: 100%; max-height: 200px; border-radius: 12px; display: none; margin: 0 auto 16px; object-fit: cover; border: 1px solid #eee;">
+        <div id="image-status" style="margin-bottom: 16px; font-weight: 800; color: #666;">正在檢查圖片...</div>
+      </div>
+      <input type="file" id="image-file-input" accept="image/png, image/jpeg, image/webp" style="display: none;"
+        onchange="handleImageSelect(event)">
+      <div class="modal-actions two">
+        <button class="btn btn-primary" onclick="document.getElementById('image-file-input').click()">上傳圖片</button>
+        <button class="btn btn-danger" id="btn-delete-image" style="display: none;" onclick="deleteItemImage()">刪除圖片</button>
+      </div>
+      <div class="modal-actions" style="grid-template-columns: 1fr; margin-top: 10px;">
+        <button class="btn btn-ghost btn-block" onclick="closeModal()">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const WORKER_BASE = "https://benmi-worker-official.thuanmnc.workers.dev";
+
+    let latestOrders = [];
+    let pendingNewOrders = [];
+    let reviewingOrder = null;
+    let currentOrderKey = null;
+    let activeTab = "live";
+    let newAlertSnoozeUntilMs = 0;
+    let snoozedNewOrderKeys = new Set();
+    let localOverrides = {};
+
+    const knownOrderKeys = new Set();
+    const processingKeys = new Set();
+    let isFirstLoad = true;
+    let soundUnlocked = false;
+    let audioCtx = null;
+    let alarmIntervalId = null;
+    let alarmTimeoutIds = [];
+
+    // Unlock audio after a user gesture (Chrome autoplay policy)
+    async function unlockSound() {
+      soundUnlocked = true;
+      try {
+        const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextCtor) return;
+        if (!audioCtx) audioCtx = new AudioContextCtor();
+        if (audioCtx.state === "suspended") await audioCtx.resume();
+      } catch (e) {
+        console.error("unlockSound failed:", e);
+      }
+    }
+    document.addEventListener("click", unlockSound, { once: true });
+    document.addEventListener("touchstart", unlockSound, { once: true });
+    document.addEventListener("keydown", unlockSound, { once: true });
+
+    function escapeHtml(s) {
+      return String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function parsePickupTimeMs(timeStr) {
+      if (!timeStr || typeof timeStr !== "string") return NaN;
+      const m = timeStr.match(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2})/);
+      if (!m) return NaN;
+      const iso = `${m[1]}T${m[2]}:00`;
+      const ms = new Date(iso).getTime();
+      return Number.isNaN(ms) ? NaN : ms;
+    }
+
+    function sortByPickupTimeAsc(a, b) {
+      const at = parsePickupTimeMs(a?.time);
+      const bt = parsePickupTimeMs(b?.time);
+      if (Number.isNaN(at) || Number.isNaN(bt)) return (a?.createdAt || 0) - (b?.createdAt || 0);
+      return at - bt;
+    }
+
+    function formatEta(timeStr) {
+      const target = parsePickupTimeMs(timeStr);
+      if (Number.isNaN(target)) return "-";
+      const diffMs = target - Date.now();
+      const diffMin = Math.round(diffMs / 60000);
+      if (diffMin <= 0) return `已到 / ${Math.abs(diffMin)} 分鐘前`;
+      if (diffMin < 60) return `剩 ${diffMin} 分鐘`;
+      const h = Math.floor(diffMin / 60);
+      const m = diffMin % 60;
+      return `剩 ${h} 小時 ${m} 分`;
+    }
+
+    function shortItems(content) {
+      if (!content) return "";
+      const lines = String(content).split("\n").map(s => s.trim()).filter(Boolean);
+      return lines.slice(0, 6).join("\n");
+    }
+
+    function switchTab(tab) {
+      activeTab = tab;
+      document.getElementById("tab-live").classList.toggle("active", tab === "live");
+      document.getElementById("tab-history").classList.toggle("active", tab === "history");
+      document.getElementById("view-live").style.display = tab === "live" ? "block" : "none";
+      document.getElementById("view-history").style.display = tab === "history" ? "block" : "none";
+      document.getElementById("view-settings").style.display = "none";
+      document.getElementById("view-menu").style.display = "none";
+      if (tab === "live" || tab === "history") renderAll();
+    }
+
+    async function fetchOrders() {
+      try {
+        const response = await fetch(`${WORKER_BASE}/api/orders?_t=${Date.now()}`, { cache: "no-store" });
+        if (!response.ok) throw new Error(`fetch failed: ${response.status}`);
+        let orders = await response.json();
+        if (!Array.isArray(orders)) orders = [];
+
+        // Deduplicate
+        const uniqueMap = new Map();
+        orders.forEach(o => { if (o?.key) uniqueMap.set(o.key, o); });
+        latestOrders = Array.from(uniqueMap.values());
+
+        // New arrivals => sound
+        const newArrivals = latestOrders.filter(o => o && o.key && !knownOrderKeys.has(o.key));
+        newArrivals.forEach(o => { if (o?.key) knownOrderKeys.add(o.key); });
+
+        // NEW orders => fullscreen alert
+        pendingNewOrders = latestOrders.filter(o => o && o.status === "NEW").slice().sort(sortByPickupTimeAsc);
+        if (!isFirstLoad && newArrivals.length > 0 && pendingNewOrders.length > 0) {
+          startContinuousAlarm();
+        }
+        isFirstLoad = false;
+        updateNewAlert();
+
+        renderAll();
+      } catch (e) {
+        console.error(e);
+        document.getElementById("list-left").innerHTML = `<div style="text-align:center; padding: 22px; color:#d32f2f;">Không tải được: ${escapeHtml(e?.message || e)}</div>`;
+        document.getElementById("list-right").innerHTML = `<div style="text-align:center; padding: 22px; color:#d32f2f;">Không tải được</div>`;
+        document.getElementById("list-history").innerHTML = `<div style="text-align:center; padding: 22px; color:#d32f2f;">Không tải được</div>`;
+      }
+    }
+
+    function renderAll() {
+      if (!Array.isArray(latestOrders)) return;
+
+      // Filter/Apply local overrides (ignore server data if override is < 15s old)
+      const now = Date.now();
+      const currentOrders = latestOrders.map(o => {
+        const override = localOverrides[o.key];
+        if (override && (now - override.time < 15000)) {
+          return { ...o, status: override.status };
+        }
+        // Cleanup old overrides
+        if (override && (now - override.time >= 15000)) {
+          delete localOverrides[o.key];
+        }
+        return o;
+      });
+
+      const leftOrders = currentOrders
+        .filter(o => o && (o.status === "NEW" || o.status === "ACCEPTED" || o.status === "WAITING_CUSTOMER_CHANGE" || o.status === "WAITING_CUSTOMER_REJECT"))
+        .slice()
+        .sort(sortByPickupTimeAsc);
+
+      const rightOrders = currentOrders
+        .filter(o => o && o.status === "DONE")
+        .slice()
+        .sort(sortByPickupTimeAsc);
+
+      const historyOrders = currentOrders
+        .filter(o => o && ["PICKED_UP", "REJECTED"].includes(o.status))
+        .slice()
+        .sort((a, b) => (b?.createdAt || 0) - (a?.createdAt || 0));
+
+      document.getElementById("count-left").innerText = String(leftOrders.length);
+      document.getElementById("count-right").innerText = String(rightOrders.length);
+
+      if (activeTab === "live") {
+        renderListLeft(leftOrders);
+        renderListRight(rightOrders);
+      } else {
+        renderHistory(historyOrders);
+      }
+    }
+
+    function renderListLeft(orders) {
+      const container = document.getElementById("list-left");
+      container.innerHTML = "";
+      if (orders.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">Chưa có</div>`;
+        return;
+      }
+
+      orders.forEach(order => {
+        const isNew = order.status === "NEW";
+        const eta = formatEta(order.time);
+
+        const tile = document.createElement("div");
+        tile.className = `tile ${isNew ? "new" : ""}`;
+        tile.onclick = () => openReview(order.key);
+
+        let badge = "";
+        let rightActions = "";
+
+        if (isNew) {
+          badge = `<span class="badge new">NEW</span>`;
+          rightActions = `<button class="btn btn-ghost btn-block" onclick="event.stopPropagation(); openReview('${escapeHtml(order.key)}')">Review</button>`;
+        } else if (order.status === "ACCEPTED") {
+          badge = `<span class="badge wait">DOING</span>`;
+          rightActions = `<button class="btn btn-primary btn-block" onclick="event.stopPropagation(); updateStatus('${escapeHtml(order.key)}','DONE', {}, this)">准备好了</button>`;
+        } else {
+          badge = `<span class="badge wait" style="background:#e5e7eb; color:#4b5563;">等客戶確認</span>`;
+          rightActions = `<button class="btn btn-block" style="background:#f3f4f6; color:#9ca3af; cursor:not-allowed;" disabled>等待回覆</button>`;
+        }
+
+        tile.innerHTML = `
+          <div>
+            <div class="tile-top">
+              <span class="tile-customer">${escapeHtml(order.customer || "Khách")}</span>
+              ${badge}
+              <span class="tile-meta">#${escapeHtml(order.key)}</span>
+            </div>
+            <div class="tile-top" style="margin-top: 6px;">
+              <span class="tile-meta">取餐: ${escapeHtml(order.time || "-")}</span>
+              <span class="tile-meta" style="color: var(--brand-red); font-weight: 1100;">${escapeHtml(eta)}</span>
+            </div>
+            <div class="tile-items">${escapeHtml(shortItems(order.content))}</div>
+          </div>
+          <div class="tile-actions">
+            ${rightActions}
+          </div>
+        `;
+
+        container.appendChild(tile);
+      });
+    }
+
+    function renderListRight(orders) {
+      const container = document.getElementById("list-right");
+      container.innerHTML = "";
+      if (orders.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">Chưa có</div>`;
+        return;
+      }
+
+      orders.forEach(order => {
+        const eta = formatEta(order.time);
+        const tile = document.createElement("div");
+        tile.className = "tile";
+        tile.onclick = () => openReview(order.key);
+
+        tile.innerHTML = `
+          <div>
+            <div class="tile-top">
+              <span class="tile-customer">${escapeHtml(order.customer || "Khách")}</span>
+              <span class="badge done">READY</span>
+              <span class="tile-meta">#${escapeHtml(order.key)}</span>
+            </div>
+            <div class="tile-top" style="margin-top: 6px;">
+              <span class="tile-meta">取餐: ${escapeHtml(order.time || "-")}</span>
+              <span class="tile-meta" style="color: var(--brand-red); font-weight: 1100;">${escapeHtml(eta)}</span>
+            </div>
+            <div class="tile-items">${escapeHtml(shortItems(order.content))}</div>
+          </div>
+          <div class="tile-actions">
+            <button class="btn btn-yellow btn-block" onclick="event.stopPropagation(); updateStatus('${escapeHtml(order.key)}','PICKED_UP', {}, this)">已取餐</button>
+          </div>
+        `;
+        container.appendChild(tile);
+      });
+    }
+
+    function groupByDate(orders) {
+      const map = new Map();
+      orders.forEach(o => {
+        let d = "Unknown";
+        if (o.createdAt) {
+          const dt = new Date(o.createdAt);
+          const nowTaiwan = new Date(dt.getTime() + 8 * 3600000);
+          const yyyy = nowTaiwan.getUTCFullYear();
+          const mm = String(nowTaiwan.getUTCMonth() + 1).padStart(2, "0");
+          const dd = String(nowTaiwan.getUTCDate()).padStart(2, "0");
+          d = `${yyyy}-${mm}-${dd}`;
+        } else if (o?.time && typeof o.time === "string" && o.time.match(/^\d{4}-\d{2}-\d{2}/)) {
+          d = o.time.slice(0, 10);
+        }
+        if (!map.has(d)) map.set(d, []);
+        map.get(d).push(o);
+      });
+      return map;
+    }
+
+    function renderHistory(orders) {
+      const container = document.getElementById("list-history");
+      container.innerHTML = "";
+      if (orders.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">Chưa có lịch sử</div>`;
+        return;
+      }
+
+      const grouped = groupByDate(orders);
+      // Sort groups by date descending
+      const sortedDates = Array.from(grouped.keys()).sort((a, b) => b.localeCompare(a));
+
+      for (const date of sortedDates) {
+        let items = grouped.get(date);
+        // Sort items: newest picked up at top (descending), fallback to newest created at top
+        items.sort((a, b) => {
+          const timeA = a.pickedUpAt || a.createdAt || 0;
+          const timeB = b.pickedUpAt || b.createdAt || 0;
+          return timeB - timeA;
+        });
+
+        const header = document.createElement("div");
+        header.style.padding = "10px 8px 2px";
+        header.style.fontWeight = "1100";
+        header.style.color = "#111827";
+        header.innerText = `${date} (${items.length})`;
+        container.appendChild(header);
+
+        items.forEach(order => {
+          const tile = document.createElement("div");
+          tile.className = "tile";
+          tile.onclick = () => openReview(order.key);
+          const badge = order.status === "PICKED_UP"
+            ? `<span class="badge done">PICKED</span>`
+            : `<span class="badge">${escapeHtml(order.status)}</span>`;
+
+          tile.innerHTML = `
+            <div>
+              <div class="tile-top">
+                <span class="tile-customer">${escapeHtml(order.customer || "Khách")}</span>
+                ${badge}
+                <span class="tile-meta">#${escapeHtml(order.key)}</span>
+              </div>
+              <div class="tile-items">${escapeHtml(shortItems(order.content))}</div>
+            </div>
+            <div class="tile-actions">
+              <button class="btn btn-ghost btn-block" onclick="event.stopPropagation(); openReview('${escapeHtml(order.key)}')">Xem</button>
+            </div>
+          `;
+          container.appendChild(tile);
+        });
+      }
+    }
+
+    function updateNewAlert() {
+      const count = pendingNewOrders.length;
+      const alertEl = document.getElementById("new-alert");
+      const titleEl = document.getElementById("new-alert-title");
+
+      if (count <= 0) {
+        alertEl.style.display = "none";
+        newAlertSnoozeUntilMs = 0;
+        snoozedNewOrderKeys = new Set();
+        stopContinuousAlarm();
+        return;
+      }
+
+      // Kiểm tra xem có BẤT KỲ bảng nào liên quan đến Review đang mở không
+      const isReviewing =
+        document.getElementById("reviewModal").style.display === "flex" ||
+        document.getElementById("changeModal").style.display === "flex" ||
+        document.getElementById("rejectModal").style.display === "flex";
+
+      if (Date.now() < newAlertSnoozeUntilMs || isReviewing) {
+        const hasBrandNew = pendingNewOrders.some(o => o?.key && !snoozedNewOrderKeys.has(o.key));
+        if (!hasBrandNew) {
+          alertEl.style.display = "none";
+          stopContinuousAlarm();
+          return;
+        }
+      }
+      titleEl.innerText = `${count} 單 新訂單`;
+      alertEl.style.display = "flex";
+      startContinuousAlarm();
+    }
+
+    function dismissNewAlert() {
+      newAlertSnoozeUntilMs = Date.now() + 30_000;
+      snoozedNewOrderKeys = new Set(pendingNewOrders.map(o => o?.key).filter(Boolean));
+      document.getElementById("new-alert").style.display = "none";
+      stopContinuousAlarm();
+    }
+
+    function reviewNextNewOrder() {
+      if (pendingNewOrders.length <= 0) {
+        dismissNewAlert();
+        return;
+      }
+      openReview(pendingNewOrders[0].key);
+    }
+
+    function openReview(orderKey) {
+      const order = (latestOrders || []).find(o => o && o.key === orderKey);
+      if (!order) return;
+      reviewingOrder = order;
+
+      if (order.status === "NEW") {
+        dismissNewAlert();
+      }
+
+      document.getElementById("review-order-key").innerText = order.key || "-";
+      document.getElementById("review-customer").innerText = order.customer || "-";
+      document.getElementById("review-pickup").innerText = order.time || "-";
+      document.getElementById("review-eta").innerText = formatEta(order.time);
+      document.getElementById("review-status").innerText = order.status || "-";
+      document.getElementById("review-content").innerHTML = formatContentHtml(order);
+
+      const actionsNew = document.getElementById("review-actions");
+      const actionsAccepted = document.getElementById("review-actions-accepted");
+      const actionsWaiting = document.getElementById("review-actions-waiting");
+      const actionsDone = document.getElementById("review-actions-done");
+
+      actionsNew.style.display = "none";
+      actionsAccepted.style.display = "none";
+      actionsWaiting.style.display = "none";
+      if (actionsDone) actionsDone.style.display = "none";
+
+      if (order.status === "NEW") {
+        actionsNew.style.display = "grid";
+      } else if (order.status === "ACCEPTED") {
+        actionsAccepted.style.display = "grid";
+      } else if (order.status === "DONE") {
+        if (actionsDone) actionsDone.style.display = "grid";
+      } else if (order.status === "WAITING_CUSTOMER_CHANGE" || order.status === "WAITING_CUSTOMER_REJECT") {
+        actionsWaiting.style.display = "grid";
+      }
+
+      document.getElementById("reviewModal").style.display = "flex";
+    }
+
+    function formatContentHtml(order) {
+      const raw = String(order.content || "");
+      if (order.reason === "Đơn qua tin nhắn") {
+        return `<div style="background:rgba(0,185,0,0.07); border:1.5px solid rgba(0,185,0,0.25); border-radius:16px; padding:18px; white-space:pre-wrap; line-height:1.7; font-size:22px;">${escapeHtml(raw)}</div>`;
+      }
+      const lines = raw.split("\n").map(l => l.trimEnd()).filter(l => l.trim() !== "");
+      if (lines.length === 0) return `<div style="background:rgba(0,185,0,0.07); border:1.5px solid rgba(0,185,0,0.25); border-radius:16px; padding:18px;">-</div>`;
+
+      let inner = lines.map(line => {
+        const t = line.trimStart();
+        const isSub = t.startsWith("-") || t.startsWith("•") || t.startsWith("↳") || t.startsWith("－");
+        return `<div style="${isSub ? 'padding-left:16px; color:#4b5563; font-size:20px;' : 'font-weight:800; margin-top:8px; font-size:22px;'}">${escapeHtml(line)}</div>`;
+      }).join("");
+
+      if (order.note) {
+        inner += `<div style="color: #555; font-size: 18px; margin-top: 12px; font-weight: 800;">📝 ${escapeHtml(order.note)}</div>`;
+      }
+
+      return `<div style="background:rgba(0,185,0,0.07); border:1.5px solid rgba(0,185,0,0.25); border-radius:16px; padding:18px; line-height:1.7;">${inner}</div>`;
+    }
+
+    function closeModal() {
+      document.querySelectorAll(".modal").forEach(m => m.style.display = "none");
+    }
+
+    async function updateStatus(key, status, extra = {}, btn = null) {
+      if (!key) return;
+      if (processingKeys.has(key)) return;
+      processingKeys.add(key);
+
+      const oldText = btn ? btn.innerText : "";
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = "Đang xử lý...";
+      }
+
+      try {
+        const response = await fetch(`${WORKER_BASE}/api/update`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key, status, ...extra })
+        });
+        if (!response.ok) throw new Error(`update failed: ${response.status}`);
+
+        // Apply local override immediately for responsiveness
+        localOverrides[key] = { status, time: Date.now() };
+        renderAll();
+
+        // Still fetch to keep in sync
+        await fetchOrders();
+      } catch (e) {
+        console.error(e);
+        alert("處理失敗，請稍後再試。");
+      } finally {
+        processingKeys.delete(key);
+        if (btn) {
+          btn.disabled = false;
+          btn.innerText = oldText;
+        }
+      }
+    }
+
+    async function reviewAccept(btn) {
+      if (!reviewingOrder?.key) return;
+      await updateStatus(reviewingOrder.key, "ACCEPTED", {}, btn);
+      closeModal();
+      dismissNewAlert();
+      switchTab("live");
+    }
+
+    function reviewOpenChange() {
+      if (!reviewingOrder?.key) return;
+      const savedKey = reviewingOrder.key;  // Save key BEFORE closeModal wipes it
+      closeModal();
+      currentOrderKey = savedKey;           // Restore after closeModal
+      document.getElementById("change-reason").value = "時間需調整";
+      document.getElementById("change-note").value = "";
+      const checkboxes = document.querySelectorAll(".sold-item");
+      if (checkboxes) checkboxes.forEach(cb => cb.checked = false);
+      onChangeReasonChange();
+      document.getElementById("changeModal").style.display = "flex";
+    }
+
+    function reviewOpenReject() {
+      if (!reviewingOrder?.key) return;
+      const savedKey = reviewingOrder.key;  // Save key BEFORE closeModal wipes it
+      closeModal();
+      currentOrderKey = savedKey;           // Restore after closeModal
+      document.getElementById("reject-reason").selectedIndex = 0;
+      document.getElementById("rejectModal").style.display = "flex";
+    }
+
+    async function markReadyFromReview(btn) {
+      if (!reviewingOrder?.key) return;
+      await updateStatus(reviewingOrder.key, "DONE", {}, btn);
+      closeModal();
+      switchTab("live");
+    }
+
+    async function reviewForceCancel(btn) {
+      if (!reviewingOrder?.key) return;
+      if (!confirm("Hủy đơn hàng này do khách không phản hồi?")) return;
+      await updateStatus(reviewingOrder.key, "FORCE_REJECT", {}, btn);
+      closeModal();
+      switchTab("live");
+    }
+
+    function onChangeReasonChange() {
+      const reason = document.getElementById("change-reason").value;
+      const note = document.getElementById("change-note");
+      const itemsDiv = document.getElementById("change-items-div");
+
+      if (reason === "時間需調整") {
+        note.style.display = "block";
+        itemsDiv.style.display = "none";
+        note.placeholder = "建議時間/Gợi ý thời gian mới (VD: 11:00)";
+      } else {
+        note.style.display = "none";
+        itemsDiv.style.display = "block";
+      }
+    }
+
+    async function confirmAction(type, btn) {
+      const key = currentOrderKey;
+      const isChange = type === "CHANGE";
+      const status = isChange ? "CHANGED" : "REJECTED";
+      const reason = isChange ? document.getElementById("change-reason").value : document.getElementById("reject-reason").value;
+      let note = isChange ? document.getElementById("change-note").value.trim() : undefined;
+
+      if (isChange && reason === "時間需調整" && !note) {
+        alert("Vui lòng nhập thời gian gợi ý mới (Ví dụ: 11:00)!");
+        return;
+      }
+
+      if (isChange && reason === "口味售完") {
+        const checked = Array.from(document.querySelectorAll(".sold-item:checked")).map(cb => cb.value);
+        if (checked.length === 0) {
+          alert("Vui lòng chọn ít nhất một món đã hết!");
+          return;
+        }
+        note = checked.join(",");
+      }
+
+      await updateStatus(key, status, { reason, note }, btn);
+      closeModal();
+    }
+
+    function clearAlarmTimeouts() {
+      alarmTimeoutIds.forEach(id => clearTimeout(id));
+      alarmTimeoutIds = [];
+    }
+
+    function stopContinuousAlarm() {
+      if (alarmIntervalId) {
+        clearInterval(alarmIntervalId);
+        alarmIntervalId = null;
+      }
+      clearAlarmTimeouts();
+    }
+
+    function playTone(frequency, durationMs, type = "square", volume = 0.22) {
+      if (!audioCtx || audioCtx.state !== "running") return;
+      const oscillator = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      oscillator.type = type;
+      oscillator.frequency.value = frequency;
+      gain.gain.value = volume;
+
+      oscillator.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      oscillator.start();
+      setTimeout(() => oscillator.stop(), durationMs);
+    }
+
+    function playAlarmCycle() {
+      clearAlarmTimeouts();
+      playTone(880, 250, "square", 0.22);
+      alarmTimeoutIds.push(setTimeout(() => playTone(1040, 250, "square", 0.22), 320));
+      alarmTimeoutIds.push(setTimeout(() => playTone(880, 320, "square", 0.24), 680));
+    }
+
+    function startContinuousAlarm() {
+      if (!soundUnlocked) return;
+      if (alarmIntervalId) return;
+      playAlarmCycle();
+      alarmIntervalId = setInterval(() => {
+        playAlarmCycle();
+      }, 2200);
+    }
+
+    async function playNewOrderSound() {
+      if (!soundUnlocked) return;
+      try {
+        const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextCtor) return;
+        if (!audioCtx) audioCtx = new AudioContextCtor();
+        if (audioCtx.state === "suspended") await audioCtx.resume();
+        playAlarmCycle();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function testSound() {
+      await unlockSound();
+      await playNewOrderSound();
+    }
+
+    // --- SETTINGS & OPERATING HOURS ---
+    let storeOperatingHours = null;
+    const DAY_NAMES = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+
+    function openSettings() {
+      activeTab = "settings";
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".content").forEach(c => c.style.display = "none");
+      document.getElementById("view-settings").style.display = "block";
+      loadOperatingHours();
+    }
+
+    async function loadOperatingHours() {
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/config?_t=${Date.now()}`);
+        if (res.ok) {
+          const data = await res.json();
+          storeOperatingHours = data.operatingHours || createDefaultOperatingHours();
+        } else {
+          storeOperatingHours = createDefaultOperatingHours();
+        }
+      } catch (e) {
+        storeOperatingHours = createDefaultOperatingHours();
+      }
+      renderOperatingHours();
+    }
+
+    function createDefaultOperatingHours() {
+      let hrs = {};
+      for (let i = 0; i < 7; i++) hrs[i] = [{ start: "08:00", end: "21:00" }];
+      return hrs;
+    }
+
+    function renderOperatingHours() {
+      const container = document.getElementById("settings-hours-container");
+      container.innerHTML = "";
+      for (let i = 1; i <= 7; i++) {
+        const dayIdx = i === 7 ? 0 : i;
+        const shifts = storeOperatingHours[dayIdx] || [];
+        const isOpen = shifts.length > 0;
+        const row = document.createElement("div");
+        row.style.cssText = "background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 12px;";
+        let shiftsHtml = "";
+        shifts.forEach((shift, sIdx) => {
+          shiftsHtml += `
+            <div style="display:flex; gap:8px; align-items:center; margin-top:10px;">
+              <input type="time" id="sh-start-${dayIdx}-${sIdx}" value="${shift.start}" style="flex:1; padding:8px; font-family:inherit; border:1px solid #ccc; border-radius:6px; font-size:15px;">
+              <span style="font-weight:900;">-</span>
+              <input type="time" id="sh-end-${dayIdx}-${sIdx}" value="${shift.end}" style="flex:1; padding:8px; font-family:inherit; border:1px solid #ccc; border-radius:6px; font-size:15px;">
+              <button onclick="removeShift(${dayIdx}, ${sIdx})" style="background:none; border:none; color:var(--brand-red); cursor:pointer; font-size:20px; padding:0 4px;">✕</button>
+            </div>`;
+        });
+        row.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:16px;">
+              <input type="checkbox" ${isOpen ? 'checked' : ''} onchange="toggleDayStatus(${dayIdx}, this.checked)" style="width:18px; height:18px;">
+              <span style="font-weight:900; color:${isOpen ? '#111' : '#999'};">${DAY_NAMES[dayIdx]}</span>
+            </label>
+            ${isOpen ? `<button onclick="addShift(${dayIdx})" style="font-size:13px; background:#eff6ff; color:#3b82f6; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:900;">+ 新增時段</button>` : `<span style="font-size:13px; color:var(--brand-red); font-weight:900;">公休</span>`}
+          </div>
+          ${isOpen ? `<div id="shifts-box-${dayIdx}">${shiftsHtml}</div>` : ''}`;
+        container.appendChild(row);
+      }
+    }
+
+    function syncOperatingHoursFromDOM() {
+      for (let i = 0; i < 7; i++) {
+        const shifts = storeOperatingHours[i];
+        if (shifts && shifts.length > 0) {
+          shifts.forEach((shift, sIdx) => {
+            const elStart = document.getElementById(`sh-start-${i}-${sIdx}`);
+            const elEnd = document.getElementById(`sh-end-${i}-${sIdx}`);
+            if (elStart && elEnd) { shift.start = elStart.value; shift.end = elEnd.value; }
+          });
+        }
+      }
+    }
+
+    function toggleDayStatus(dayIdx, isChecked) {
+      storeOperatingHours[dayIdx] = isChecked ? [{ start: "08:00", end: "21:00" }] : [];
+      renderOperatingHours();
+    }
+
+    function addShift(dayIdx) {
+      syncOperatingHoursFromDOM();
+      storeOperatingHours[dayIdx].push({ start: "12:00", end: "13:00" });
+      renderOperatingHours();
+    }
+
+    function removeShift(dayIdx, sIdx) {
+      syncOperatingHoursFromDOM();
+      storeOperatingHours[dayIdx].splice(sIdx, 1);
+      renderOperatingHours();
+    }
+
+    async function saveOperatingHours() {
+      syncOperatingHoursFromDOM();
+      const btn = document.getElementById("btn-save-hours");
+      const oldText = btn.innerText;
+      btn.innerText = "儲存中..."; btn.disabled = true;
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/config`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ operatingHours: storeOperatingHours })
+        });
+        if (!res.ok) throw new Error("API returned " + res.status);
+        alert("營業時間儲存成功！");
+      } catch (e) {
+        alert("儲存失敗：" + e.message);
+      } finally {
+        btn.innerText = oldText; btn.disabled = false;
+      }
+    }
+
+    // --- MENU EDITOR LOGIC (ALing-POS style, Benmi fixed categories) ---
+    // Benmi menu structure: { small:{name:price}, large:{}, combo:{}, drinks:{}, topping:{} }
+    // We convert to array of categories with items for the editor, then convert back on save.
+    let currentMenuData = null;   // Array form for editor
+    let rawMenuData = null;       // Original object form from API
+    let activeCategoryIndex = -1;
+    let isMenuDirty = false;
+
+    function markMenuDirty() {
+      isMenuDirty = true;
+      const btn = document.querySelector("#view-menu .btn-primary");
+      if (btn) {
+        btn.style.backgroundColor = "var(--brand-red)";
+        btn.innerText = "儲存變更 (尚未儲存 *)";
+      }
+    }
+
+    function clearMenuDirty() {
+      isMenuDirty = false;
+      const btn = document.querySelector("#view-menu .btn-primary");
+      if (btn) {
+        btn.style.backgroundColor = ""; // revert to CSS default
+        btn.innerText = "儲存變更 (儲存菜單)";
+      }
+    }
+
+    const BENMI_CATS = [
+      { id: "large", label: "肉類 (雞胸肉 / 雞腿肉 / 松阪豬)" },
+      { id: "small", label: "小菜 $50/份" },
+      { id: "combo", label: "小菜 $30/份" },
+      { id: "drinks", label: "小菜 $25/份" },
+      { id: "veggie", label: "蔬菜 $35/份 (1份$35 / 3份$100)" },
+      { id: "topping", label: "加料 (加香菜 / 檸檬汁)" }
+    ];
+
+    function openMenuSettings() {
+      activeTab = "menu";
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".content").forEach(c => c.style.display = "none");
+      document.getElementById("view-menu").style.display = "block";
+      if (!currentMenuData) loadMenuData();
+    }
+
+    async function loadMenuData() {
+      document.getElementById("menu-editor-body").innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">載入菜單中...</div>`;
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/menu?_t=${Date.now()}`);
+        if (!res.ok) throw new Error("Failed to load");
+        rawMenuData = await res.json();
+        // Convert object format to editable array format
+        currentMenuData = BENMI_CATS.map(cat => ({
+          id: cat.id,
+          title: cat.label,
+          items: Object.entries(rawMenuData[cat.id] || {}).map(([name, price]) => ({ name, price }))
+        }));
+        activeCategoryIndex = -1;
+        renderMenuCategories();
+        document.getElementById("menu-editor-body").innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">請先從左側選擇分類</div>`;
+        document.getElementById("menu-editor-title").innerText = "分類項目";
+      } catch (e) {
+        alert("無法載入菜單資料：" + e.message);
+      }
+    }
+
+    function renderMenuCategories() {
+      const container = document.getElementById("menu-categories");
+      container.innerHTML = "";
+      if (!currentMenuData) return;
+      currentMenuData.forEach((cat, index) => {
+        const div = document.createElement("div");
+        div.style.cssText = `
+          padding: 16px; border-bottom: 1px solid #eee; cursor: pointer; font-weight: 1000; font-size: 16px;
+          background: ${activeCategoryIndex === index ? '#f3f4f6' : '#fff'};
+          border-left: 4px solid ${activeCategoryIndex === index ? 'var(--brand-red)' : 'transparent'};
+          display: flex; justify-content: space-between; align-items: center;
+        `;
+        div.innerHTML = `
+          <span>${escapeHtml(cat.title)}</span>
+          <span style="font-size: 13px; font-weight: 900; color: var(--muted);">${cat.items.length} 項</span>
+        `;
+        div.onclick = () => {
+          syncMenuDataFromDOM();
+          activeCategoryIndex = index;
+          renderMenuCategories();
+          renderMenuCategoryEditor(index);
+        };
+        container.appendChild(div);
+      });
+    }
+
+    function renderMenuCategoryEditor(index) {
+      if (!currentMenuData || !currentMenuData[index]) return;
+      const cat = currentMenuData[index];
+      document.getElementById("menu-editor-title").innerText = cat.title + " (全部 " + cat.items.length + " 項)";
+
+      const container = document.getElementById("menu-editor-body");
+      container.innerHTML = "";
+
+      let draggedItemIndex = null;
+
+      cat.items.forEach((item, iIdx) => {
+        const row = document.createElement("div");
+        row.style.cssText = "background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; transition: opacity 0.2s; cursor: grab;";
+        row.draggable = true;
+
+        row.addEventListener("dragstart", (e) => {
+          draggedItemIndex = iIdx;
+          e.dataTransfer.effectAllowed = "move";
+          setTimeout(() => row.style.opacity = "0.4", 0);
+        });
+        row.addEventListener("dragend", () => { row.style.opacity = "1"; });
+        row.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          row.style.border = "2px dashed var(--primary)";
+        });
+        row.addEventListener("dragleave", () => {
+          row.style.border = "1px solid var(--border)";
+        });
+        row.addEventListener("drop", (e) => {
+          e.preventDefault();
+          row.style.border = "1px solid var(--border)";
+          if (draggedItemIndex !== null && draggedItemIndex !== iIdx) {
+            syncMenuDataFromDOM();
+            const arr = currentMenuData[index].items;
+            const moved = arr.splice(draggedItemIndex, 1)[0];
+            arr.splice(iIdx, 0, moved);
+            markMenuDirty();
+            renderMenuCategoryEditor(index);
+          }
+        });
+
+        row.innerHTML = `
+          <div style="color: #ccc; font-size: 22px; cursor: grab; flex-shrink:0;">☰</div>
+          <input type="text" value="${escapeHtml(item.name)}" data-name-cidx="${index}" data-name-iidx="${iIdx}" oninput="markMenuDirty()"
+            style="flex: 2; min-width: 120px; font-size: 17px; font-weight: 900; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-family:inherit; box-sizing:border-box;">
+          <label style="display:flex; align-items:center; gap:6px; font-weight:900; flex-shrink:0;">
+            <span style="font-size:18px;">$</span>
+            <input type="number" value="${item.price !== null && item.price !== undefined ? item.price : ''}" data-cidx="${index}" data-iidx="${iIdx}" oninput="markMenuDirty()"
+              placeholder="隱藏" style="width: 90px; font-size: 17px; font-weight: 900; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-family:inherit; box-sizing:border-box;">
+          </label>
+          <button class="btn btn-ghost" style="padding: 8px 14px; font-size:14px; flex-shrink:0;" onclick="openImageModal('${cat.id}', '${escapeHtml(item.name)}')">📷 Ảnh</button>
+          <button class="btn btn-ghost" style="padding: 8px 14px; color: var(--brand-red); font-size:14px; flex-shrink:0;" onclick="removeMenuItemAt(${index}, ${iIdx})">刪除</button>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function removeMenuItemAt(cIdx, iIdx) {
+      if (confirm("確定要刪除這個項目嗎?")) {
+        syncMenuDataFromDOM();
+        currentMenuData[cIdx].items.splice(iIdx, 1);
+        markMenuDirty();
+        renderMenuCategoryEditor(cIdx);
+        renderMenuCategories();
+      }
+    }
+
+    function addNewMenuItem() {
+      if (activeCategoryIndex < 0 || !currentMenuData) return;
+      syncMenuDataFromDOM();
+      currentMenuData[activeCategoryIndex].items.unshift({ name: "新項目", price: 0 });
+      markMenuDirty();
+      renderMenuCategoryEditor(activeCategoryIndex);
+      renderMenuCategories();
+    }
+
+    function syncMenuDataFromDOM() {
+      document.querySelectorAll("#menu-editor-body input[data-name-cidx]").forEach(inp => {
+        const cIdx = parseInt(inp.getAttribute("data-name-cidx"));
+        const iIdx = parseInt(inp.getAttribute("data-name-iidx"));
+        if (currentMenuData[cIdx] && currentMenuData[cIdx].items[iIdx]) {
+          currentMenuData[cIdx].items[iIdx].name = inp.value;
+        }
+      });
+      document.querySelectorAll("#menu-editor-body input[data-cidx]").forEach(inp => {
+        const cIdx = parseInt(inp.getAttribute("data-cidx"));
+        const iIdx = parseInt(inp.getAttribute("data-iidx"));
+        const val = inp.value.trim() === "" ? null : parseInt(inp.value);
+        if (currentMenuData[cIdx] && currentMenuData[cIdx].items[iIdx]) {
+          currentMenuData[cIdx].items[iIdx].price = val;
+        }
+      });
+    }
+
+    async function saveMenuData() {
+      if (!currentMenuData) return;
+      if (!confirm("確定要儲存所有變更嗎？這會直接即時影響顧客端點餐頁面。")) return;
+      syncMenuDataFromDOM();
+
+      // Convert back to Benmi object format
+      const output = {};
+      currentMenuData.forEach(cat => {
+        output[cat.id] = {};
+        cat.items.forEach(item => {
+          if (item.name && item.name.trim() !== "" && item.price !== null) {
+            output[cat.id][item.name.trim()] = item.price;
+          }
+        });
+      });
+
+      const btn = document.querySelector("#view-menu .btn-primary");
+      const oldText = btn.innerText;
+      btn.innerText = "儲存中..."; btn.disabled = true;
+
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/menu`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(output)
+        });
+        if (!res.ok) throw new Error("API returned " + res.status);
+        clearMenuDirty();
+        alert("儲存成功！");
+        renderMenuCategories();
+      } catch (e) {
+        alert("儲存失敗：" + e.message);
+      } finally {
+        btn.innerText = "儲存變更 (儲存菜單)"; btn.disabled = false;
+      }
+    }
+
+    async function restoreDefaultMenu() {
+      if (!confirm("您確定要將菜單重設為預設值嗎？這將覆蓋您已修改的所有品項！")) return;
+
+      const DEFAULT_MENU = {
+        large: { "雞胸肉": 60, "雞腿肉": 70, "松阪豬": 70 },
+        small: { "無骨鳳爪": 50, "日本山藥": 50 },
+        combo: { "煙燻豆包": 30, "茶燻百葉": 30, "鳥蛋(5顆)": 30, "鴨米血": 30, "櫛瓜": 30, "木耳": 30, "蘋果": 30, "筍片": 30 },
+        drinks: { "蝦子(一隻)": 25, "大黑豆乾": 25, "竹輪": 25, "皮蛋": 25, "甜不辣": 25 },
+        veggie: { "小黃瓜": 35, "高麗菜": 35, "玉米筍": 35, "龍鬚菜": 35, "娃娃菜": 35, "蓮藕片": 35, "豬耳朵": 35, "雞軟骨": 35, "烤馬鈴薯": 35, "腐竹豆皮": 35, "滷蛋白丁": 35, "蘆筍": 35, "花椰菜": 35, "水蓮": 35, "山苦瓜": 35, "秋葵": 35, "芥藍芽": 35, "杏鮑菇": 35, "雞肝": 35, "雞胗": 35, "鴨賞": 35, "雞心": 35, "蕎麥麵": 35, "金針菇": 35 },
+        topping: { "加香菜": 15, "檸檬汁": 20 }
+      };
+
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/menu`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(DEFAULT_MENU)
+        });
+        if (!res.ok) throw new Error("API returned " + res.status);
+        alert("預設菜單已恢復成功！");
+        loadMenuData(); // Reload from server
+      } catch (e) {
+        alert("恢復預設菜單時出錯：" + e.message);
+      }
+    }
+
+    // --- Image Management ---
+    let currentImageItemName = null;
+
+    async function openImageModal(categoryId, itemName) {
+      currentImageItemName = `${categoryId}_${itemName}`;
+      document.getElementById("image-modal-title").innerText = `圖片管理: ${itemName}`;
+      document.getElementById("image-preview").style.display = "none";
+      document.getElementById("btn-delete-image").style.display = "none";
+      document.getElementById("image-status").innerText = "正在檢查圖片...";
+
+      document.getElementById("imageModal").style.display = "flex";
+
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/image_list?_t=${Date.now()}`);
+        if (res.ok) {
+          const list = await res.json();
+          if (list.includes(currentImageItemName)) {
+            document.getElementById("image-preview").src = `${WORKER_BASE}/api/image?name=${encodeURIComponent(currentImageItemName)}&_t=${Date.now()}`;
+            document.getElementById("image-preview").style.display = "block";
+            document.getElementById("btn-delete-image").style.display = "block";
+            document.getElementById("image-status").innerText = "此品項已有圖片";
+          } else {
+            document.getElementById("image-status").innerText = "此品項尚未上傳圖片";
+          }
+        }
+      } catch (e) {
+        document.getElementById("image-status").innerText = "載入圖片失敗";
+      }
+    }
+
+    function handleImageSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = new Image();
+        img.onload = function () {
+          // Resize if too large
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Get base64 (webp is usually smaller)
+          const dataUri = canvas.toDataURL("image/webp", 0.8);
+          uploadImage(dataUri);
+        }
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+      event.target.value = ''; // reset
+    }
+
+    async function uploadImage(dataUri) {
+      document.getElementById("image-status").innerText = "正在上傳圖片...";
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/image`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: currentImageItemName, dataUri })
+        });
+        if (!res.ok) throw new Error("Upload failed");
+
+        document.getElementById("image-preview").src = dataUri;
+        document.getElementById("image-preview").style.display = "block";
+        document.getElementById("btn-delete-image").style.display = "block";
+        document.getElementById("image-status").innerText = "上傳圖片成功！";
+      } catch (e) {
+        alert("Lỗi tải ảnh: " + e.message);
+        document.getElementById("image-status").innerText = "圖片上傳失敗";
+      }
+    }
+
+    async function deleteItemImage() {
+      if (!confirm("您確定要刪除此圖片嗎？")) return;
+      document.getElementById("image-status").innerText = "正在刪除圖片...";
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/image`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: currentImageItemName })
+        });
+        if (!res.ok) throw new Error("Delete failed");
+
+        document.getElementById("image-preview").style.display = "none";
+        document.getElementById("btn-delete-image").style.display = "none";
+        document.getElementById("image-status").innerText = "此品項尚未上傳圖片";
+      } catch (e) {
+        alert("Lỗi xóa ảnh: " + e.message);
+      }
+    }
+
+    function closeModal() {
+      document.querySelectorAll(".modal").forEach(m => m.style.display = "none");
+      reviewingOrder = null;
+      currentOrderKey = null;
+    }
+
+    setInterval(() => {
+      if (activeTab === "live" || activeTab === "history") fetchOrders();
+    }, 1500);
+    fetchOrders();
+  </script>
+</body>
+
+</html>
