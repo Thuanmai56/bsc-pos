@@ -38,7 +38,8 @@
     </div>
 
     <nav class="sticky-nav" id="main-nav">
-        <div class="nav-btn active" onclick="scrollToSec('sec-meat')">🍗 肉類</div>
+        <div class="nav-btn active" onclick="scrollToSec('sec-flavor')">🧪 口味選擇</div>
+        <div class="nav-btn" onclick="scrollToSec('sec-meat')">🍗 肉類</div>
         <div class="nav-btn" onclick="scrollToSec('sec-side50')">小菜$50</div>
         <div class="nav-btn" onclick="scrollToSec('sec-side30')">小菜$30</div>
         <div class="nav-btn" onclick="scrollToSec('sec-side25')">小菜$25</div>
@@ -47,38 +48,7 @@
     </nav>
 
     <div class="container">
-        <div class="section-container" id="sec-meat">
-            <div class="section-title">🍗 肉類</div>
-            <div class="grid" id="meat-list"></div>
-        </div>
-
-        <div class="section-container" id="sec-side50">
-            <div class="section-title">⭐ 精選小菜 $50/份</div>
-            <div class="grid" id="side50-list"></div>
-        </div>
-
-        <div class="section-container" id="sec-side30">
-            <div class="section-title">🥘 特色小菜 $30/份</div>
-            <div class="grid" id="side30-list"></div>
-        </div>
-
-        <div class="section-container" id="sec-side25">
-            <div class="section-title">🥗 經典小菜 $25/份</div>
-            <div class="grid" id="side25-list"></div>
-        </div>
-
-        <div class="section-container" id="sec-veggie">
-            <div class="section-title">🥦 蔬菜/配菜 1份$35 / 3份$100</div>
-            <div class="grid" id="veggie-list"></div>
-        </div>
-
-        <div class="section-container" id="sec-checkout" style="margin-top: 20px;">
-            <div class="section-title">🛍️ 購物車清單</div>
-            <div id="cart-summary"
-                style="margin-bottom: 20px; padding: 12px; background: #fff; border-radius: 12px; border: 1px solid var(--border); font-size: 15px; color: #444;">
-                <div style="text-align:center; color:#9ca3af;">(目前沒有已選商品)</div>
-            </div>
-
+        <div class="section-container" id="sec-flavor">
             <div class="section-title">🧪 口味與客製化選擇</div>
             <div class="custom-panel" style="margin-bottom: 20px; padding: 16px; background: #fff; border-radius: 12px; border: 1px solid var(--border); font-size: 15px; color: #444;">
                 <div class="custom-group">
@@ -90,9 +60,10 @@
                         <label class="radio-label"><input type="radio" name="opt-flavor" value="檸檬香菜" onchange="toggleOriginalCustom()"> 檸檬香菜</label>
                         <label class="radio-label"><input type="radio" name="opt-flavor" value="原味客製" onchange="toggleOriginalCustom()"> 原味客製</label>
                     </div>
-                    <div id="original-custom-sub" style="display: none; margin-top: 10px; padding-left: 10px; border-left: 2px solid #ddd; gap: 15px;">
+                    <div id="original-custom-sub" style="display: none; margin-top: 10px; padding-left: 10px; border-left: 2px solid #ddd; gap: 15px; flex-wrap: wrap;">
                         <label class="checkbox-label"><input type="checkbox" id="chk-no-oil"> 不加香油</label>
                         <label class="checkbox-label"><input type="checkbox" id="chk-no-pepper"> 不加胡椒</label>
+                        <label class="checkbox-label"><input type="checkbox" id="chk-no-pepper-with-salt"> 不加胡椒加鹽巴</label>
                     </div>
                 </div>
 
@@ -132,6 +103,39 @@
                         <label class="checkbox-label" style="font-weight: 800; color: #b45309;"><input type="checkbox" id="chk-lemon" onchange="updateTotal()"> 加檸檬汁 (+$20)</label>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <div class="section-container" id="sec-meat">
+            <div class="section-title">🍗 肉類</div>
+            <div class="grid" id="meat-list"></div>
+        </div>
+
+        <div class="section-container" id="sec-side50">
+            <div class="section-title">⭐ 精選小菜 $50/份</div>
+            <div class="grid" id="side50-list"></div>
+        </div>
+
+        <div class="section-container" id="sec-side30">
+            <div class="section-title">🥘 特色小菜 $30/份</div>
+            <div class="grid" id="side30-list"></div>
+        </div>
+
+        <div class="section-container" id="sec-side25">
+            <div class="section-title">🥗 經典小菜 $25/份</div>
+            <div class="grid" id="side25-list"></div>
+        </div>
+
+        <div class="section-container" id="sec-veggie">
+            <div class="section-title">🥦 蔬菜/配菜 1份$35 / 3份$100</div>
+            <div class="grid" id="veggie-list"></div>
+        </div>
+
+        <div class="section-container" id="sec-checkout" style="margin-top: 20px;">
+            <div class="section-title">🛍️ 購物車清單</div>
+            <div id="cart-summary"
+                style="margin-bottom: 20px; padding: 12px; background: #fff; border-radius: 12px; border: 1px solid var(--border); font-size: 15px; color: #444;">
+                <div style="text-align:center; color:#9ca3af;">(目前沒有已選商品)</div>
             </div>
 
             <div class="section-title">🕒 取餐時間</div>
@@ -320,6 +324,7 @@
                 let subOpts = [];
                 if (document.getElementById('chk-no-oil')?.checked) subOpts.push('不加香油');
                 if (document.getElementById('chk-no-pepper')?.checked) subOpts.push('不加胡椒');
+                if (document.getElementById('chk-no-pepper-with-salt')?.checked) subOpts.push('不加胡椒加鹽巴');
                 if (subOpts.length > 0) {
                     flavorDetails = ` (${subOpts.join('、')})`;
                 }
@@ -660,8 +665,10 @@
                     subDiv.style.display = 'none';
                     const noOil = document.getElementById('chk-no-oil');
                     const noPepper = document.getElementById('chk-no-pepper');
+                    const noPepperWithSalt = document.getElementById('chk-no-pepper-with-salt');
                     if (noOil) noOil.checked = false;
                     if (noPepper) noPepper.checked = false;
+                    if (noPepperWithSalt) noPepperWithSalt.checked = false;
                 }
             }
         }
