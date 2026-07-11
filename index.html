@@ -84,17 +84,27 @@
                 <div class="custom-group">
                     <label class="custom-label" style="font-weight: 800; display: block; margin-bottom: 8px;">✦ 口味選擇</label>
                     <div class="radio-grid" style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 8px;">
-                        <label class="radio-label"><input type="radio" name="opt-flavor" value="特調胡椒" checked onchange="toggleOriginalCustom()"> 特調胡椒</label>
-                        <label class="radio-label"><input type="radio" name="opt-flavor" value="泰式酸辣" onchange="toggleOriginalCustom()"> 泰式酸辣</label>
-                        <label class="radio-label"><input type="radio" name="opt-flavor" value="清爽檸檬" onchange="toggleOriginalCustom()"> 清爽檸檬</label>
-                        <label class="radio-label"><input type="radio" name="opt-flavor" value="檸檬香菜" onchange="toggleOriginalCustom()"> 檸檬香菜</label>
-                        <label class="radio-label"><input type="radio" name="opt-flavor" value="原味客製" onchange="toggleOriginalCustom()"> 原味客製</label>
+                        <div class="flavor-option-container" style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
+                            <label class="radio-label"><input type="radio" name="opt-flavor" value="特調胡椒" checked onchange="toggleOriginalCustom()"> 特調胡椒</label>
+                        </div>
+                        <div class="flavor-option-container" style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
+                            <label class="radio-label"><input type="radio" name="opt-flavor" value="泰式酸辣" onchange="toggleOriginalCustom()"> 泰式酸辣</label>
+                        </div>
+                        <div class="flavor-option-container" style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
+                            <label class="radio-label"><input type="radio" name="opt-flavor" value="清爽檸檬" onchange="toggleOriginalCustom()"> 清爽檸檬</label>
+                        </div>
+                        <div class="flavor-option-container" style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
+                            <label class="radio-label"><input type="radio" name="opt-flavor" value="檸檬香菜" onchange="toggleOriginalCustom()"> 檸檬香菜</label>
+                        </div>
+                        <div class="flavor-option-container" style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
+                            <label class="radio-label"><input type="radio" name="opt-flavor" value="原味客製" onchange="toggleOriginalCustom()"> 原味客製</label>
+                        </div>
                     </div>
-                    <div id="original-custom-sub" style="display: none; margin-top: 10px; padding-left: 10px; border-left: 2px solid #ddd; gap: 15px;">
+                    <div id="original-custom-sub" style="display: none; margin-top: 10px; padding-left: 10px; border-left: 2px solid #ddd; gap: 15px; flex-wrap: wrap;">
                         <label class="checkbox-label"><input type="checkbox" id="chk-no-oil"> 不加香油</label>
                         <label class="checkbox-label"><input type="checkbox" id="chk-no-pepper"> 不加胡椒</label>
                     </div>
-                    <div id="lemon-custom-sub" style="display: none; margin-top: 10px; padding-left: 10px; border-left: 2px solid #ddd; gap: 15px;">
+                    <div id="lemon-custom-sub" style="display: none; margin-top: 10px; padding-left: 10px; border-left: 2px solid #ddd; gap: 15px; flex-wrap: wrap;">
                         <label class="checkbox-label"><input type="checkbox" id="chk-lemon-no-oil"> 不加香油</label>
                         <label class="checkbox-label"><input type="checkbox" id="chk-lemon-no-salt"> 不加鹽巴</label>
                     </div>
@@ -639,9 +649,12 @@
         function toggleOriginalCustom() {
             const flavorRadio = document.querySelector('input[name="opt-flavor"]:checked');
             const flavor = flavorRadio ? flavorRadio.value : '';
+            const container = flavorRadio ? flavorRadio.closest('.flavor-option-container') : null;
+
             const subDiv = document.getElementById('original-custom-sub');
             if (subDiv) {
                 if (flavor === '原味客製') {
+                    if (container) container.appendChild(subDiv);
                     subDiv.style.display = 'flex';
                 } else {
                     subDiv.style.display = 'none';
@@ -654,6 +667,7 @@
             const lemonSubDiv = document.getElementById('lemon-custom-sub');
             if (lemonSubDiv) {
                 if (flavor === '清爽檸檬' || flavor === '檸檬香菜') {
+                    if (container) container.appendChild(lemonSubDiv);
                     lemonSubDiv.style.display = 'flex';
                 } else {
                     lemonSubDiv.style.display = 'none';
