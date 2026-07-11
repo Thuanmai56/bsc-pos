@@ -164,12 +164,8 @@
           <div class="detail-value" id="review-customer">-</div>
         </div>
         <div class="detail-box">
-          <div class="detail-label">取餐時間</div>
+          <div class="detail-label">取餐日期</div>
           <div class="detail-value" id="review-pickup">-</div>
-        </div>
-        <div class="detail-box">
-          <div class="detail-label">剩餘時間</div>
-          <div class="detail-value" id="review-eta" style="color: var(--brand-red);">-</div>
         </div>
         <div class="detail-box">
           <div class="detail-label">訂單狀態</div>
@@ -220,11 +216,10 @@
       <select id="change-reason"
         style="width:100%; padding: 16px; margin-top: 10px; border-radius: 12px; border: 1px solid var(--border); font-size: 22px;"
         onchange="onChangeReasonChange()">
-        <option value="時間需調整">取餐時間需調整 (延後)</option>
         <option value="口味售完">商品已售完</option>
       </select>
       <textarea id="change-note" rows="3" placeholder="建議新時間 (例如：17:30)"
-        style="width:100%; padding: 16px; margin-top: 16px; border-radius: 12px; border: 1px solid var(--border); font-size: 22px;"></textarea>
+        style="width:100%; padding: 16px; margin-top: 16px; border-radius: 12px; border: 1px solid var(--border); font-size: 22px; display: none;"></textarea>
 
       <div id="change-items-div" style="display: none;">
         <div style="margin-top: 16px; font-weight: 800; font-size: 18px; margin-bottom: 12px;">選擇已售完的商品：</div>
@@ -359,7 +354,7 @@
 
     function formatEta(timeStr) {
       const target = parsePickupTimeMs(timeStr);
-      if (Number.isNaN(target)) return "-";
+      if (Number.isNaN(target)) return "";
       const diffMs = target - Date.now();
       const diffMin = Math.round(diffMs / 60000);
       if (diffMin <= 0) return `已到 / ${Math.abs(diffMin)} 分鐘前`;
@@ -413,9 +408,9 @@
         renderAll();
       } catch (e) {
         console.error(e);
-        document.getElementById("list-left").innerHTML = `<div style="text-align:center; padding: 22px; color:#d32f2f;">Không tải được: ${escapeHtml(e?.message || e)}</div>`;
-        document.getElementById("list-right").innerHTML = `<div style="text-align:center; padding: 22px; color:#d32f2f;">Không tải được</div>`;
-        document.getElementById("list-history").innerHTML = `<div style="text-align:center; padding: 22px; color:#d32f2f;">Không tải được</div>`;
+        document.getElementById("list-left").innerHTML = `<div style="text-align:center; padding: 22px; color:#d32f2f;">無法載入: ${escapeHtml(e?.message || e)}</div>`;
+        document.getElementById("list-right").innerHTML = `<div style="text-align:center; padding: 22px; color:#d32f2f;">無法載入</div>`;
+        document.getElementById("list-history").innerHTML = `<div style="text-align:center; padding: 22px; color:#d32f2f;">無法載入</div>`;
       }
     }
 
@@ -466,7 +461,7 @@
       const container = document.getElementById("list-left");
       container.innerHTML = "";
       if (orders.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">Chưa có</div>`;
+        container.innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">暫無訂單</div>`;
         return;
       }
 
@@ -495,7 +490,7 @@
         tile.innerHTML = `
           <div>
             <div class="tile-top">
-              <span class="tile-customer">${escapeHtml(order.customer || "Khách")}</span>
+              <span class="tile-customer">${escapeHtml(order.customer || "顧客")}</span>
               ${badge}
               <span class="tile-meta">#${escapeHtml(order.key)}</span>
             </div>
@@ -682,7 +677,6 @@
       document.getElementById("review-order-key").innerText = order.key || "-";
       document.getElementById("review-customer").innerText = order.customer || "-";
       document.getElementById("review-pickup").innerText = order.time || "-";
-      document.getElementById("review-eta").innerText = formatEta(order.time);
       document.getElementById("review-status").innerText = order.status || "-";
       document.getElementById("review-content").innerHTML = formatContentHtml(order);
 
@@ -784,8 +778,7 @@
       const savedKey = reviewingOrder.key;  // Save key BEFORE closeModal wipes it
       closeModal();
       currentOrderKey = savedKey;           // Restore after closeModal
-      document.getElementById("change-reason").value = "時間需調整";
-      document.getElementById("change-note").value = "";
+      document.getElementById("change-reason").value = "口味售完";
       const checkboxes = document.querySelectorAll(".sold-item");
       if (checkboxes) checkboxes.forEach(cb => cb.checked = false);
       onChangeReasonChange();
@@ -1189,7 +1182,7 @@
             <input type="number" value="${item.price !== null && item.price !== undefined ? item.price : ''}" data-cidx="${index}" data-iidx="${iIdx}" oninput="markMenuDirty()"
               placeholder="隱藏" style="width: 90px; font-size: 17px; font-weight: 900; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-family:inherit; box-sizing:border-box;">
           </label>
-          <button class="btn btn-ghost" style="padding: 8px 14px; font-size:14px; flex-shrink:0;" onclick="openImageModal('${cat.id}', '${escapeHtml(item.name)}')">📷 Ảnh</button>
+          <button class="btn btn-ghost" style="padding: 8px 14px; font-size:14px; flex-shrink:0;" onclick="openImageModal('${cat.id}', '${escapeHtml(item.name)}')">📷 圖片</button>
           <button class="btn btn-ghost" style="padding: 8px 14px; color: var(--brand-red); font-size:14px; flex-shrink:0;" onclick="removeMenuItemAt(${index}, ${iIdx})">刪除</button>
         `;
         container.appendChild(row);
@@ -1383,7 +1376,7 @@
         document.getElementById("btn-delete-image").style.display = "block";
         document.getElementById("image-status").innerText = "上傳圖片成功！";
       } catch (e) {
-        alert("Lỗi tải ảnh: " + e.message);
+        alert("上傳圖片失敗: " + e.message);
         document.getElementById("image-status").innerText = "圖片上傳失敗";
       }
     }
@@ -1403,7 +1396,7 @@
         document.getElementById("btn-delete-image").style.display = "none";
         document.getElementById("image-status").innerText = "此品項尚未上傳圖片";
       } catch (e) {
-        alert("Lỗi xóa ảnh: " + e.message);
+        alert("刪除圖片失敗: " + e.message);
       }
     }
 

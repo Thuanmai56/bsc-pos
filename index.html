@@ -94,6 +94,10 @@
                         <label class="checkbox-label"><input type="checkbox" id="chk-no-oil"> 不加香油</label>
                         <label class="checkbox-label"><input type="checkbox" id="chk-no-pepper"> 不加胡椒</label>
                     </div>
+                    <div id="lemon-custom-sub" style="display: none; margin-top: 10px; padding-left: 10px; border-left: 2px solid #ddd; gap: 15px;">
+                        <label class="checkbox-label"><input type="checkbox" id="chk-lemon-no-oil"> 不加香油</label>
+                        <label class="checkbox-label"><input type="checkbox" id="chk-lemon-no-salt"> 不加鹽巴</label>
+                    </div>
                 </div>
 
                 <div class="custom-group" style="margin-top: 16px;">
@@ -113,6 +117,7 @@
                         <label class="radio-label"><input type="radio" name="opt-spicy" value="小辣"> 小辣</label>
                         <label class="radio-label"><input type="radio" name="opt-spicy" value="中辣"> 中辣</label>
                         <label class="radio-label"><input type="radio" name="opt-spicy" value="大辣"> 大辣</label>
+                        <label class="radio-label"><input type="radio" name="opt-spicy" value="辣椒放餐盒角落"> 辣椒放餐盒角落</label>
                     </div>
                 </div>
 
@@ -134,12 +139,11 @@
                 </div>
             </div>
 
-            <div class="section-title">🕒 取餐時間</div>
+            <div class="section-title">🕒 取餐日期</div>
             <div class="input-group">
-                <label style="font-weight: 800; color: var(--primary);">⚠️ 請選擇取餐日期 / 時間</label>
+                <label style="font-weight: 800; color: var(--primary);">⚠️ 請選擇取餐日期</label>
                 <div class="datetime-row">
                     <input type="date" id="pickup-date">
-                    <input type="time" id="pickup-time">
                 </div>
             </div>
 
@@ -241,9 +245,8 @@
             if (!hasItem) return customAlert('請選擇品項');
 
             const dateInput = document.getElementById('pickup-date').value;
-            const timeInput = document.getElementById('pickup-time').value;
 
-            if (!dateInput || !timeInput) {
+            if (!dateInput) {
                 const timeSection = document.getElementById('sec-checkout');
                 if (timeSection) {
                     timeSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -252,55 +255,32 @@
                     setTimeout(() => { timeSection.style.outline = 'none'; }, 2000);
                 }
                 setTimeout(() => {
-                    if (!dateInput) document.getElementById('pickup-date').focus();
-                    else document.getElementById('pickup-time').focus();
+                    document.getElementById('pickup-date').focus();
                 }, 400);
-                return customAlert('請先選取取餐日期和時間 ↓');
+                return customAlert('請先選取取餐日期 ↓');
             }
 
-            const now = new Date();
-            const selectedDateTime = new Date(`${dateInput}T${timeInput}`);
-            if (selectedDateTime < now) return customAlert('不能選擇過去的時間，請重新選擇');
+            const nowTaiwan = new Date(Date.now() + 8 * 3600000);
+            const todayStr = nowTaiwan.toISOString().split('T')[0];
+            if (dateInput < todayStr) return customAlert('不能選擇過去的日期，請重新選擇');
 
             const pickupDate = new Date(dateInput);
             const dayOfWeek = pickupDate.getDay();
-            const [hours, minutes] = timeInput.split(':').map(Number);
-            const timeValue = hours + minutes / 60;
 
-            let isValidTime = false;
-            let displayHoursMsg = "";
-            
+            let isClosed = false;
             if (storeConfig && storeConfig.operatingHours) {
                 const shifts = storeConfig.operatingHours[dayOfWeek] || [];
-                if (shifts.length > 0) {
-                    for (let shift of shifts) {
-                        const [sH, sM] = shift.start.split(':').map(Number);
-                        const [eH, eM] = shift.end.split(':').map(Number);
-                        const startVal = sH + sM / 60;
-                        const endVal = eH + eM / 60;
-                        if (timeValue >= startVal && timeValue <= endVal) {
-                            isValidTime = true;
-                            break;
-                        }
-                    }
-                    displayHoursMsg = shifts.map(s => `${s.start} - ${s.end}`).join(", ");
+                if (shifts.length === 0) {
+                    isClosed = true;
                 }
             } else {
-                if (dayOfWeek === 1 || dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0) {
-                    if (timeValue >= 16.5 && timeValue <= 21.5) isValidTime = true;
-                    displayHoursMsg = "16:30 - 21:30";
-                } else {
-                    displayHoursMsg = "";
+                if (dayOfWeek === 2 || dayOfWeek === 3 || dayOfWeek === 4) {
+                    isClosed = true;
                 }
             }
-            
-            if (!isValidTime) {
-                if (displayHoursMsg === "") {
-                    return customAlert('當天店家公休，請選擇其他日期');
-                } else {
-                    const days = ["日", "一", "二", "三", "四", "五", "六"];
-                    return customAlert(`週${days[dayOfWeek]}的營業時間為 ${displayHoursMsg}，請重新選擇取餐時間`);
-                }
+
+            if (isClosed) {
+                return customAlert('當天店家公休，請選擇其他日期');
             }
 
             isSubmitting = true;
@@ -320,6 +300,13 @@
                 let subOpts = [];
                 if (document.getElementById('chk-no-oil')?.checked) subOpts.push('不加香油');
                 if (document.getElementById('chk-no-pepper')?.checked) subOpts.push('不加胡椒');
+                if (subOpts.length > 0) {
+                    flavorDetails = ` (${subOpts.join('、')})`;
+                }
+            } else if (flavor === '清爽檸檬' || flavor === '檸檬香菜') {
+                let subOpts = [];
+                if (document.getElementById('chk-lemon-no-oil')?.checked) subOpts.push('不加香油');
+                if (document.getElementById('chk-lemon-no-salt')?.checked) subOpts.push('不加鹽巴');
                 if (subOpts.length > 0) {
                     flavorDetails = ` (${subOpts.join('、')})`;
                 }
@@ -353,7 +340,7 @@
             if (exclusionsStr) msg += `\n- ${exclusionsStr}`;
             if (addOnsStr) msg += `\n- ${addOnsStr}`;
 
-            msg += `\n\n🕒 取餐時間：${dateInput} ${timeInput}`;
+            msg += `\n\n🕒 取餐日期：${dateInput}`;
             const mainNote = document.getElementById('note').value;
             if (mainNote) msg += `\n📝 總備註：${mainNote}`;
             msg += `\n💰 總金額：$${currentTotal}`;
@@ -370,7 +357,7 @@
                     key: orderNum,
                     userId: profile.userId,
                     customer: profile.displayName,
-                    time: `${dateInput} ${timeInput}`,
+                    time: dateInput,
                     content: msg.split('\n\n🕒')[0].replace('[Benmi 點餐]\n', ''),
                     total: currentTotal,
                     note: mainNote,
@@ -387,7 +374,7 @@
                     throw new Error(`API returned status ${res.status}`);
                 }
 
-                customAlert('<div style="margin-bottom: 15px;"><svg width="64" height="64" viewBox="0 0 24 24" fill="#10b981"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div><div style="font-size: 18px; line-height: 1.4; color: #111;">訂單已送出，店員會馬上跟您確認，請稍等</div>', () => {
+                customAlert('<div style="margin-bottom: 15px;"><svg width="64" height="64" viewBox="0 0 24 24" fill="#10b981"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div><div style="font-size: 18px; line-height: 1.4; color: #111;">感謝您的訂單！餐點製作完成後，我們會再次通知您前來取餐，謝謝！</div>', () => {
                     liff.closeWindow();
                 });
 
@@ -400,7 +387,7 @@
                 
                 try {
                     await liff.sendMessages([{ type: 'text', text: msg }]);
-                    customAlert('<div style="margin-bottom: 15px;"><svg width="64" height="64" viewBox="0 0 24 24" fill="#10b981"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div><div style="font-size: 18px; line-height: 1.4; color: #111;">訂單已送出，店員會馬上跟您確認，請稍等</div>', () => {
+                    customAlert('<div style="margin-bottom: 15px;"><svg width="64" height="64" viewBox="0 0 24 24" fill="#10b981"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div><div style="font-size: 18px; line-height: 1.4; color: #111;">感謝您的訂單！餐點製作完成後，我們會再次通知您前來取餐，謝謝！</div>', () => {
                         liff.closeWindow();
                     });
                 } catch (liffErr) {
@@ -412,7 +399,7 @@
                             key: orderNum,
                             userId: profile.userId,
                             customer: profile.displayName,
-                            time: `${dateInput} ${timeInput}`,
+                            time: dateInput,
                             content: msg.split('\n\n🕒')[0].replace('[Benmi 點餐]\n', ''),
                             total: currentTotal,
                             note: mainNote,
@@ -424,7 +411,7 @@
                             body: JSON.stringify(orderPayload)
                         });
                         if (res.ok) {
-                            customAlert('<div style="margin-bottom: 15px;"><svg width="64" height="64" viewBox="0 0 24 24" fill="#10b981"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div><div style="font-size: 18px; line-height: 1.4; color: #111;">訂單已送出，店員會馬上跟您確認</div>', () => {
+                            customAlert('<div style="margin-bottom: 15px;"><svg width="64" height="64" viewBox="0 0 24 24" fill="#10b981"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div><div style="font-size: 18px; line-height: 1.4; color: #111;">感謝您的訂單！餐點製作完成後，我們會再次通知您前來取餐，謝謝！</div>', () => {
                                 liff.closeWindow();
                             });
                             return;
@@ -662,6 +649,18 @@
                     const noPepper = document.getElementById('chk-no-pepper');
                     if (noOil) noOil.checked = false;
                     if (noPepper) noPepper.checked = false;
+                }
+            }
+            const lemonSubDiv = document.getElementById('lemon-custom-sub');
+            if (lemonSubDiv) {
+                if (flavor === '清爽檸檬' || flavor === '檸檬香菜') {
+                    lemonSubDiv.style.display = 'flex';
+                } else {
+                    lemonSubDiv.style.display = 'none';
+                    const lemonNoOil = document.getElementById('chk-lemon-no-oil');
+                    const lemonNoSalt = document.getElementById('chk-lemon-no-salt');
+                    if (lemonNoOil) lemonNoOil.checked = false;
+                    if (lemonNoSalt) lemonNoSalt.checked = false;
                 }
             }
         }
