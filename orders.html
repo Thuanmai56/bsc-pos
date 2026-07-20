@@ -292,7 +292,7 @@
     </div>
   </div>
 
-  <!-- Modal Quản lý Hết Hàng (Stock Management) -->
+  <!-- 庫存管理 (Stock Management) Modal -->
   <div id="stockModal" class="modal">
     <div class="modal-content" style="max-width: 450px;">
       <div class="modal-title">
@@ -1519,7 +1519,7 @@
       const untilDate = document.getElementById("oos-until-date").value;
 
       if (status === "out_of_stock" && duration === "multiple_days" && !untilDate) {
-        alert("請選擇恢復販售日期！ (Vui lòng chọn ngày khôi phục!)");
+        alert("請選擇恢復販售日期！");
         return;
       }
 
@@ -1545,7 +1545,7 @@
           throw new Error(errData.error || "Update failed");
         }
 
-        // Cập nhật local state
+        // 更新 local state
         item.isOos = (status === "out_of_stock");
 
         const targetCidx = currentStockCidx;
@@ -1553,9 +1553,9 @@
         renderMenuCategoryEditor(targetCidx);
         renderMenuCategories();
 
-        alert("更新庫存狀態成功！ (Cập nhật thành công!)");
+        alert("更新庫存狀態成功！");
       } catch (e) {
-        alert("更新失敗 (Lỗi cập nhật): " + e.message);
+        alert("更新失敗：" + e.message);
       }
     }
 
