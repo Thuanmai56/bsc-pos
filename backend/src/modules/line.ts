@@ -513,7 +513,7 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
             const isAgree = lowerText === "好" || lowerText === "同意" || lowerText === "ok";
             if (isAgree) {
               order.status = "ACCEPTED";
-              await replyText(replyToken, `Benmi 收到您的同意！我們會開始準備您的訂單 #${orderKey}。🥖`, env);
+              await replyText(replyToken, `干城鹹水雞 收到您的同意！我們會開始準備您的訂單 #${orderKey}。`, env);
               const cleanup = async () => { await saveOrder(env, order); await finishPending(); };
               if (ctx && ctx.waitUntil) ctx.waitUntil(cleanup()); else await cleanup();
               continue;
@@ -532,7 +532,7 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
               const reason = order.reason || "（未提供原因）";
               await replyText(
                 replyToken,
-                `非常抱歉！Benmi 無法接下您的訂單 #${orderKey}。\n原因：${reason}\n感謝您訂購 Benmi，歡迎您下次再訂購。`,
+                `非常抱歉！干城鹹水雞 無法接下您的訂單 #${orderKey}。\n原因：${reason}\n感謝您訂購 干城鹹水雞，歡迎您下次再訂購。`,
                 env
               );
               const cleanup = async () => { await saveOrder(env, order); await finishPending(); await syncToGoogleSheets(order, env); };
