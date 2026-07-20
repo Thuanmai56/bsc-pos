@@ -407,7 +407,32 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
     // 1) Pending flow priority
     const pMap = await getPendingMap(env, userId);
     // Find latest pending entry for this user
-    const pKeys = Object.keys(pMap).sort((a, b) => (pMap[b].createdAt || 0) - (pMap[a].createdAt || 0));
+    let pKeys = Object.keys(pMap).sort((a, b) => (pMap[b].createdAt || 0) - (pMap[a].createdAt || 0));
+
+    // Filter out stale pending keys whose orders are already in a final or active state
+    const activeKeys: string[] = [];
+    for (const key of pKeys) {
+      const orderRaw = await env.ORDER_STATE.get(`order:${key}`);
+      if (orderRaw) {
+        try {
+          const order: Order = JSON.parse(orderRaw);
+          if (order.status === "REJECTED" || order.status === "ACCEPTED" || order.status === "DONE" || order.status === "PICKED_UP") {
+            delete pMap[key];
+            continue;
+          }
+        } catch { }
+      }
+      activeKeys.push(key);
+    }
+
+    if (activeKeys.length !== pKeys.length) {
+      if (activeKeys.length === 0) {
+        await env.ORDER_STATE.delete(pendingKey);
+      } else {
+        await env.ORDER_STATE.put(pendingKey, JSON.stringify(pMap));
+      }
+      pKeys = activeKeys;
+    }
 
     if (pKeys.length > 0) {
       const orderKey = pKeys[0]; // Respond to the most recent one

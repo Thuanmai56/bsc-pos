@@ -162,6 +162,18 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
     if (isAlreadyAccepted || isNoReplyReason) {
       order.status = "REJECTED";
       await saveOrder(env, order);
+
+      // Clean up pending action from pMap when rejecting
+      if (order.userId) {
+        try {
+          const pMap = await getPendingMap(env, order.userId);
+          if (pMap[order.key]) {
+            delete pMap[order.key];
+            await env.ORDER_STATE.put(`pending:${order.userId}`, JSON.stringify(pMap));
+          }
+        } catch { }
+      }
+
       if (ctx && ctx.waitUntil) ctx.waitUntil(syncToGoogleSheets(order, env));
       return json({ success: true });
     }
