@@ -291,8 +291,42 @@
     </div>
   </div>
 
+  <!-- Modal Quản lý Hết Hàng (Stock Management) -->
+  <div id="stockModal" class="modal">
+    <div class="modal-content" style="max-width: 450px;">
+      <div class="modal-title">
+        <h3 id="stock-modal-title">設定庫存狀態 (Cài đặt Kho)</h3>
+        <div class="modal-close" onclick="closeStockModal()">✕</div>
+      </div>
+      <div style="margin-top: 16px;">
+        <label style="display: block; font-weight: 900; margin-bottom: 8px; font-size: 15px;">狀態 (Trạng thái):</label>
+        <select id="stock-status-select" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px;" onchange="handleStockStatusChange()">
+          <option value="in_stock">🟢 販售中 (Còn hàng)</option>
+          <option value="out_of_stock">🔴 已售完 (Hết hàng)</option>
+        </select>
+      </div>
+      <div id="oos-options-container" style="margin-top: 16px; display: none;">
+        <label style="display: block; font-weight: 900; margin-bottom: 8px; font-size: 15px;">售完期限 (Thời hạn hết hàng):</label>
+        <select id="stock-duration-select" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px;" onchange="handleStockDurationChange()">
+          <option value="today">今天 (明天早上4點自動恢復 / Tự hồi phục 4h sáng mai)</option>
+          <option value="multiple_days">指定日期 (Chọn ngày khôi phục)</option>
+          <option value="indefinite">永久 (手動恢復 / Chờ mở thủ công)</option>
+        </select>
+        
+        <div id="oos-date-container" style="margin-top: 16px; display: none;">
+          <label style="display: block; font-weight: 900; margin-bottom: 8px; font-size: 15px;">恢復販售日期 (Ngày khôi phục bán):</label>
+          <input type="date" id="oos-until-date" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px;">
+        </div>
+      </div>
+      <div class="modal-actions two" style="margin-top: 24px;">
+        <button class="btn btn-primary btn-block" onclick="saveStockStatus()">儲存變更 (Lưu)</button>
+        <button class="btn btn-ghost btn-block" onclick="closeStockModal()">取消 (Hủy)</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    const WORKER_BASE = "https://bsc.thuanmnc.workers.dev";
+    const WORKER_BASE = "https://bsc-worker-production.thuanmnc.workers.dev";
 
     let latestOrders = [];
     let pendingNewOrders = [];
@@ -1095,7 +1129,10 @@
         currentMenuData = BENMI_CATS.map(cat => ({
           id: cat.id,
           title: cat.label,
-          items: Object.entries(rawMenuData[cat.id] || {}).map(([name, price]) => ({ name, price }))
+          items: Object.entries(rawMenuData[cat.id] || {}).map(([name, price]) => {
+            const isOos = rawMenuData.out_of_stock && rawMenuData.out_of_stock.includes(`${cat.id}:${name}`);
+            return { name, price, isOos };
+          })
         }));
         activeCategoryIndex = -1;
         renderMenuCategories();
@@ -1173,6 +1210,11 @@
           }
         });
 
+        const oosBg = item.isOos ? '#fee2e2' : '#ecfdf5';
+        const oosColor = item.isOos ? '#dc2626' : '#059669';
+        const oosBorder = item.isOos ? '#fca5a5' : '#6ee7b7';
+        const oosText = item.isOos ? '🔴 Hết' : '🟢 Còn';
+
         row.innerHTML = `
           <div style="color: #ccc; font-size: 22px; cursor: grab; flex-shrink:0;">☰</div>
           <input type="text" value="${escapeHtml(item.name)}" data-name-cidx="${index}" data-name-iidx="${iIdx}" oninput="markMenuDirty()"
@@ -1182,6 +1224,8 @@
             <input type="number" value="${item.price !== null && item.price !== undefined ? item.price : ''}" data-cidx="${index}" data-iidx="${iIdx}" oninput="markMenuDirty()"
               placeholder="隱藏" style="width: 90px; font-size: 17px; font-weight: 900; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-family:inherit; box-sizing:border-box;">
           </label>
+          <button class="btn" style="padding: 8px 14px; font-size:14px; flex-shrink:0; background: ${oosBg}; color: ${oosColor}; border: 1px solid ${oosBorder}; border-radius: 8px; font-weight: 900;"
+            onclick="openStockModal(${index}, ${iIdx})">${oosText}</button>
           <button class="btn btn-ghost" style="padding: 8px 14px; font-size:14px; flex-shrink:0;" onclick="openImageModal('${cat.id}', '${escapeHtml(item.name)}')">📷 圖片</button>
           <button class="btn btn-ghost" style="padding: 8px 14px; color: var(--brand-red); font-size:14px; flex-shrink:0;" onclick="removeMenuItemAt(${index}, ${iIdx})">刪除</button>
         `;
@@ -1397,6 +1441,115 @@
         document.getElementById("image-status").innerText = "此品項尚未上傳圖片";
       } catch (e) {
         alert("刪除圖片失敗: " + e.message);
+      }
+    }
+
+    // --- Stock Management ---
+    let currentStockCidx = null;
+    let currentStockIidx = null;
+
+    function openStockModal(cIdx, iIdx) {
+      // Lưu lại các thay đổi người dùng đang nhập dở trên input
+      syncMenuDataFromDOM();
+
+      currentStockCidx = cIdx;
+      currentStockIidx = iIdx;
+      
+      const item = currentMenuData[cIdx].items[iIdx];
+      document.getElementById("stock-modal-title").innerText = `庫存管理 (Kho): ${item.name}`;
+      
+      // Set values
+      const statusSelect = document.getElementById("stock-status-select");
+      statusSelect.value = item.isOos ? "out_of_stock" : "in_stock";
+      
+      // Reset duration & date
+      document.getElementById("stock-duration-select").value = "today";
+      document.getElementById("oos-until-date").value = "";
+      
+      handleStockStatusChange();
+      
+      document.getElementById("stockModal").style.display = "flex";
+    }
+
+    function closeStockModal() {
+      document.getElementById("stockModal").style.display = "none";
+      currentStockCidx = null;
+      currentStockIidx = null;
+    }
+
+    function handleStockStatusChange() {
+      const status = document.getElementById("stock-status-select").value;
+      const optionsContainer = document.getElementById("oos-options-container");
+      if (status === "out_of_stock") {
+        optionsContainer.style.display = "block";
+      } else {
+        optionsContainer.style.display = "none";
+      }
+      handleStockDurationChange();
+    }
+
+    function handleStockDurationChange() {
+      const duration = document.getElementById("stock-duration-select").value;
+      const dateContainer = document.getElementById("oos-date-container");
+      const status = document.getElementById("stock-status-select").value;
+      
+      if (status === "out_of_stock" && duration === "multiple_days") {
+        dateContainer.style.display = "block";
+      } else {
+        dateContainer.style.display = "none";
+      }
+    }
+
+    async function saveStockStatus() {
+      if (currentStockCidx === null || currentStockIidx === null) return;
+      
+      // Đồng bộ dữ liệu hiện tại từ DOM
+      syncMenuDataFromDOM();
+
+      const categorySlug = currentMenuData[currentStockCidx].id;
+      const item = currentMenuData[currentStockCidx].items[currentStockIidx];
+      const status = document.getElementById("stock-status-select").value;
+      const duration = document.getElementById("stock-duration-select").value;
+      const untilDate = document.getElementById("oos-until-date").value;
+      
+      if (status === "out_of_stock" && duration === "multiple_days" && !untilDate) {
+        alert("請選擇恢復販售日期！ (Vui lòng chọn ngày khôi phục!)");
+        return;
+      }
+
+      const tenantIdParam = new URLSearchParams(window.location.search).get("tenant_id") || "";
+
+      const body = {
+        category_slug: categorySlug,
+        name: item.originalName || item.name,
+        status: status,
+        duration: duration,
+        until_date: untilDate ? `${untilDate}T04:00:00+07:00` : null
+      };
+
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/menu/stock-status${tenantIdParam ? '?tenant_id=' + tenantIdParam : ''}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || "Update failed");
+        }
+
+        // Cập nhật local state
+        item.isOos = (status === "out_of_stock");
+        
+        const targetCidx = currentStockCidx;
+        closeStockModal();
+        renderMenuCategoryEditor(targetCidx);
+        renderMenuCategories();
+        
+        alert("更新庫存狀態成功！ (Cập nhật thành công!)");
+      } catch (e) {
+        alert("更新失敗 (Lỗi cập nhật): " + e.message);
       }
     }
 

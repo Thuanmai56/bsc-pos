@@ -1,6 +1,7 @@
 export interface Env {
   // Bindings
   ORDER_STATE: KVNamespace;
+  DB: D1Database;
 
   // Secrets & Env Variables
   LINE_CHANNEL_TOKEN?: string;
