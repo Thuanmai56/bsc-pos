@@ -12,9 +12,13 @@ export interface Order {
 }
 
 export interface Menu {
-  [category: string]: {
-    [itemName: string]: number;
-  };
+  small?: { [itemName: string]: number };
+  large?: { [itemName: string]: number };
+  combo?: { [itemName: string]: number };
+  drinks?: { [itemName: string]: number };
+  topping?: { [itemName: string]: number };
+  out_of_stock?: string[];
+  [category: string]: any;
 }
 
 export interface StoreConfig {

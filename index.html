@@ -226,7 +226,7 @@
         <script>
 
             // --- MENU DATA ---
-            const WORKER_BASE = "https://bsc.thuanmnc.workers.dev";
+            const WORKER_BASE = "https://bsc-worker-test.thuanmnc.workers.dev";
             let menu = { large: {}, small: {}, combo: {}, drinks: {}, veggie: {}, topping: {} };
             let imageList = [];
             let storeConfig = null;
@@ -615,7 +615,6 @@
                         }
                     }
                 } catch (e) { }
-
                 setTodayDate();
                 checkStoreStatus();
                 setInterval(checkStoreStatus, 60000);
@@ -644,8 +643,24 @@
                 const hasImage = imageList.includes(imageKey);
                 const imgHTML = hasImage ? `<img class="item-img" src="${WORKER_BASE}/api/image?name=${encodeURIComponent(imageKey)}&v=2" alt="${origName}" loading="lazy" onclick="openImageLightbox(this.src)" style="cursor: zoom-in;">` : '';
 
+                const isOos = menu.out_of_stock && menu.out_of_stock.includes(`${category}:${origName}`);
+                if (isOos) {
+                    div.style.opacity = '0.65';
+                    div.style.pointerEvents = 'none';
+                }
+
+                const qtyControlHTML = isOos ? `
+                    <div style="color: #dc2626; font-weight: 900; font-size: 14px; background: #fee2e2; padding: 4px 10px; border-radius: 6px; pointer-events: none;">已售完 / Hết</div>
+                ` : `
+                    <div class="qty-control">
+                        <button class="btn-qty" onclick="updateQty('${category}','${origName}',-1)">-</button>
+                        <span class="qty-text" id="qty-${category}-${origName}">0</span>
+                        <button class="btn-qty" onclick="updateQty('${category}','${origName}',1)">+</button>
+                    </div>
+                `;
+
                 div.innerHTML = `
-        <div class="card-main">
+        <div class="card-main" style="${isOos ? 'pointer-events: none;' : ''}">
             ${imgHTML}
             <div class="card-info">
                 <div>
@@ -653,11 +668,7 @@
                 </div>
                 <div class="card-footer">
                     <div class="card-price">$${price}</div>
-                    <div class="qty-control">
-                        <button class="btn-qty" onclick="updateQty('${category}','${origName}',-1)">-</button>
-                        <span class="qty-text" id="qty-${category}-${origName}">0</span>
-                        <button class="btn-qty" onclick="updateQty('${category}','${origName}',1)">+</button>
-                    </div>
+                    ${qtyControlHTML}
                 </div>
             </div>
         </div>
