@@ -535,7 +535,7 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
             }
 
             // Fallback for explicitly agreed non-flavor changes
-            const isAgree = lowerText === "好" || lowerText === "同意" || lowerText === "ok";
+            const isAgree = (lowerText.includes("同意") && !lowerText.includes("不同意")) || lowerText === "好" || lowerText === "ok" || lowerText === "可以" || lowerText === "好的";
             if (isAgree) {
               order.status = "ACCEPTED";
               await replyText(replyToken, `干城鹹水雞 收到您的同意！我們會開始準備您的訂單 #${orderKey}。`, env);
@@ -549,7 +549,7 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
           }
 
           if (pendingType === "REJECT") {
-            const isAgree = lowerText === "同意" || lowerText === "好" || lowerText === "ok";
+            const isAgree = (lowerText.includes("同意") && !lowerText.includes("不同意")) || lowerText === "好" || lowerText === "ok" || lowerText === "可以" || lowerText === "好的";
             const isDifferent = lowerText.includes("不同意") || lowerText.includes("不要") || lowerText === "取消";
 
             if (isAgree) {
