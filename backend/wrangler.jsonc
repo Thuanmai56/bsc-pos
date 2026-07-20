@@ -65,7 +65,7 @@
         {
           "binding": "LINE_CHANNEL_TOKEN",
           "store_id": "7e2896f1c5cf4e1eb80ef6c89f3024d4",
-          "secret_name": "LINE_MESSAGE_API_CHANNEL_BLAB"
+          "secret_name": "LINE_MESSAGE_API_CHANNEL_BSC"
         },
         {
           "binding": "OPENROUTER_API_KEY",

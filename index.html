@@ -590,13 +590,8 @@
                 renderMenu();
                 renderStoreOperatingHours();
 
-                let dynamicLiffId = '2009555608-DMioljsI'; // fallback to test LIFF ID
-                if (storeConfig && storeConfig.liffId) {
-                    dynamicLiffId = storeConfig.liffId;
-                }
-
                 try {
-                    await liff.init({ liffId: dynamicLiffId });
+                    await liff.init({ liffId: '2010595300-lmVTCe1A' });
                 } catch (e) {
                     console.error("LIFF Init Error", e);
                 }
