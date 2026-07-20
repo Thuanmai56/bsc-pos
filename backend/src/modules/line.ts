@@ -4,9 +4,10 @@ import { corsHeaders } from '../utils/http';
 import { saveOrder, getPendingMap } from './orders';
 import { callAI } from '../integrations/openRouter';
 import { syncToGoogleSheets } from '../integrations/googleSheets';
+import { resolveSecret } from '../utils/secrets';
 
 export async function pushLineMessage(userId: string, text: string, env: Env): Promise<void> {
-  const token = env.LINE_CHANNEL_TOKEN;
+  const token = await resolveSecret(env.LINE_CHANNEL_TOKEN);
   if (!token) { console.error("[Benmi] pushLineMessage: LINE_CHANNEL_TOKEN missing"); return; }
   if (!userId) { console.error("[Benmi] pushLineMessage: userId is empty, cannot push"); return; }
 
@@ -35,7 +36,7 @@ export async function pushLineMessage(userId: string, text: string, env: Env): P
 }
 
 export async function replyText(replyToken: string, text: string, env: Env): Promise<void> {
-  const token = env.LINE_CHANNEL_TOKEN;
+  const token = await resolveSecret(env.LINE_CHANNEL_TOKEN);
   if (!token || !replyToken) return;
 
   try {
@@ -61,10 +62,10 @@ export async function replyText(replyToken: string, text: string, env: Env): Pro
 }
 
 export async function replyWithLiffRedirect(replyToken: string, userId: string, env: Env): Promise<void> {
-  const token = env.LINE_CHANNEL_TOKEN;
+  const token = await resolveSecret(env.LINE_CHANNEL_TOKEN);
   if (!token || !replyToken) return;
 
-  const liffUrl = env.LIFF_URL || "https://liff.line.me/";
+  const liffUrl = (await resolveSecret(env.LIFF_URL)) || "https://liff.line.me/";
 
   const flexBubble = {
     type: "bubble",
@@ -336,7 +337,7 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
       if (ctx && ctx.waitUntil) {
         ctx.waitUntil((async () => {
           try {
-            const token = env.LINE_CHANNEL_TOKEN;
+            const token = await resolveSecret(env.LINE_CHANNEL_TOKEN);
             const profUrl = `https://api.line.me/v2/bot/profile/${userId}`;
             const resp = await fetch(profUrl, { headers: { Authorization: `Bearer ${token}` } });
             if (resp.ok) {

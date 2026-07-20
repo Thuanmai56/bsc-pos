@@ -1,5 +1,6 @@
 import { Env } from '../types/env';
 import { json } from '../utils/http';
+import { resolveSecret } from '../utils/secrets';
 
 export async function getConfig(env: Env): Promise<Response> {
   let stored: any = {};
@@ -9,7 +10,7 @@ export async function getConfig(env: Env): Promise<Response> {
   } catch (e) {}
   
   return json({ 
-    liffId: env.LIFF_ID || null,
+    liffId: (await resolveSecret(env.LIFF_ID)) || null,
     operatingHours: stored.operatingHours || null
   });
 }

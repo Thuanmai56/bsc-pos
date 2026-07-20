@@ -1,15 +1,17 @@
 import { Env } from '../types/env';
+import { resolveSecret } from '../utils/secrets';
 
 export async function callAI(prompt: string, env: Env): Promise<string | null> {
   try {
-    if (!env.OPENROUTER_API_KEY) {
+    const apiKey = await resolveSecret(env.OPENROUTER_API_KEY);
+    if (!apiKey) {
       return null;
     }
 
     const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${env.OPENROUTER_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
