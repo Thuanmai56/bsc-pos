@@ -248,7 +248,11 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
       // If it is a receipt message from successful API creation, skip parsing/saving to avoid overwriting due to KV latency
       if (userText.includes("[已收到]") || userText.includes("[Đã nhận]")) {
         console.log(`[Benmi] Webhook received receipt message. Skipping to avoid overwrite.`);
-        try { await env.ORDER_STATE.delete(pendingKey); } catch { }
+        try {
+          await env.DB.prepare(
+            "DELETE FROM pending_actions WHERE tenant_id = ? AND user_id = ?"
+          ).bind("bsc", userId).run();
+        } catch { }
         try { await env.ORDER_STATE.delete(draftKey); } catch { }
         continue;
       }
@@ -356,8 +360,11 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
         })());
       }
 
-      // Auto-clear any stuck pending state
-      try { await env.ORDER_STATE.delete(pendingKey); } catch { }
+      try {
+        await env.DB.prepare(
+          "DELETE FROM pending_actions WHERE tenant_id = ? AND user_id = ?"
+        ).bind("bsc", userId).run();
+      } catch { }
 
       continue;
     }
@@ -417,7 +424,13 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
         try {
           const order: Order = JSON.parse(orderRaw);
           if (order.status === "REJECTED" || order.status === "ACCEPTED" || order.status === "DONE" || order.status === "PICKED_UP") {
-            delete pMap[key];
+            if (env.DB) {
+              try {
+                await env.DB.prepare(
+                  "DELETE FROM pending_actions WHERE tenant_id = ? AND user_id = ? AND order_key = ?"
+                ).bind("bsc", userId, key).run();
+              } catch { }
+            }
             continue;
           }
         } catch { }
@@ -425,14 +438,7 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
       activeKeys.push(key);
     }
 
-    if (activeKeys.length !== pKeys.length) {
-      if (activeKeys.length === 0) {
-        await env.ORDER_STATE.delete(pendingKey);
-      } else {
-        await env.ORDER_STATE.put(pendingKey, JSON.stringify(pMap));
-      }
-      pKeys = activeKeys;
-    }
+    pKeys = activeKeys;
 
     if (pKeys.length > 0) {
       const orderKey = pKeys[0]; // Respond to the most recent one
@@ -448,11 +454,14 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
 
           // If handled:
           const finishPending = async () => {
-            delete pMap[orderKey];
-            if (Object.keys(pMap).length === 0) {
-              await env.ORDER_STATE.delete(pendingKey);
-            } else {
-              await env.ORDER_STATE.put(pendingKey, JSON.stringify(pMap));
+            if (env.DB) {
+              try {
+                await env.DB.prepare(
+                  "DELETE FROM pending_actions WHERE tenant_id = ? AND user_id = ? AND order_key = ?"
+                ).bind("bsc", userId, orderKey).run();
+              } catch (e) {
+                console.error("[finishPending] failed:", e);
+              }
             }
           };
 
@@ -583,7 +592,11 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
       }
 
       // pending exists but invalid state
-      try { await env.ORDER_STATE.delete(pendingKey); } catch { }
+      try {
+        await env.DB.prepare(
+          "DELETE FROM pending_actions WHERE tenant_id = ? AND user_id = ?"
+        ).bind("bsc", userId).run();
+      } catch { }
       await replyText(replyToken, `目前有點狀況，請稍後再確認一次。`, env);
       continue;
     }
