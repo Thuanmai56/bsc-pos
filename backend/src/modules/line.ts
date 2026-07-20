@@ -554,10 +554,9 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
 
             if (isAgree) {
               order.status = "REJECTED";
-              const reason = order.reason || "（未提供原因）";
               await replyText(
                 replyToken,
-                `非常抱歉！干城鹹水雞 無法接下您的訂單 #${orderKey}。\n原因：${reason}\n感謝您訂購 干城鹹水雞，歡迎您下次再訂購。`,
+                `非常抱歉！干城鹹水雞 無法接下您的訂單 #${orderKey}。\n感謝您訂購 干城鹹水雞，歡迎您下次再訂購。`,
                 env
               );
               const cleanup = async () => { await saveOrder(env, order); await finishPending(); await syncToGoogleSheets(order, env); };
