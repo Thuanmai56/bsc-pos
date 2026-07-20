@@ -283,7 +283,8 @@
         onchange="handleImageSelect(event)">
       <div class="modal-actions two">
         <button class="btn btn-primary" onclick="document.getElementById('image-file-input').click()">上傳圖片</button>
-        <button class="btn btn-danger" id="btn-delete-image" style="display: none;" onclick="deleteItemImage()">刪除圖片</button>
+        <button class="btn btn-danger" id="btn-delete-image" style="display: none;"
+          onclick="deleteItemImage()">刪除圖片</button>
       </div>
       <div class="modal-actions" style="grid-template-columns: 1fr; margin-top: 10px;">
         <button class="btn btn-ghost btn-block" onclick="closeModal()">關閉</button>
@@ -300,22 +301,29 @@
       </div>
       <div style="margin-top: 16px;">
         <label style="display: block; font-weight: 900; margin-bottom: 8px; font-size: 15px;">狀態 (Trạng thái):</label>
-        <select id="stock-status-select" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px;" onchange="handleStockStatusChange()">
+        <select id="stock-status-select"
+          style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px;"
+          onchange="handleStockStatusChange()">
           <option value="in_stock">🟢 販售中 (Còn hàng)</option>
           <option value="out_of_stock">🔴 已售完 (Hết hàng)</option>
         </select>
       </div>
       <div id="oos-options-container" style="margin-top: 16px; display: none;">
-        <label style="display: block; font-weight: 900; margin-bottom: 8px; font-size: 15px;">售完期限 (Thời hạn hết hàng):</label>
-        <select id="stock-duration-select" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px;" onchange="handleStockDurationChange()">
+        <label style="display: block; font-weight: 900; margin-bottom: 8px; font-size: 15px;">售完期限 (Thời hạn hết
+          hàng):</label>
+        <select id="stock-duration-select"
+          style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px;"
+          onchange="handleStockDurationChange()">
           <option value="today">今天 (明天早上4點自動恢復 / Tự hồi phục 4h sáng mai)</option>
           <option value="multiple_days">指定日期 (Chọn ngày khôi phục)</option>
           <option value="indefinite">永久 (手動恢復 / Chờ mở thủ công)</option>
         </select>
-        
+
         <div id="oos-date-container" style="margin-top: 16px; display: none;">
-          <label style="display: block; font-weight: 900; margin-bottom: 8px; font-size: 15px;">恢復販售日期 (Ngày khôi phục bán):</label>
-          <input type="date" id="oos-until-date" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px;">
+          <label style="display: block; font-weight: 900; margin-bottom: 8px; font-size: 15px;">恢復販售日期 (Ngày khôi phục
+            bán):</label>
+          <input type="date" id="oos-until-date"
+            style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px;">
         </div>
       </div>
       <div class="modal-actions two" style="margin-top: 24px;">
@@ -1454,20 +1462,20 @@
 
       currentStockCidx = cIdx;
       currentStockIidx = iIdx;
-      
+
       const item = currentMenuData[cIdx].items[iIdx];
       document.getElementById("stock-modal-title").innerText = `庫存管理 (Kho): ${item.name}`;
-      
+
       // Set values
       const statusSelect = document.getElementById("stock-status-select");
       statusSelect.value = item.isOos ? "out_of_stock" : "in_stock";
-      
+
       // Reset duration & date
       document.getElementById("stock-duration-select").value = "today";
       document.getElementById("oos-until-date").value = "";
-      
+
       handleStockStatusChange();
-      
+
       document.getElementById("stockModal").style.display = "flex";
     }
 
@@ -1492,7 +1500,7 @@
       const duration = document.getElementById("stock-duration-select").value;
       const dateContainer = document.getElementById("oos-date-container");
       const status = document.getElementById("stock-status-select").value;
-      
+
       if (status === "out_of_stock" && duration === "multiple_days") {
         dateContainer.style.display = "block";
       } else {
@@ -1502,7 +1510,7 @@
 
     async function saveStockStatus() {
       if (currentStockCidx === null || currentStockIidx === null) return;
-      
+
       // Đồng bộ dữ liệu hiện tại từ DOM
       syncMenuDataFromDOM();
 
@@ -1511,7 +1519,7 @@
       const status = document.getElementById("stock-status-select").value;
       const duration = document.getElementById("stock-duration-select").value;
       const untilDate = document.getElementById("oos-until-date").value;
-      
+
       if (status === "out_of_stock" && duration === "multiple_days" && !untilDate) {
         alert("請選擇恢復販售日期！ (Vui lòng chọn ngày khôi phục!)");
         return;
@@ -1541,12 +1549,12 @@
 
         // Cập nhật local state
         item.isOos = (status === "out_of_stock");
-        
+
         const targetCidx = currentStockCidx;
         closeStockModal();
         renderMenuCategoryEditor(targetCidx);
         renderMenuCategories();
-        
+
         alert("更新庫存狀態成功！ (Cập nhật thành công!)");
       } catch (e) {
         alert("更新失敗 (Lỗi cập nhật): " + e.message);
