@@ -58,24 +58,24 @@
     "test": {
       "name": "bsc-worker-test",
       "vars": {
-        "LIFF_ID": "PLACEHOLDER_TEST_LIFF_ID",
-        "LIFF_URL": "PLACEHOLDER_TEST_LIFF_URL"
+        "LIFF_ID": "2009555608-DMioljsI",
+        "LIFF_URL": "https://liff.line.me/2009555608-DMioljsI"
       },
       "secrets_store_secrets": [
         {
           "binding": "LINE_CHANNEL_TOKEN",
           "store_id": "7e2896f1c5cf4e1eb80ef6c89f3024d4",
-          "secret_name": "PLACEHOLDER_TEST_SECRET_NAME_LINE"
+          "secret_name": "LINE_MESSAGE_API_CHANNEL_BLAB"
         },
         {
           "binding": "OPENROUTER_API_KEY",
           "store_id": "7e2896f1c5cf4e1eb80ef6c89f3024d4",
-          "secret_name": "PLACEHOLDER_TEST_SECRET_NAME_OPENROUTER"
+          "secret_name": "OPENROUTER_API_KEY_BLAB"
         },
         {
           "binding": "GROQ_API_KEY",
           "store_id": "7e2896f1c5cf4e1eb80ef6c89f3024d4",
-          "secret_name": "PLACEHOLDER_TEST_SECRET_NAME_GROQ"
+          "secret_name": "GROQ_API_KEY_BLAB"
         }
       ],
       "kv_namespaces": [
