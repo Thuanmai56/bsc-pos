@@ -33,9 +33,51 @@
       "database_id": "48479f91-eec7-4da2-b044-edaaf622f195"
     }
   ],
+  "vars": {
+    "LIFF_ID": "PLACEHOLDER_PRODUCTION_LIFF_ID",
+    "LIFF_URL": "PLACEHOLDER_PRODUCTION_LIFF_URL"
+  },
+  "secrets_store_secrets": [
+    {
+      "binding": "LINE_CHANNEL_TOKEN",
+      "store_id": "7e2896f1c5cf4e1eb80ef6c89f3024d4",
+      "secret_name": "PLACEHOLDER_PRODUCTION_SECRET_NAME_LINE"
+    },
+    {
+      "binding": "OPENROUTER_API_KEY",
+      "store_id": "7e2896f1c5cf4e1eb80ef6c89f3024d4",
+      "secret_name": "PLACEHOLDER_PRODUCTION_SECRET_NAME_OPENROUTER"
+    },
+    {
+      "binding": "GROQ_API_KEY",
+      "store_id": "7e2896f1c5cf4e1eb80ef6c89f3024d4",
+      "secret_name": "PLACEHOLDER_PRODUCTION_SECRET_NAME_GROQ"
+    }
+  ],
   "env": {
     "test": {
       "name": "bsc-worker-test",
+      "vars": {
+        "LIFF_ID": "PLACEHOLDER_TEST_LIFF_ID",
+        "LIFF_URL": "PLACEHOLDER_TEST_LIFF_URL"
+      },
+      "secrets_store_secrets": [
+        {
+          "binding": "LINE_CHANNEL_TOKEN",
+          "store_id": "7e2896f1c5cf4e1eb80ef6c89f3024d4",
+          "secret_name": "PLACEHOLDER_TEST_SECRET_NAME_LINE"
+        },
+        {
+          "binding": "OPENROUTER_API_KEY",
+          "store_id": "7e2896f1c5cf4e1eb80ef6c89f3024d4",
+          "secret_name": "PLACEHOLDER_TEST_SECRET_NAME_OPENROUTER"
+        },
+        {
+          "binding": "GROQ_API_KEY",
+          "store_id": "7e2896f1c5cf4e1eb80ef6c89f3024d4",
+          "secret_name": "PLACEHOLDER_TEST_SECRET_NAME_GROQ"
+        }
+      ],
       "kv_namespaces": [
         {
           "id": "749b3a0cb19848e4b943b42d5898efff",
