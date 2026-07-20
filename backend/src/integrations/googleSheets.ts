@@ -1,8 +1,10 @@
 import { Env } from '../types/env';
 import { Order } from '../types/index';
+import { resolveSecret } from '../utils/secrets';
 
 export async function syncToGoogleSheets(order: Order, env: Env): Promise<void> {
-  const sheetUrl = env.GOOGLE_SHEETS_URL || "https://script.google.com/macros/s/AKfycbw2zpueE7DmkcrHU0fMgfHWhWhhMsEFprJJEo4-kfirRrcDY7NZNeRMduy_aAf-AX0few/exec";
+  const resolvedUrl = await resolveSecret(env.GOOGLE_SHEETS_URL);
+  const sheetUrl = resolvedUrl || "https://script.google.com/macros/s/AKfycbw2zpueE7DmkcrHU0fMgfHWhWhhMsEFprJJEo4-kfirRrcDY7NZNeRMduy_aAf-AX0few/exec";
   try {
     await fetch(sheetUrl, {
       method: "POST",
