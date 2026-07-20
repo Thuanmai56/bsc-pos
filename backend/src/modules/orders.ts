@@ -89,7 +89,7 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
         }
       } catch { }
       if (!wasWaiting) {
-        await pushLineMessage(order.userId, `Benmi 已收到您的訂單 #${order.key}，謝謝您！`, env);
+        await pushLineMessage(order.userId, `干城鹹水雞 已收到您的訂單 #${order.key}，謝謝您！`, env);
       }
     }
     return json({ success: true });
@@ -108,7 +108,7 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
       try {
         await pushLineMessage(order.userId, "您的餐點已準備完成，請至櫃檯取餐，謝謝！", env);
       } catch (e) {
-        console.error("[Benmi] Failed to send order ready message:", e);
+        console.error("[BSC] Failed to send order ready message:", e);
       }
     }
 
@@ -138,7 +138,7 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
         const reason = order.reason || "未提供原因";
         const note = order.note || "";
         notifyText =
-          `Benmi 已收到您的訂單 #${order.key}，需要做小幅調整。\n` +
+          `干城鹹水雞 已收到您的訂單 #${order.key}，需要做小幅調整。\n` +
           `原因：${reason}\n` +
           (note ? `備註：${note}\n` : "") +
           `\n請回覆「同意」以接受變更，或回覆「取消 / 不要了」以取消訂單。`;
@@ -156,9 +156,24 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
 
   // Employee 無法接單 -> 等客戶「同意/不同意」
   if (incoming === "REJECTED") {
-    if (order.reason === "取消並不回復客戶") {
+    const isAlreadyAccepted = order.status === "ACCEPTED" || order.status === "DONE" || order.status === "PICKED_UP";
+    const isNoReplyReason = order.reason === "取消並不回復客戶" || order.reason === "取消並不回覆客戶";
+
+    if (isAlreadyAccepted || isNoReplyReason) {
       order.status = "REJECTED";
       await saveOrder(env, order);
+
+      // Clean up pending action from pMap when rejecting
+      if (order.userId) {
+        try {
+          const pMap = await getPendingMap(env, order.userId);
+          if (pMap[order.key]) {
+            delete pMap[order.key];
+            await env.ORDER_STATE.put(`pending:${order.userId}`, JSON.stringify(pMap));
+          }
+        } catch { }
+      }
+
       if (ctx && ctx.waitUntil) ctx.waitUntil(syncToGoogleSheets(order, env));
       return json({ success: true });
     }
@@ -169,7 +184,7 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
     if (order.userId) {
       const reason = order.reason || "未提供原因";
       const notifyText =
-        `非常抱歉！Benmi 目前無法接下您的訂單 #${order.key}。\n` +
+        `非常抱歉！干城鹹水雞 目前無法接下您的訂單 #${order.key}。\n` +
         `原因：${reason}\n` +
         `\n請回覆「同意」以取消訂單，或回覆「不同意」以重新確認。`;
 
@@ -196,7 +211,7 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
           await env.ORDER_STATE.put(`pending:${order.userId}`, JSON.stringify(pMap));
         }
       } catch { }
-      await pushLineMessage(order.userId, `Benmi：由於未收到您的回覆，訂單 #${order.key} 已自動取消。期待下次為您服務！`, env);
+      await pushLineMessage(order.userId, `干城鹹水雞：由於未收到您的回覆，訂單 #${order.key} 已自動取消。期待下次為您服務！`, env);
     }
 
     if (ctx && ctx.waitUntil) ctx.waitUntil(syncToGoogleSheets(order, env));
