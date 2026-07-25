@@ -57,6 +57,7 @@
   "env": {
     "test": {
       "name": "bsc-worker-test",
+      "workers_dev": true,
       "vars": {
         "LIFF_ID": "2009555608-DMioljsI",
         "LIFF_URL": "https://liff.line.me/2009555608-DMioljsI"
@@ -65,7 +66,7 @@
         {
           "binding": "LINE_CHANNEL_TOKEN",
           "store_id": "7e2896f1c5cf4e1eb80ef6c89f3024d4",
-          "secret_name": "LINE_MESSAGE_API_CHANNEL_BSC"
+          "secret_name": "LINE_MESSAGE_API_CHANNEL_BLAB"
         },
         {
           "binding": "OPENROUTER_API_KEY",
