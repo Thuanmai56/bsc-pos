@@ -590,8 +590,9 @@
                 renderMenu();
                 renderStoreOperatingHours();
 
+                const targetLiffId = (storeConfig && storeConfig.liffId) ? storeConfig.liffId : '2010595300-lmVTCe1A';
                 try {
-                    await liff.init({ liffId: '2010595300-lmVTCe1A' });
+                    await liff.init({ liffId: targetLiffId });
                 } catch (e) {
                     console.error("LIFF Init Error", e);
                 }
