@@ -10,5 +10,5 @@
   },
   "compatibility_flags": [
     "nodejs_compat"
-  ]
+  ],"env": {"test":{"name":"bsc-worker-test"}}
 }
