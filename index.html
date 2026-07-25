@@ -399,14 +399,17 @@
                 if (mainNote) msg += `\n📝 總備註：${mainNote}`;
                 msg += `\n💰 總金額：$${currentTotal}`;
 
-                if (!liff.isLoggedIn()) {
-                    localStorage.setItem('benmi_cart_save', JSON.stringify({ cart }));
-                    liff.login({ redirectUri: window.location.href });
-                    return;
+                let profile = { userId: "", displayName: "Khách (Web)" };
+                if (liff.isLoggedIn()) {
+                    try {
+                        const p = await liff.getProfile();
+                        if (p && p.userId) profile = p;
+                    } catch (pErr) {
+                        console.warn("Could not fetch LIFF profile:", pErr);
+                    }
                 }
 
                 try {
-                    const profile = await liff.getProfile();
                     const orderPayload = {
                         key: orderNum,
                         userId: profile.userId,
@@ -436,8 +439,10 @@
                         console.error("Non-blocking liff.sendMessages failed:", e);
                     });
 
+                    return;
+
                 } catch (err) {
-                    console.warn("Primary API flow failed, falling back to LINE message flow:", err);
+                    console.warn("Primary API flow failed, trying LIFF sendMessages fallback:", err);
 
                     try {
                         await liff.sendMessages([{ type: 'text', text: msg }]);
@@ -445,40 +450,8 @@
                             liff.closeWindow();
                         });
                     } catch (liffErr) {
-                        console.error("LIFF sendMessages fallback also failed:", liffErr);
-
-                        try {
-                            const profile = await liff.getProfile();
-                            const orderPayload = {
-                                key: orderNum,
-                                userId: profile.userId,
-                                customer: profile.displayName,
-                                time: dateInput,
-                                content: msg.split('\n\n🕒')[0].replace('[Benmi 點餐]\n', ''),
-                                total: currentTotal,
-                                note: mainNote,
-                                liffFallback: true
-                            };
-                            const res = await fetch(`${WORKER_BASE}/api/create`, {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify(orderPayload)
-                            });
-                            if (res.ok) {
-                                customAlert('<div style="margin-bottom: 15px;"><svg width="64" height="64" viewBox="0 0 24 24" fill="#10b981"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div><div style="font-size: 18px; line-height: 1.4; color: #111;">感謝您的訂單！餐點製作完成後，我們會再次通知您前來取餐，謝謝！</div>', () => {
-                                    liff.closeWindow();
-                                });
-                                return;
-                            }
-                        } catch (retryErr) {
-                            console.error("Final retry API failed:", retryErr);
-                        }
-
-                        if (liffErr.code === "400" || String(liffErr).includes("liffId")) {
-                            customAlert('⚠️ 傳送失敗：請使用手機的 LINE 應用程式進行點餐，或向店員反應。');
-                        } else {
-                            customAlert('傳送失敗，請重試 (LIFF 錯誤)');
-                        }
+                        console.error("LIFF sendMessages fallback failed:", liffErr);
+                        customAlert('傳送失敗，請重試或向店員反應。');
                         isSubmitting = false;
                         submitBtn.disabled = false;
                         submitBtn.innerText = '確認下單';
