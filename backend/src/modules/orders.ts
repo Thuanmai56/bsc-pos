@@ -4,10 +4,9 @@ import { json } from '../utils/http';
 import { syncToGoogleSheets } from '../integrations/googleSheets';
 import { pushLineMessage } from './line';
 
-export const ORDER_INDEX_LATEST = "order_index:latest";
 export const MAX_INDEX = 200;
 
-export async function createOrder(request: Request, env: Env): Promise<Response> {
+export async function createOrder(request: Request, env: Env, ctx?: ExecutionContext): Promise<Response> {
   const data: any = await request.json();
 
   // Taiwan time UTC+8
@@ -34,11 +33,24 @@ export async function createOrder(request: Request, env: Env): Promise<Response>
 
   await saveOrder(env, order);
 
+  // Push confirmation message to LINE user asynchronously
   if (order.userId) {
-    try {
-      await pushLineMessage(order.userId, "感謝您的訂單！餐點製作完成後，我們會再次通知您前來取餐，謝謝！", env);
-    } catch (e) {
-      console.error("[Benmi] Failed to send order creation message:", e);
+    let confirmText = `✅ [已收到] 訂單編號：${order.key}\n📦 訂單內容：\n${order.content}\n\n🕒 取餐時間：${order.time}`;
+    if (order.note) confirmText += `\n📝 總備註：${order.note}`;
+    confirmText += `\n💰 總金額：$${order.total}`;
+
+    const sendPush = async () => {
+      try {
+        await pushLineMessage(order.userId!, confirmText, env);
+      } catch (e) {
+        console.error(`[BSC] createOrder pushLineMessage Error:`, e);
+      }
+    };
+
+    if (ctx && ctx.waitUntil) {
+      ctx.waitUntil(sendPush());
+    } else {
+      await sendPush();
     }
   }
 
@@ -51,7 +63,7 @@ export async function getPendingMap(env: Env, userId: string): Promise<Record<st
   try {
     const { results } = await env.DB.prepare(
       "SELECT * FROM pending_actions WHERE tenant_id = ? AND user_id = ?"
-    ).bind("bsc", userId).all();
+    ).bind("bsc", userId).all<any>();
 
     const map: Record<string, any> = {};
     if (results && Array.isArray(results)) {
@@ -59,10 +71,10 @@ export async function getPendingMap(env: Env, userId: string): Promise<Record<st
         map[row.order_key] = {
           orderKey: row.order_key,
           type: row.action_type,
-          createdAt: row.created_at ? new Date(row.created_at + " UTC").getTime() : Date.now(),
+          createdAt: row.created_at ? new Date(row.created_at + "Z").getTime() : Date.now(),
           questionText: row.question_text,
-          reason: row.reason,
-          note: row.note
+          reason: row.reason || "",
+          note: row.note || ""
         };
       }
     }
@@ -73,12 +85,36 @@ export async function getPendingMap(env: Env, userId: string): Promise<Record<st
   }
 }
 
+export async function getOrder(env: Env, orderKey: string): Promise<Order | null> {
+  if (!env.DB) return null;
+  try {
+    const row = await env.DB.prepare(
+      "SELECT * FROM orders WHERE key = ?"
+    ).bind(orderKey).first<any>();
+    if (!row) return null;
+    return {
+      key: row.key,
+      customer: row.customer_name,
+      time: row.pickup_time,
+      content: row.order_content,
+      status: row.status,
+      createdAt: new Date(row.created_at + "Z").getTime(),
+      userId: row.user_id || undefined,
+      total: row.total_amount,
+      reason: row.reason || "",
+      note: row.note || ""
+    };
+  } catch (e) {
+    console.error("[getOrder] D1 error:", e);
+    return null;
+  }
+}
+
 export async function updateOrder(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   const data: any = await request.json();
-  const raw = await env.ORDER_STATE.get(`order:${data.key}`);
-  if (!raw) return json({ error: "order not found" }, 404);
+  const order = await getOrder(env, data.key);
+  if (!order) return json({ error: "order not found" }, 404);
 
-  const order: Order = JSON.parse(raw);
   const incoming = data.status;
 
   if (data.reason !== undefined) order.reason = data.reason;
@@ -87,7 +123,7 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
   // Employee 接單
   if (incoming === "ACCEPTED") {
     if (order.status === "ACCEPTED" || order.status === "DONE" || order.status === "PICKED_UP") {
-      await saveOrder(env, order); // Sync cache
+      await saveOrder(env, order);
       return json({ success: true });
     }
     const wasWaiting = order.status && order.status.startsWith("WAITING");
@@ -112,7 +148,7 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
   // Employee 準備好了
   if (incoming === "DONE") {
     if (order.status === "DONE" || order.status === "PICKED_UP") {
-      await saveOrder(env, order); // Sync cache
+      await saveOrder(env, order);
       return json({ success: true });
     }
     order.status = "DONE";
@@ -251,7 +287,7 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
   // Employee 已取餐 (Không gửi thêm thông báo để tiết kiệm LINE API quota)
   if (incoming === "PICKED_UP") {
     if (order.status === "PICKED_UP") {
-      await saveOrder(env, order); // Sync cache
+      await saveOrder(env, order);
       return json({ success: true });
     }
     order.status = "PICKED_UP";
@@ -269,69 +305,122 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
 }
 
 export async function getOrders(env: Env): Promise<Response> {
-  const cacheRaw = await env.ORDER_STATE.get("order_view:cache");
-  let orders: Order[] = [];
-  try { orders = cacheRaw ? JSON.parse(cacheRaw) : []; } catch { orders = []; }
+  if (!env.DB) return json([]);
+  try {
+    const { results } = await env.DB.prepare(
+      "SELECT * FROM orders WHERE tenant_id = ? ORDER BY created_at DESC LIMIT 200"
+    ).bind("bsc").all<any>();
 
-  if (orders.length > 0) {
+    const orders: Order[] = (results || []).map(row => ({
+      key: row.key,
+      customer: row.customer_name,
+      time: row.pickup_time,
+      content: row.order_content,
+      status: row.status,
+      createdAt: new Date(row.created_at + "Z").getTime(),
+      userId: row.user_id || undefined,
+      total: row.total_amount,
+      reason: row.reason || "",
+      note: row.note || ""
+    }));
+
     return json(orders);
+  } catch (e) {
+    console.error("[getOrders] D1 error:", e);
+    return json([]);
   }
-
-  // Fallback: Rebuild Cache if empty
-  const indexRaw = await env.ORDER_STATE.get(ORDER_INDEX_LATEST);
-  let keys: string[] = [];
-  try { keys = indexRaw ? JSON.parse(indexRaw) : []; } catch { keys = []; }
-
-  if (!Array.isArray(keys) || keys.length === 0) return json([]);
-
-  const promises = keys.map(k => env.ORDER_STATE.get(`order:${k}`).then(raw => {
-    if (raw) { try { return JSON.parse(raw) as Order; } catch { } }
-    return null;
-  }));
-
-  const results = await Promise.all(promises);
-  orders = results.filter(Boolean) as Order[];
-  orders.sort((a, b) => (b?.createdAt || 0) - (a?.createdAt || 0));
-
-  if (orders.length > 0) {
-    await env.ORDER_STATE.put("order_view:cache", JSON.stringify(orders));
-  }
-
-  return json(orders);
 }
 
 export async function saveOrder(env: Env, order: Order): Promise<void> {
-  // 1. Single source of truth
-  await env.ORDER_STATE.put(`order:${order.key}`, JSON.stringify(order));
+  if (!env.DB) return;
+  await env.DB.prepare(
+    `INSERT INTO orders (key, tenant_id, user_id, customer_name, pickup_time, status, total_amount, order_content, reason, note, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime(?, 'unixepoch'), datetime('now'))
+     ON CONFLICT(key) DO UPDATE SET
+       status = excluded.status,
+       total_amount = excluded.total_amount,
+       order_content = excluded.order_content,
+       reason = excluded.reason,
+       note = excluded.note,
+       updated_at = datetime('now')`
+  ).bind(
+    order.key,
+    "bsc",
+    order.userId || null,
+    order.customer,
+    order.time,
+    order.status,
+    order.total,
+    order.content,
+    order.reason || "",
+    order.note || "",
+    Math.floor((order.createdAt || Date.now()) / 1000)
+  ).run();
+}
 
-  // 2. Index Keys
-  const indexRaw = await env.ORDER_STATE.get(ORDER_INDEX_LATEST);
-  let keys: string[] = [];
-  try { keys = indexRaw ? JSON.parse(indexRaw) : []; } catch { keys = []; }
-  if (!Array.isArray(keys)) keys = [];
-  if (!keys.includes(order.key)) keys.unshift(order.key);
-  keys = keys.filter(Boolean);
-  keys = [...new Set(keys)].slice(0, MAX_INDEX);
-  await env.ORDER_STATE.put(ORDER_INDEX_LATEST, JSON.stringify(keys));
-
-  // 3. Cache latest View Data (Safe merge)
-  const cacheRaw = await env.ORDER_STATE.get("order_view:cache");
-  let orders: Order[] = [];
-  try { orders = cacheRaw ? JSON.parse(cacheRaw) : []; } catch { orders = []; }
-
-  if (!cacheRaw || orders.length === 0) {
-    await env.ORDER_STATE.delete("order_view:cache");
-    return;
+export async function handleOrdersMigration(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const secret = url.searchParams.get("secret");
+  if (secret !== "bsc_migrate_2026") {
+    return new Response("Unauthorized", { status: 401 });
   }
 
-  const idx = orders.findIndex(o => o.key === order.key);
-  if (idx >= 0) {
-    orders[idx] = order;
-  } else {
-    orders.unshift(order);
-  }
+  const batchSize = parseInt(url.searchParams.get("limit") || "40", 10);
+  const reqCursor = url.searchParams.get("cursor") || "";
 
-  orders = orders.filter(Boolean).slice(0, MAX_INDEX);
-  orders.sort((a, b) => (b?.createdAt || 0) - (a?.createdAt || 0));
-  await env.ORDER_STATE.put("order_view:cache", JSON.stringify(orders));
+  const logs: string[] = [];
+  let migratedCount = 0;
+
+  try {
+    const listRes = await env.ORDER_STATE.list({
+      prefix: "order:",
+      cursor: reqCursor,
+      limit: batchSize
+    });
+
+    for (const keyObj of listRes.keys) {
+      const key = keyObj.name;
+      if (key === "order_index:latest" || key === "order_view:cache") continue;
+
+      const raw = await env.ORDER_STATE.get(key);
+      if (!raw) continue;
+
+      try {
+        const order = JSON.parse(raw);
+
+        await env.DB.prepare(
+          `INSERT OR IGNORE INTO orders (key, tenant_id, user_id, customer_name, pickup_time, status, total_amount, order_content, reason, note, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime(?, 'unixepoch'), datetime('now'))`
+        ).bind(
+          order.key,
+          "bsc",
+          order.userId || null,
+          order.customer,
+          order.time,
+          order.status || "NEW",
+          order.total || 0,
+          order.content,
+          order.reason || "",
+          order.note || "",
+          Math.floor((order.createdAt || Date.now()) / 1000)
+        ).run();
+        migratedCount++;
+      } catch (e: any) {
+        logs.push(`Failed to migrate order ${key}: ${e.message}`);
+      }
+    }
+
+    const nextCursor = ("cursor" in listRes) ? (listRes.cursor || "") : "";
+    const isComplete = listRes.list_complete || nextCursor === "";
+
+    return json({
+      success: true,
+      migrated_count: migratedCount,
+      completed: isComplete,
+      next_cursor: nextCursor,
+      logs
+    });
+  } catch (err: any) {
+    return json({ success: false, error: err.message, logs }, 500);
+  }
 }

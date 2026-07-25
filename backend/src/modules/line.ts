@@ -1,8 +1,8 @@
 import { Env } from '../types/env';
 import { Order } from '../types/index';
 import { corsHeaders } from '../utils/http';
-import { saveOrder, getPendingMap } from './orders';
-import { callAI } from '../integrations/openRouter';
+import { saveOrder, getPendingMap, getOrder } from './orders';
+import { callAI } from '../integrations/groq';
 import { syncToGoogleSheets } from '../integrations/googleSheets';
 import { resolveSecret } from '../utils/secrets';
 
@@ -294,14 +294,9 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
       let custName = "Khách (Web)";
 
       // Check if order already exists to preserve customer name
-      const existingRaw = await env.ORDER_STATE.get(`order:${orderKey}`);
-      if (existingRaw) {
-        try {
-          const existingOrder = JSON.parse(existingRaw) as Order;
-          if (existingOrder && existingOrder.customer && existingOrder.customer !== "Khách (Web)") {
-            custName = existingOrder.customer;
-          }
-        } catch { }
+      const existingOrder = await getOrder(env, orderKey);
+      if (existingOrder && existingOrder.customer && existingOrder.customer !== "Khách (Web)") {
+        custName = existingOrder.customer;
       }
 
       const contentStart = userText.indexOf("📦 訂單內容：");
@@ -419,21 +414,18 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
     // Filter out stale pending keys whose orders are already in a final or active state
     const activeKeys: string[] = [];
     for (const key of pKeys) {
-      const orderRaw = await env.ORDER_STATE.get(`order:${key}`);
-      if (orderRaw) {
-        try {
-          const order: Order = JSON.parse(orderRaw);
-          if (order.status === "REJECTED" || order.status === "ACCEPTED" || order.status === "DONE" || order.status === "PICKED_UP") {
-            if (env.DB) {
-              try {
-                await env.DB.prepare(
-                  "DELETE FROM pending_actions WHERE tenant_id = ? AND user_id = ? AND order_key = ?"
-                ).bind("bsc", userId, key).run();
-              } catch { }
-            }
-            continue;
+      const order = await getOrder(env, key);
+      if (order) {
+        if (order.status === "REJECTED" || order.status === "ACCEPTED" || order.status === "DONE" || order.status === "PICKED_UP") {
+          if (env.DB) {
+            try {
+              await env.DB.prepare(
+                "DELETE FROM pending_actions WHERE tenant_id = ? AND user_id = ? AND order_key = ?"
+              ).bind("bsc", userId, key).run();
+            } catch { }
           }
-        } catch { }
+          continue;
+        }
       }
       activeKeys.push(key);
     }
@@ -447,9 +439,8 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
       const lowerText = userText.trim().toLowerCase();
 
       if (orderKey) {
-        const orderRaw = await env.ORDER_STATE.get(`order:${orderKey}`);
-        if (orderRaw) {
-          const order: Order = JSON.parse(orderRaw);
+        const order = await getOrder(env, orderKey);
+        if (order) {
           const pendingType = pending?.type;
 
           // If handled:
