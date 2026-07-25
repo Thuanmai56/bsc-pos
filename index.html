@@ -676,12 +676,57 @@
                 container.appendChild(div);
             }
 
+            function updateToppingStockStatus() {
+                if (!menu || !menu.out_of_stock) return;
+                const oos = menu.out_of_stock;
+
+                const corianderItem = document.getElementById('chk-coriander');
+                if (corianderItem) {
+                    const isOos = oos.includes('topping:加香菜') || oos.includes('topping:香菜');
+                    if (isOos) {
+                        corianderItem.checked = false;
+                        corianderItem.disabled = true;
+                        const label = corianderItem.closest('.checkbox-label');
+                        if (label) {
+                            label.style.opacity = '0.5';
+                            label.style.pointerEvents = 'none';
+                            label.style.textDecoration = 'line-through';
+                            label.style.color = '#94a3b8';
+                            if (!label.querySelector('.oos-badge')) {
+                                label.insertAdjacentHTML('beforeend', ' <span class="oos-badge" style="color:#dc2626; font-size:12px; font-weight:900; text-decoration:none;">(已售完)</span>');
+                            }
+                        }
+                    }
+                }
+
+                const lemonItem = document.getElementById('chk-lemon');
+                if (lemonItem) {
+                    const isOos = oos.includes('topping:檸檬汁') || oos.includes('topping:加檸檬汁');
+                    if (isOos) {
+                        lemonItem.checked = false;
+                        lemonItem.disabled = true;
+                        const label = lemonItem.closest('.checkbox-label');
+                        if (label) {
+                            label.style.opacity = '0.5';
+                            label.style.pointerEvents = 'none';
+                            label.style.textDecoration = 'line-through';
+                            label.style.color = '#94a3b8';
+                            if (!label.querySelector('.oos-badge')) {
+                                label.insertAdjacentHTML('beforeend', ' <span class="oos-badge" style="color:#dc2626; font-size:12px; font-weight:900; text-decoration:none;">(已售完)</span>');
+                            }
+                        }
+                    }
+                }
+            }
+
             function renderMenu() {
                 for (let name in menu.large) createItem(name, menu.large[name], 'large', 'meat-list', name, false);
                 for (let name in menu.small) createItem(name, menu.small[name], 'small', 'side50-list', name, false);
                 for (let name in menu.combo) createItem(name, menu.combo[name], 'combo', 'side30-list', name, false);
                 for (let name in menu.drinks) createItem(name, menu.drinks[name], 'drinks', 'side25-list', name, false);
                 for (let name in menu.veggie) createItem(name, menu.veggie[name], 'veggie', 'veggie-list', name, false);
+
+                updateToppingStockStatus();
 
                 document.querySelectorAll('.section-container').forEach(sec => observer.observe(sec));
             }

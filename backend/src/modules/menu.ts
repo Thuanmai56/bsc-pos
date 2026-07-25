@@ -343,9 +343,9 @@ export async function updateStockStatus(request: Request, env: Env): Promise<Res
       `UPDATE menu_items 
        SET out_of_stock_until = ?, updated_at = datetime('now') 
        WHERE tenant_id = ? 
-         AND name = ? 
+         AND (name = ? OR name = ('加' || ?) OR name = REPLACE(?, '加', '')) 
          AND category_id = (SELECT id FROM menu_categories WHERE tenant_id = ? AND slug = ?)`
-    ).bind(outOfStockUntil, tenantId, name, tenantId, category_slug).run();
+    ).bind(outOfStockUntil, tenantId, name, name, name, tenantId, category_slug).run();
 
     if (dbRes.meta.changes === 0) {
       return json({ error: "Menu item not found or unauthorized" }, 404);
