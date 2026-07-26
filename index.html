@@ -432,9 +432,25 @@
                         throw new Error(`API returned status ${res.status}`);
                     }
 
-                    liff.closeWindow();
-                });
-            } catch (liffErr) {
+                    customAlert('<div style="margin-bottom: 15px;"><svg width="64" height="64" viewBox="0 0 24 24" fill="#10b981"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div><div style="font-size: 18px; line-height: 1.4; color: #111;">感謝您的訂單！餐點製作完成後，我們會再次通知您前來取餐，謝謝！</div>', () => {
+                        liff.closeWindow();
+                    });
+
+                    liff.sendMessages([{ type: 'text', text: msg }]).catch(e => {
+                        console.error("Non-blocking liff.sendMessages failed:", e);
+                    });
+
+                    return;
+
+                } catch (err) {
+                    console.warn("Primary API flow failed, trying LIFF sendMessages fallback:", err);
+
+                    try {
+                        await liff.sendMessages([{ type: 'text', text: msg }]);
+                        customAlert('<div style="margin-bottom: 15px;"><svg width="64" height="64" viewBox="0 0 24 24" fill="#10b981"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div><div style="font-size: 18px; line-height: 1.4; color: #111;">感謝您的訂單！餐點製作完成後，我們會再次通知您前來取餐，謝謝！</div>', () => {
+                            liff.closeWindow();
+                        });
+                    } catch (liffErr) {
                         console.error("LIFF sendMessages fallback failed:", liffErr);
                         customAlert('傳送失敗，請重試或向店員反應。');
                         isSubmitting = false;
