@@ -33,27 +33,6 @@ export async function createOrder(request: Request, env: Env, ctx?: ExecutionCon
 
   await saveOrder(env, order);
 
-  // Push confirmation message to LINE user asynchronously
-  if (order.userId) {
-    let confirmText = `✅ [已收到] 訂單編號：${order.key}\n📦 訂單內容：\n${order.content}\n\n🕒 取餐時間：${order.time}`;
-    if (order.note) confirmText += `\n📝 總備註：${order.note}`;
-    confirmText += `\n💰 總金額：$${order.total}`;
-
-    const sendPush = async () => {
-      try {
-        await pushLineMessage(order.userId!, confirmText, env);
-      } catch (e) {
-        console.error(`[BSC] createOrder pushLineMessage Error:`, e);
-      }
-    };
-
-    if (ctx && ctx.waitUntil) {
-      ctx.waitUntil(sendPush());
-    } else {
-      await sendPush();
-    }
-  }
-
   return json({ success: true, key: orderKey });
 }
 
