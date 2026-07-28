@@ -332,9 +332,7 @@
   </div>
 
   <script>
-    const WORKER_BASE = window.location.hostname.includes("test")
-      ? "https://bsc-worker-test.thuanmnc.workers.dev"
-      : "https://bsc-worker-production.thuanmnc.workers.dev";
+    const WORKER_BASE = "https://bsc-worker-test.thuanmnc.workers.dev";
 
     let latestOrders = [];
     let pendingNewOrders = [];

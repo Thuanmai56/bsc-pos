@@ -283,35 +283,90 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
   return json({ success: true });
 }
 
+// In-Memory Cache (RAM) trong Worker Isolate (TTL: 2000ms)
+interface MemoryOrdersCache {
+  orders: Order[];
+  timestamp: number;
+}
+const memoryOrdersCache = new Map<string, MemoryOrdersCache>();
+const MEMORY_CACHE_TTL_MS = 2000; // 2 giây
+
 export async function getOrders(env: Env): Promise<Response> {
+  const tenantId = "bsc";
+  const cacheKey = `tenant:${tenantId}:orders_cache`;
+
+  // 1. Kiểm tra RAM Cache trước (0ms latency, 0 KV reads, 0 D1 reads)
+  const memCached = memoryOrdersCache.get(tenantId);
+  if (memCached && Date.now() - memCached.timestamp < MEMORY_CACHE_TTL_MS) {
+    return json(memCached.orders);
+  }
+
+  // 2. RAM Cache Miss -> Kiểm tra KV Cache
+  if (env.ORDER_STATE) {
+    try {
+      const cached = await env.ORDER_STATE.get(cacheKey);
+      if (cached) {
+        const parsedOrders: Order[] = JSON.parse(cached);
+        memoryOrdersCache.set(tenantId, { orders: parsedOrders, timestamp: Date.now() });
+        return json(parsedOrders);
+      }
+    } catch (e) {
+      console.error("[getOrders] KV Cache read error:", e);
+    }
+  }
+
   if (!env.DB) return json([]);
+
+  // 3. RAM & KV Cache Miss -> Truy vấn từ D1 Database
   try {
     const { results } = await env.DB.prepare(
       "SELECT * FROM orders WHERE tenant_id = ? ORDER BY created_at DESC LIMIT 200"
-    ).bind("bsc").all<any>();
+    ).bind(tenantId).all<any>();
 
-    const orders: Order[] = (results || []).map(row => ({
-      key: row.key,
-      customer: row.customer_name,
-      time: row.pickup_time,
-      content: row.order_content,
-      status: row.status,
-      createdAt: new Date(row.created_at + "Z").getTime(),
-      userId: row.user_id || undefined,
-      total: row.total_amount,
-      reason: row.reason || "",
-      note: row.note || ""
-    }));
+    const orders: Order[] = (results || []).map(row => {
+      let parsedCreatedAt = Date.now();
+      if (row.created_at) {
+        const t = new Date(row.created_at.includes("Z") ? row.created_at : row.created_at + "Z").getTime();
+        if (!isNaN(t)) parsedCreatedAt = t;
+      }
+
+      return {
+        key: row.key,
+        customer: row.customer_name || "顧客",
+        time: row.pickup_time || "",
+        content: row.order_content || "",
+        status: row.status || "NEW",
+        createdAt: parsedCreatedAt,
+        userId: row.user_id || undefined,
+        total: row.total_amount || 0,
+        reason: row.reason || "",
+        note: row.note || ""
+      };
+    });
+
+    // Cập nhật RAM Cache
+    memoryOrdersCache.set(tenantId, { orders, timestamp: Date.now() });
+
+    // Cập nhật KV Cache (TTL 60s)
+    if (env.ORDER_STATE) {
+      try {
+        await env.ORDER_STATE.put(cacheKey, JSON.stringify(orders), { expirationTtl: 60 });
+      } catch (e) {
+        console.error("[getOrders] KV Cache write error:", e);
+      }
+    }
 
     return json(orders);
-  } catch (e) {
+  } catch (e: any) {
     console.error("[getOrders] D1 error:", e);
-    return json([]);
+    return json({ error: "Failed to fetch orders", details: e.message }, 500);
   }
 }
 
 export async function saveOrder(env: Env, order: Order): Promise<void> {
   if (!env.DB) return;
+  const tenantId = "bsc";
+
   await env.DB.prepare(
     `INSERT INTO orders (key, tenant_id, user_id, customer_name, pickup_time, status, total_amount, order_content, reason, note, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime(?, 'unixepoch'), datetime('now'))
@@ -324,7 +379,7 @@ export async function saveOrder(env: Env, order: Order): Promise<void> {
        updated_at = datetime('now')`
   ).bind(
     order.key,
-    "bsc",
+    tenantId,
     order.userId || null,
     order.customer,
     order.time,
@@ -335,6 +390,16 @@ export async function saveOrder(env: Env, order: Order): Promise<void> {
     order.note || "",
     Math.floor((order.createdAt || Date.now()) / 1000)
   ).run();
+
+  // Invalidate RAM Cache & KV Cache cho tenant "bsc"
+  memoryOrdersCache.delete(tenantId);
+  if (env.ORDER_STATE) {
+    try {
+      await env.ORDER_STATE.delete(`tenant:${tenantId}:orders_cache`);
+    } catch (e) {
+      console.error("[saveOrder] KV Cache invalidate error:", e);
+    }
+  }
 }
 
 export async function handleOrdersMigration(request: Request, env: Env): Promise<Response> {

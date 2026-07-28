@@ -225,9 +225,7 @@
         <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
         <script>
 
-            const WORKER_BASE = window.location.hostname.includes("test")
-                ? "https://bsc-worker-test.thuanmnc.workers.dev"
-                : "https://bsc-worker-production.thuanmnc.workers.dev";
+            const WORKER_BASE = "https://bsc-worker-test.thuanmnc.workers.dev";
             let menu = { large: {}, small: {}, combo: {}, drinks: {}, veggie: {}, topping: {} };
             let imageList = [];
             let storeConfig = null;
@@ -570,7 +568,7 @@
                 renderMenu();
                 renderStoreOperatingHours();
 
-                const targetLiffId = (storeConfig && storeConfig.liffId) ? storeConfig.liffId : '2010595300-lmVTCe1A';
+                const targetLiffId = (storeConfig && storeConfig.liffId) ? storeConfig.liffId : '2009555608-DMioljsI';
                 try {
                     await liff.init({ liffId: targetLiffId });
                 } catch (e) {
