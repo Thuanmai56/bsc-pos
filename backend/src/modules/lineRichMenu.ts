@@ -101,7 +101,7 @@ export async function setupAlertRichMenu(env: Env): Promise<string | null> {
       size: { width: 2500, height: 843 },
       selected: true,
       name: "BSC Alert Banner",
-      chatBarText: "⚠️ 訂單異動通知 / Thông báo đơn hàng",
+      chatBarText: "⚠️ 訂單異動通知",
       areas: [
         {
           bounds: { x: 0, y: 0, width: 2500, height: 843 },
