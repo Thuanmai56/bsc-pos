@@ -141,7 +141,7 @@ export async function setupAlertRichMenu(env: Env): Promise<string | null> {
         "Content-Type": "image/png",
         Authorization: `Bearer ${token}`,
       },
-      body: pngBytes,
+      body: pngBytes.buffer,
     });
 
     if (!uploadRes.ok) {
