@@ -3,6 +3,7 @@ import { Order } from '../types/index';
 import { json } from '../utils/http';
 import { syncToGoogleSheets } from '../integrations/googleSheets';
 import { pushLineMessage } from './line';
+import { linkAlertRichMenuToUser, unlinkAlertRichMenuFromUser } from './lineRichMenu';
 
 export const MAX_INDEX = 200;
 
@@ -117,6 +118,7 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
           ).bind("bsc", order.userId, order.key).run();
         } catch { }
       }
+      await unlinkAlertRichMenuFromUser(order.userId, env);
       if (!wasWaiting) {
         await pushLineMessage(order.userId, `干城鹹水雞 已收到您的訂單 #${order.key}，謝謝您！`, env);
       }
@@ -186,7 +188,7 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
         ).bind("bsc", order.userId, order.key, "CHANGE", notifyText, order.reason || "", order.note || "").run();
       }
 
-      await pushLineMessage(order.userId, notifyText, env);
+      await linkAlertRichMenuToUser(order.userId, env);
     }
 
     return json({ success: true });
@@ -237,7 +239,7 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
         ).bind("bsc", order.userId, order.key, "REJECT", notifyText, order.reason || "", order.note || "").run();
       }
 
-      await pushLineMessage(order.userId, notifyText, env);
+      await linkAlertRichMenuToUser(order.userId, env);
     }
 
     return json({ success: true });
@@ -256,6 +258,7 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
           ).bind("bsc", order.userId, order.key).run();
         } catch { }
       }
+      await unlinkAlertRichMenuFromUser(order.userId, env);
       await pushLineMessage(order.userId, `干城鹹水雞：由於未收到您的回覆，訂單 #${order.key} 已自動取消。期待下次為您服務！`, env);
     }
 
@@ -466,5 +469,43 @@ export async function handleOrdersMigration(request: Request, env: Env): Promise
     });
   } catch (err: any) {
     return json({ success: false, error: err.message, logs }, 500);
+  }
+}
+
+export async function getPendingActionsApi(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const userId = url.searchParams.get("userId");
+  if (!userId) return json({ pending: [] });
+
+  const map = await getPendingMap(env, userId);
+  const list = Object.values(map);
+  return json({ pending: list });
+}
+
+export async function cleanupExpiredPendingActions(env: Env): Promise<void> {
+  if (!env.DB) return;
+  try {
+    const { results } = await env.DB.prepare(
+      `SELECT tenant_id, user_id, order_key FROM pending_actions 
+       WHERE tenant_id = 'bsc' AND created_at < DATETIME('now', '-15 minutes')`
+    ).all<any>();
+
+    if (results && results.length > 0) {
+      for (const row of results as any[]) {
+        const order = await getOrder(env, row.order_key);
+        if (order) {
+          order.status = "REJECTED";
+          await saveOrder(env, order);
+        }
+        await env.DB.prepare(
+          "DELETE FROM pending_actions WHERE tenant_id = ? AND user_id = ? AND order_key = ?"
+        ).bind("bsc", row.user_id, row.order_key).run();
+
+        await unlinkAlertRichMenuFromUser(row.user_id, env);
+      }
+      console.log(`[PendingActions] Cleaned up ${results.length} expired pending actions`);
+    }
+  } catch (e) {
+    console.error("[PendingActions] cleanup error:", e);
   }
 }

@@ -324,7 +324,7 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
 
       await saveOrder(env, orderData);
 
-      if (!existingRaw && replyToken) {
+      if (!existingOrder && replyToken) {
         try {
           await replyText(replyToken, "感謝您的訂單！餐點製作完成後，我們會再次通知您前來取餐，謝謝！", env);
         } catch (e) {

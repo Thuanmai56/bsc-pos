@@ -216,6 +216,17 @@
             </div>
         </div>
 
+        <div id="pending-action-modal" class="custom-alert-overlay" style="display:none; z-index: 3000;">
+            <div class="custom-alert-box" style="max-width: 380px;">
+                <div class="custom-alert-header" style="color: var(--primary);">⚠️ 訂單異動通知</div>
+                <div id="pending-action-text" class="custom-alert-body" style="white-space: pre-line; text-align: left; max-height: 250px; overflow-y: auto;"></div>
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button id="btn-pending-reject" class="custom-alert-btn" style="background: #e0e0e0; color: #333;" onclick="resolvePendingAction(false)">取消訂單</button>
+                    <button id="btn-pending-accept" class="custom-alert-btn" style="background: var(--primary); color: #fff;" onclick="resolvePendingAction(true)">同意變更</button>
+                </div>
+            </div>
+        </div>
+
         <div id="image-lightbox" class="custom-alert-overlay" style="display:none; z-index: 2000;"
             onclick="closeImageLightbox()">
             <img id="lightbox-img" src=""
@@ -597,6 +608,58 @@
                 setTodayDate();
                 checkStoreStatus();
                 setInterval(checkStoreStatus, 60000);
+                await checkPendingActions();
+            }
+
+            let currentPendingAction = null;
+
+            async function checkPendingActions() {
+                try {
+                    if (!liff.isLoggedIn()) return;
+                    const profile = await liff.getProfile();
+                    if (!profile || !profile.userId) return;
+
+                    const res = await fetch(`${WORKER_BASE}/api/pending-actions?userId=${profile.userId}`);
+                    if (!res.ok) return;
+
+                    const data = await res.json();
+                    if (data.pending && data.pending.length > 0) {
+                        currentPendingAction = data.pending[0];
+                        const text = currentPendingAction.questionText || "您的訂單有所變更，請確認。";
+                        document.getElementById('pending-action-text').innerText = text;
+                        document.getElementById('pending-action-modal').style.display = 'flex';
+                    }
+                } catch (e) {
+                    console.error("Error checking pending actions:", e);
+                }
+            }
+
+            async function resolvePendingAction(isAgree) {
+                if (!currentPendingAction) return;
+                try {
+                    const status = isAgree ? 'ACCEPTED' : 'REJECTED';
+                    const res = await fetch(`${WORKER_BASE}/api/update`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            key: currentPendingAction.orderKey,
+                            status: status,
+                            reason: isAgree ? "客戶同意變更" : "客戶取消訂單"
+                        })
+                    });
+
+                    document.getElementById('pending-action-modal').style.display = 'none';
+                    if (res.ok) {
+                        showCustomAlert(isAgree ? "已確認同意變更！" : "已為您取消訂單！", () => {
+                            if (liff.isInClient && liff.isInClient()) {
+                                liff.closeWindow();
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.error("Failed to resolve pending action:", e);
+                    document.getElementById('pending-action-modal').style.display = 'none';
+                }
             }
             initApp();
 

@@ -13,4 +13,5 @@ export interface Env {
   GROQ_API_KEY?: any;
   GROQ_MODEL?: string;
   GOOGLE_SHEETS_URL?: any;
+  ALERT_RICH_MENU_ID?: any;
 }
