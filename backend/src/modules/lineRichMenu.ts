@@ -49,6 +49,22 @@ export async function linkAlertRichMenuToUser(userId: string, env: Env): Promise
     if (!res.ok) {
       const errText = await res.text().catch(() => "(unreadable)");
       console.error(`[RichMenu] linkAlertRichMenuToUser FAILED: status=${res.status} body=${errText}`);
+
+      // Self-healing: if error indicates missing image or invalid ID, re-run setup and retry once
+      if (errText.includes("upload richmenu image") || res.status === 404 || res.status === 400) {
+        console.log("[RichMenu] Re-running setupAlertRichMenu to fix invalid/imageless Rich Menu...");
+        const newRichMenuId = await setupAlertRichMenu(env);
+        if (newRichMenuId) {
+          const retryRes = await fetch(`${LINE_API_BASE}/user/${userId}/richmenu/${newRichMenuId}`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (retryRes.ok) {
+            console.log(`[RichMenu] Self-healing success: Linked new Rich Menu (${newRichMenuId}) to user ${userId}`);
+            return true;
+          }
+        }
+      }
       return false;
     }
 
