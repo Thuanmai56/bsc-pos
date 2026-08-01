@@ -1,9 +1,20 @@
 import { Env } from '../types/env';
 import { Order } from '../types/index';
-import { json } from '../utils/http';
+import { corsHeaders, json } from '../utils/http';
 import { syncToGoogleSheets } from '../integrations/googleSheets';
 import { pushLineMessage } from './line';
 import { linkAlertRichMenuToUser, unlinkAlertRichMenuFromUser } from './lineRichMenu';
+
+function jsonWithETag(data: any, version: string, status: number = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      ...corsHeaders(),
+      "Content-Type": "application/json",
+      "ETag": `"${version}"`,
+    },
+  });
+}
 
 export const MAX_INDEX = 200;
 
@@ -286,44 +297,76 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
   return json({ success: true });
 }
 
-// In-Memory Cache (RAM) trong Worker Isolate (TTL: 2000ms)
+// In-Memory Cache (RAM) trong Worker Isolate
 interface MemoryOrdersCache {
   orders: Order[];
   timestamp: number;
 }
 const memoryOrdersCache = new Map<string, MemoryOrdersCache>();
+const memoryOrdersVersion = new Map<string, string>();
 const MEMORY_CACHE_TTL_MS = 2000; // 2 giây
 
-export async function getOrders(env: Env): Promise<Response> {
+export async function getOrders(request: Request, env: Env): Promise<Response> {
   const tenantId = "bsc";
   const cacheKey = `tenant:${tenantId}:orders_cache`;
+  const versionKey = `tenant:${tenantId}:orders_version`;
 
-  // 1. Kiểm tra RAM Cache trước (0ms latency, 0 KV reads, 0 D1 reads)
-  const memCached = memoryOrdersCache.get(tenantId);
-  if (memCached && Date.now() - memCached.timestamp < MEMORY_CACHE_TTL_MS) {
-    return json(memCached.orders);
+  // 1. Lấy ETag version hiện tại từ Memory hoặc KV
+  let currentVersion = memoryOrdersVersion.get(tenantId);
+  if (!currentVersion && env.ORDER_STATE) {
+    try {
+      currentVersion = (await env.ORDER_STATE.get(versionKey)) || undefined;
+    } catch {}
   }
 
-  // 2. RAM Cache Miss -> Kiểm tra KV Cache
+  if (!currentVersion) {
+    currentVersion = Date.now().toString();
+    memoryOrdersVersion.set(tenantId, currentVersion);
+    if (env.ORDER_STATE) {
+      try {
+        await env.ORDER_STATE.put(versionKey, currentVersion);
+      } catch {}
+    }
+  }
+
+  // 2. Client gửi Header "If-None-Match" -> Kiểm tra để trả về HTTP 304 Not Modified
+  const clientETag = request.headers.get("if-none-match")?.replace(/^W\//, '').replace(/"/g, '');
+  if (clientETag && clientETag === currentVersion) {
+    return new Response(null, {
+      status: 304,
+      headers: {
+        "ETag": `"${currentVersion}"`,
+        ...corsHeaders(),
+      },
+    });
+  }
+
+  // 3. Kiểm tra RAM Cache trước (0ms latency, 0 KV reads, 0 D1 reads)
+  const memCached = memoryOrdersCache.get(tenantId);
+  if (memCached && Date.now() - memCached.timestamp < MEMORY_CACHE_TTL_MS) {
+    return jsonWithETag(memCached.orders, currentVersion);
+  }
+
+  // 4. RAM Cache Miss -> Kiểm tra KV Cache
   if (env.ORDER_STATE) {
     try {
       const cached = await env.ORDER_STATE.get(cacheKey);
       if (cached) {
         const parsedOrders: Order[] = JSON.parse(cached);
         memoryOrdersCache.set(tenantId, { orders: parsedOrders, timestamp: Date.now() });
-        return json(parsedOrders);
+        return jsonWithETag(parsedOrders, currentVersion);
       }
     } catch (e) {
       console.error("[getOrders] KV Cache read error:", e);
     }
   }
 
-  if (!env.DB) return json([]);
+  if (!env.DB) return jsonWithETag([], currentVersion);
 
-  // 3. RAM & KV Cache Miss -> Truy vấn từ D1 Database
+  // 5. RAM & KV Cache Miss -> Truy vấn từ D1 Database
   try {
     const { results } = await env.DB.prepare(
-      "SELECT * FROM orders WHERE tenant_id = ? ORDER BY created_at DESC LIMIT 200"
+      "SELECT key, customer_name, pickup_time, status, total_amount, order_content, reason, note, created_at FROM orders WHERE tenant_id = ? ORDER BY created_at DESC LIMIT 200"
     ).bind(tenantId).all<any>();
 
     const orders: Order[] = (results || []).map(row => {
@@ -359,7 +402,7 @@ export async function getOrders(env: Env): Promise<Response> {
       }
     }
 
-    return json(orders);
+    return jsonWithETag(orders, currentVersion);
   } catch (e: any) {
     console.error("[getOrders] D1 error:", e);
     return json({ error: "Failed to fetch orders", details: e.message }, 500);
@@ -394,13 +437,17 @@ export async function saveOrder(env: Env, order: Order): Promise<void> {
     Math.floor((order.createdAt || Date.now()) / 1000)
   ).run();
 
-  // Invalidate RAM Cache & KV Cache cho tenant "bsc"
+  // Invalidate RAM Cache & Update version cho tenant "bsc"
+  const newVersion = Date.now().toString();
+  memoryOrdersVersion.set(tenantId, newVersion);
   memoryOrdersCache.delete(tenantId);
+
   if (env.ORDER_STATE) {
     try {
       await env.ORDER_STATE.delete(`tenant:${tenantId}:orders_cache`);
+      await env.ORDER_STATE.put(`tenant:${tenantId}:orders_version`, newVersion);
     } catch (e) {
-      console.error("[saveOrder] KV Cache invalidate error:", e);
+      console.error("[saveOrder] KV Cache update error:", e);
     }
   }
 }

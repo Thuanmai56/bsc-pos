@@ -421,10 +421,25 @@
       if (tab === "live" || tab === "history") renderAll();
     }
 
+    let lastOrdersETag = "";
+
     async function fetchOrders() {
       try {
-        const response = await fetch(`${WORKER_BASE}/api/orders?_t=${Date.now()}`, { cache: "no-store" });
+        const headers = {};
+        if (lastOrdersETag) {
+          headers["If-None-Match"] = lastOrdersETag;
+        }
+
+        const response = await fetch(`${WORKER_BASE}/api/orders`, { headers });
+        if (response.status === 304) {
+          // No order updates since last poll
+          return;
+        }
         if (!response.ok) throw new Error(`fetch failed: ${response.status}`);
+
+        const etag = response.headers.get("ETag");
+        if (etag) lastOrdersETag = etag;
+
         let orders = await response.json();
         if (!Array.isArray(orders)) orders = [];
 

@@ -28,7 +28,7 @@ export default {
       }
       if (request.method === "POST" && path === "/api/create") return await createOrder(request, env, ctx);
       if (request.method === "POST" && path === "/api/update") return await updateOrder(request, env, ctx);
-      if (request.method === "GET" && path === "/api/orders") return await getOrders(env);
+      if (request.method === "GET" && path === "/api/orders") return await getOrders(request, env);
       if (request.method === "GET" && path === "/api/pending-actions") return await getPendingActionsApi(request, env);
       if (request.method === "POST" && path === "/api/setup-alert-richmenu") {
         const richMenuId = await setupAlertRichMenu(env);
