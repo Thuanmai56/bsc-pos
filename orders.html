@@ -3,122 +3,108 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>干城鹹水雞 KDS / POS 管理系統</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>干城鹹水雞 管理後台</title>
   <link rel="stylesheet" href="orders.css" />
 </head>
 
 <body>
   <div class="app">
-    <!-- Topbar Header -->
     <div class="topbar">
       <div class="brand">
-        <div class="brand-title"><i class="fa-solid fa-drumstick-bite" style="color: #EF4444;"></i> 干城鹹水雞 KDS</div>
-        <div class="brand-sub"><i class="fa-solid fa-desktop"></i> 即時訂單看板</div>
+        <div class="brand-title">🍗 干城鹹水雞 後台系統</div>
+        <div class="brand-sub">即時訂單管理</div>
       </div>
-      
-      <!-- Quick Stats Bar -->
-      <div class="pos-stats-bar">
-        <div class="stat-pill"><i class="fa-solid fa-chart-simple"></i> 今日總單 <strong id="stat-total">0</strong></div>
-        <div class="stat-pill warning"><i class="fa-solid fa-fire"></i> 準備中 <strong id="stat-left">0</strong></div>
-        <div class="stat-pill success"><i class="fa-solid fa-circle-check"></i> 待取餐 <strong id="stat-right">0</strong></div>
-      </div>
-
-      <!-- Navigation Tabs & Actions -->
       <div class="tabs">
-        <button class="tab active" id="tab-live" onclick="switchTab('live')"><i class="fa-solid fa-border-all"></i> 即時看板</button>
-        <button class="tab" id="tab-history" onclick="switchTab('history')"><i class="fa-solid fa-clock-rotate-left"></i> 歷史訂單</button>
-        <button class="mini-btn" onclick="testSound()"><i class="fa-solid fa-bell"></i> 測試鈴聲</button>
-        <button class="mini-btn" onclick="openMenuSettings()"><i class="fa-solid fa-bars-staggered"></i> 菜單設定</button>
-        <button class="mini-btn" onclick="openSettings()"><i class="fa-solid fa-gear"></i> 系統設定</button>
+        <button class="tab active" id="tab-live" onclick="switchTab('live')">即時單</button>
+        <button class="tab" id="tab-history" onclick="switchTab('history')">歷史單</button>
+        <button class="mini-btn" onclick="testSound()">測試鈴聲</button>
+        <button class="mini-btn" onclick="openMenuSettings()">菜單</button>
+        <button class="mini-btn" onclick="openSettings()">系統設定</button>
       </div>
     </div>
 
-    <!-- Live KDS Dual-Column View -->
     <div class="content" id="view-live">
       <div class="split">
-        <!-- Preparing Column -->
         <div class="panel">
           <div class="panel-header">
             <div>
-              <div class="panel-title"><i class="fa-solid fa-fire" style="color: var(--brand-yellow);"></i> 準備中</div>
-              <div class="panel-sub">依取餐時間（由近到遠排序）</div>
+              <div class="panel-title">準備中</div>
+              <div class="panel-sub">依取餐時間（由近到遠）</div>
             </div>
             <div class="badge wait" id="count-left">0</div>
           </div>
           <div class="panel-body" id="list-left">
-            <div style="text-align:center; padding: 32px; color: var(--muted);">載入中...</div>
+            <div style="text-align:center; padding: 22px; color:#999;">載入中...</div>
           </div>
         </div>
 
-        <!-- Ready for Pickup Column -->
         <div class="panel">
           <div class="panel-header">
             <div>
-              <div class="panel-title"><i class="fa-solid fa-circle-check" style="color: var(--primary);"></i> 待取餐</div>
-              <div class="panel-sub">餐點已準備完成</div>
+              <div class="panel-title">待取餐</div>
+              <div class="panel-sub">已準備完成</div>
             </div>
             <div class="badge done" id="count-right">0</div>
           </div>
           <div class="panel-body" id="list-right">
-            <div style="text-align:center; padding: 32px; color: var(--muted);">無訂單</div>
+            <div style="text-align:center; padding: 22px; color:#999;">無訂單</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- History View -->
     <div class="content" id="view-history" style="display:none;">
       <div class="panel" style="height: 100%;">
         <div class="panel-header">
           <div>
-            <div class="panel-title">📜 歷史訂單紀錄</div>
-            <div class="panel-sub">依日期歸檔顯示</div>
+            <div class="panel-title">歷史訂單</div>
+            <div class="panel-sub">依日期篩選</div>
           </div>
         </div>
         <div class="panel-body" id="list-history">
-          <div style="text-align:center; padding: 32px; color: var(--muted);">載入中...</div>
+          <div style="text-align:center; padding: 22px; color:#999;">載入中...</div>
         </div>
       </div>
     </div>
 
-    <!-- System Settings Panel -->
+    <!-- Settings Panel -->
     <div class="content" id="view-settings" style="display:none; max-width: 860px; margin: 0 auto; width: 100%;">
       <div class="panel" style="height: auto; padding-bottom: 24px;">
         <div class="panel-header">
-          <div class="panel-title">⚙️ 系統設定</div>
+          <div class="panel-title">系統設定 (Settings)</div>
         </div>
         <div class="panel-body" style="padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+
           <!-- Operating Hours -->
-          <div style="border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; background: var(--card);">
-            <div style="padding: 16px 20px; background: var(--card-subtle); border-bottom: 1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
-              <div style="font-weight: 900; font-size: 18px; color: var(--text-main);">⏰ 營業時間設定</div>
-              <button class="btn btn-primary" style="padding: 8px 18px; font-size: 14px;" onclick="saveOperatingHours()" id="btn-save-hours">儲存時間</button>
+          <div style="border: 1px solid var(--border); border-radius: 12px; overflow: hidden;">
+            <div
+              style="padding: 16px 20px; background: #f3f4f6; border-bottom: 1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+              <div style="font-weight: 800; font-size: 18px;">⏰ 營業時間設定</div>
+              <button class="btn btn-primary" style="padding: 10px 20px; font-size: 15px; border-radius: 8px;"
+                onclick="saveOperatingHours()" id="btn-save-hours">儲存時間</button>
             </div>
             <div id="settings-hours-container" style="padding: 16px; display: flex; flex-direction: column; gap: 10px;">
-              <div style="text-align:center; font-size:14px; color: var(--muted);">載入中...</div>
+              <div style="text-align:center; font-size:14px; color:#999;">載入中...</div>
             </div>
           </div>
+
         </div>
       </div>
     </div>
 
-    <!-- Menu Editor Panel -->
+    <!-- Menu Editor -->
     <div class="content" id="view-menu" style="display:none;">
       <div class="split" style="grid-template-columns: 260px 1fr;">
         <div class="panel">
           <div class="panel-header">
             <div>
-              <div class="panel-title">📋 菜單分類</div>
-              <div class="panel-sub" style="color: var(--brand-yellow); margin-top:4px;">干城鹹水雞 6 大分類</div>
+              <div class="panel-title">菜單分類</div>
+              <div class="panel-sub" style="color: var(--brand-red); margin-top:4px;">干城鹹水雞 6 大分類</div>
             </div>
             <button class="mini-btn" onclick="loadMenuData()">重整</button>
           </div>
-          <div class="panel-body" id="menu-categories" style="padding: 0; background: transparent;">
+          <div class="panel-body" id="menu-categories" style="padding: 0; background: #fff;">
             <!-- Categories rendered here -->
           </div>
         </div>
@@ -127,23 +113,28 @@
           <div class="panel-header">
             <div>
               <div class="panel-title" id="menu-editor-title">分類項目</div>
-              <div class="panel-sub">點擊欄位可直接編輯修改</div>
+              <div class="panel-sub">拖曳排序 ✦ 點擊欄位直接修改</div>
             </div>
             <div style="display:flex; gap:8px;">
-              <button class="btn btn-ghost" style="padding: 8px 16px; font-size: 14px; color: var(--brand-red);" onclick="restoreDefaultMenu()">恢復預設菜單</button>
-              <button class="btn btn-yellow" style="padding: 8px 16px; font-size: 14px;" onclick="addNewMenuItem()">+ 新增項目</button>
-              <button class="btn btn-primary" style="padding: 8px 16px; font-size: 14px;" onclick="saveMenuData()">儲存變更</button>
+              <button class="btn btn-ghost" style="padding: 8px 16px; font-size: 14px; color: var(--brand-red);"
+                onclick="restoreDefaultMenu()">恢復預設菜單</button>
+              <button class="btn btn-yellow" style="padding: 8px 16px; font-size: 14px;" onclick="addNewMenuItem()">+
+                新增項目</button>
+              <button class="btn btn-primary" style="padding: 8px 16px; font-size: 14px;"
+                onclick="saveMenuData()">儲存變更</button>
             </div>
           </div>
-          <div class="panel-body" id="menu-editor-body" style="background: transparent;">
-            <div style="text-align:center; padding: 22px; color: var(--muted);">請先從左側選擇分類</div>
+          <div class="panel-body" id="menu-editor-body" style="background: #f9fafb;">
+            <div style="text-align:center; padding: 22px; color:#999;">請先從左側選擇分類</div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Fullscreen New Order Alert Overlay -->
+
+
+  <!-- Fullscreen new order alert -->
   <div class="new-alert" id="new-alert">
     <div class="new-alert-box">
       <h1 class="new-alert-title" id="new-alert-title">1 筆新訂單</h1>
@@ -155,11 +146,11 @@
     </div>
   </div>
 
-  <!-- Review Modal -->
+  <!-- Review modal -->
   <div id="reviewModal" class="modal">
     <div class="modal-content">
       <div class="modal-title">
-        <h3>🔍 審核訂單詳情</h3>
+        <h3>審核訂單</h3>
         <div class="modal-close" onclick="closeModal()">✕</div>
       </div>
 
@@ -173,7 +164,7 @@
           <div class="detail-value" id="review-customer">-</div>
         </div>
         <div class="detail-box">
-          <div class="detail-label">取餐時間</div>
+          <div class="detail-label">取餐日期</div>
           <div class="detail-value" id="review-pickup">-</div>
         </div>
         <div class="detail-box">
@@ -182,7 +173,7 @@
         </div>
       </div>
 
-      <div class="detail-content" id="review-content" style="margin-bottom: 20px;">-</div>
+      <div class="detail-content" id="review-content">-</div>
 
       <div class="modal-actions" id="review-actions">
         <button class="btn btn-primary" onclick="reviewAccept(this)">接單 (確認)</button>
@@ -192,41 +183,47 @@
 
       <div class="modal-actions" id="review-actions-accepted" style="display:none;">
         <button class="btn btn-primary" onclick="markReadyFromReview(this)">準備完成</button>
-        <button class="btn btn-danger" onclick="cancelOrderFromReview(this)">取消訂單</button>
+        <button class="btn btn-danger"
+          onclick="if(confirm('您確定要取消此訂單嗎？顧客端將不會收到回覆通知。')){ updateStatus(reviewingOrder.key, 'REJECTED', { reason: '取消並不回覆客戶' }, this).then(() => closeModal()); }">取消訂單</button>
         <button class="btn btn-ghost" onclick="closeModal()">關閉</button>
       </div>
 
       <div class="modal-actions" id="review-actions-done" style="display:none;">
-        <button class="btn btn-primary" onclick="updateStatus(reviewingOrder.key, 'PICKED_UP', {}, this).then(() => closeModal());">已交付顧客</button>
-        <button class="btn btn-danger" onclick="cancelOrderFromReview(this)">取消訂單</button>
+        <button class="btn btn-primary"
+          onclick="updateStatus(reviewingOrder.key, 'PICKED_UP', {}, this).then(() => closeModal());">已交付顧客</button>
+        <button class="btn btn-danger"
+          onclick="if(confirm('您確定要取消此訂單嗎？顧客端將不會收到回覆通知。')){ updateStatus(reviewingOrder.key, 'REJECTED', { reason: '取消並不回覆客戶' }, this).then(() => closeModal()); }">取消訂單</button>
         <button class="btn btn-ghost" onclick="closeModal()">關閉</button>
       </div>
 
       <div class="modal-actions" id="review-actions-waiting" style="display:none;">
         <button class="btn btn-primary" onclick="reviewAccept(this)">接單 (確認)</button>
         <button class="btn btn-yellow" onclick="resendPendingMessage(this)">重新傳送訊息</button>
-        <button class="btn btn-danger" onclick="cancelOrderFromReview(this)">取消訂單</button>
+        <button class="btn btn-danger" onclick="reviewForceCancel(this)">取消訂單</button>
         <button class="btn btn-ghost" onclick="closeModal()">關閉</button>
       </div>
     </div>
   </div>
 
-  <!-- Change Modal -->
+  <!-- Change modal -->
   <div id="changeModal" class="modal">
     <div class="modal-content">
       <div class="modal-title">
-        <h3>📝 需要修改訂單</h3>
+        <h3>需要修改訂單</h3>
         <div class="modal-close" onclick="closeModal()">✕</div>
       </div>
-      <label class="form-label">修改原因 / 建議：</label>
-      <select id="change-reason" class="form-select" onchange="onChangeReasonChange()">
+      <label style="display:block; margin-top: 10px; font-weight: 800; font-size: 20px;">修改原因 / 建議：</label>
+      <select id="change-reason"
+        style="width:100%; padding: 16px; margin-top: 10px; border-radius: 12px; border: 1px solid var(--border); font-size: 22px;"
+        onchange="onChangeReasonChange()">
         <option value="口味售完">商品已售完</option>
       </select>
-      <textarea id="change-note" class="form-control" rows="3" placeholder="建議新時間 (例如：17:30)" style="margin-top: 16px; display: none;"></textarea>
+      <textarea id="change-note" rows="3" placeholder="建議新時間 (例如：17:30)"
+        style="width:100%; padding: 16px; margin-top: 16px; border-radius: 12px; border: 1px solid var(--border); font-size: 22px; display: none;"></textarea>
 
       <div id="change-items-div" style="display: none;">
-        <div class="form-label" style="margin-top: 16px;">選擇已售完的商品：</div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px;">
+        <div style="margin-top: 16px; font-weight: 800; font-size: 18px; margin-bottom: 12px;">選擇已售完的商品：</div>
+        <div class="checkbox-grid">
           <label class="checkbox-label"><input type="checkbox" value="雞胸肉" class="sold-item"> 雞胸肉</label>
           <label class="checkbox-label"><input type="checkbox" value="雞腿肉" class="sold-item"> 雞腿肉</label>
           <label class="checkbox-label"><input type="checkbox" value="松阪豬" class="sold-item"> 松阪豬</label>
@@ -242,27 +239,28 @@
         </div>
       </div>
 
-      <div class="modal-actions" style="margin-top: 20px;">
+      <div class="modal-actions two" style="margin-top: 16px;">
         <button class="btn btn-yellow" onclick="confirmAction('CHANGE', this)">傳送修改建議</button>
         <button class="btn btn-ghost" onclick="closeModal()">取消</button>
       </div>
     </div>
   </div>
 
-  <!-- Reject Modal -->
+  <!-- Reject modal -->
   <div id="rejectModal" class="modal">
     <div class="modal-content">
       <div class="modal-title">
-        <h3>🚫 拒單 / 無法接單</h3>
+        <h3>拒單 / 無法接單</h3>
         <div class="modal-close" onclick="closeModal()">✕</div>
       </div>
-      <select id="reject-reason" class="form-select" style="margin-top: 16px;">
+      <select id="reject-reason"
+        style="width:100%; padding: 16px; margin-top: 16px; border-radius: 12px; border: 1px solid var(--border); font-size: 22px;">
         <option value="今日已售完">今日商品已售完</option>
         <option value="訂單過多">目前訂單過多，暫時不接單</option>
         <option value="已過營業時間">已過營業時間</option>
         <option value="取消並不回覆客戶">取消訂單且不回覆顧客</option>
       </select>
-      <div class="modal-actions">
+      <div class="modal-actions two">
         <button class="btn btn-danger" onclick="confirmAction('REJECT', this)">確認拒單</button>
         <button class="btn btn-ghost" onclick="closeModal()">取消</button>
       </div>
@@ -273,52 +271,60 @@
   <div id="imageModal" class="modal">
     <div class="modal-content" style="max-width: 500px;">
       <div class="modal-title">
-        <h3 id="image-modal-title">🖼️ 圖片管理</h3>
+        <h3 id="image-modal-title">圖片管理</h3>
         <div class="modal-close" onclick="closeModal()">✕</div>
       </div>
       <div style="margin-top: 16px; text-align: center;">
-        <img id="image-preview" src="" style="max-width: 100%; max-height: 200px; border-radius: 12px; display: none; margin: 0 auto 16px; object-fit: cover; border: 1px solid var(--border);">
-        <div id="image-status" style="margin-bottom: 16px; font-weight: 800; color: var(--muted);">正在檢查圖片...</div>
+        <img id="image-preview" src=""
+          style="max-width: 100%; max-height: 200px; border-radius: 12px; display: none; margin: 0 auto 16px; object-fit: cover; border: 1px solid #eee;">
+        <div id="image-status" style="margin-bottom: 16px; font-weight: 800; color: #666;">正在檢查圖片...</div>
       </div>
-      <input type="file" id="image-file-input" accept="image/png, image/jpeg, image/webp" style="display: none;" onchange="handleImageSelect(event)">
-      <div class="modal-actions">
+      <input type="file" id="image-file-input" accept="image/png, image/jpeg, image/webp" style="display: none;"
+        onchange="handleImageSelect(event)">
+      <div class="modal-actions two">
         <button class="btn btn-primary" onclick="document.getElementById('image-file-input').click()">上傳圖片</button>
-        <button class="btn btn-danger" id="btn-delete-image" style="display: none;" onclick="deleteItemImage()">刪除圖片</button>
+        <button class="btn btn-danger" id="btn-delete-image" style="display: none;"
+          onclick="deleteItemImage()">刪除圖片</button>
       </div>
-      <div class="modal-actions" style="margin-top: 10px;">
+      <div class="modal-actions" style="grid-template-columns: 1fr; margin-top: 10px;">
         <button class="btn btn-ghost btn-block" onclick="closeModal()">關閉</button>
       </div>
     </div>
   </div>
 
-  <!-- Stock Management Modal -->
+  <!-- 庫存管理 (Stock Management) Modal -->
   <div id="stockModal" class="modal">
     <div class="modal-content" style="max-width: 450px;">
       <div class="modal-title">
-        <h3 id="stock-modal-title">📦 設定庫存狀態</h3>
+        <h3 id="stock-modal-title">設定庫存狀態</h3>
         <div class="modal-close" onclick="closeStockModal()">✕</div>
       </div>
       <div style="margin-top: 16px;">
-        <label class="form-label">狀態：</label>
-        <select id="stock-status-select" class="form-select" onchange="handleStockStatusChange()">
+        <label style="display: block; font-weight: 900; margin-bottom: 8px; font-size: 15px;">狀態：</label>
+        <select id="stock-status-select"
+          style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px;"
+          onchange="handleStockStatusChange()">
           <option value="in_stock">🟢 販售中</option>
           <option value="out_of_stock">🔴 已售完</option>
         </select>
       </div>
       <div id="oos-options-container" style="margin-top: 16px; display: none;">
-        <label class="form-label">售完期限：</label>
-        <select id="stock-duration-select" class="form-select" onchange="handleStockDurationChange()">
+        <label style="display: block; font-weight: 900; margin-bottom: 8px; font-size: 15px;">售完期限：</label>
+        <select id="stock-duration-select"
+          style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px;"
+          onchange="handleStockDurationChange()">
           <option value="today">今天 (明天早上4點自動恢復)</option>
           <option value="multiple_days">指定日期</option>
           <option value="indefinite">永久 (手動恢復)</option>
         </select>
 
         <div id="oos-date-container" style="margin-top: 16px; display: none;">
-          <label class="form-label">恢復販售日期：</label>
-          <input type="date" id="oos-until-date" class="form-control">
+          <label style="display: block; font-weight: 900; margin-bottom: 8px; font-size: 15px;">恢復販售日期：</label>
+          <input type="date" id="oos-until-date"
+            style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px;">
         </div>
       </div>
-      <div class="modal-actions" style="margin-top: 24px;">
+      <div class="modal-actions two" style="margin-top: 24px;">
         <button class="btn btn-primary btn-block" onclick="saveStockStatus()">儲存變更</button>
         <button class="btn btn-ghost btn-block" onclick="closeStockModal()">取消</button>
       </div>
@@ -426,6 +432,7 @@
 
         const response = await fetch(`${WORKER_BASE}/api/orders`, { headers });
         if (response.status === 304) {
+          // No order updates since last poll
           return;
         }
         if (!response.ok) throw new Error(`fetch failed: ${response.status}`);
@@ -456,21 +463,23 @@
         renderAll();
       } catch (e) {
         console.error(e);
-        document.getElementById("list-left").innerHTML = `<div style="text-align:center; padding: 22px; color:var(--brand-red);">無法載入: ${escapeHtml(e?.message || e)}</div>`;
-        document.getElementById("list-right").innerHTML = `<div style="text-align:center; padding: 22px; color:var(--brand-red);">無法載入</div>`;
-        document.getElementById("list-history").innerHTML = `<div style="text-align:center; padding: 22px; color:var(--brand-red);">無法載入</div>`;
+        document.getElementById("list-left").innerHTML = `<div style="text-align:center; padding: 22px; color:#d32f2f;">無法載入: ${escapeHtml(e?.message || e)}</div>`;
+        document.getElementById("list-right").innerHTML = `<div style="text-align:center; padding: 22px; color:#d32f2f;">無法載入</div>`;
+        document.getElementById("list-history").innerHTML = `<div style="text-align:center; padding: 22px; color:#d32f2f;">無法載入</div>`;
       }
     }
 
     function renderAll() {
       if (!Array.isArray(latestOrders)) return;
 
+      // Filter/Apply local overrides (ignore server data if override is < 15s old)
       const now = Date.now();
       const currentOrders = latestOrders.map(o => {
         const override = localOverrides[o.key];
         if (override && (now - override.time < 15000)) {
           return { ...o, status: override.status };
         }
+        // Cleanup old overrides
         if (override && (now - override.time >= 15000)) {
           delete localOverrides[o.key];
         }
@@ -494,9 +503,6 @@
 
       document.getElementById("count-left").innerText = String(leftOrders.length);
       document.getElementById("count-right").innerText = String(rightOrders.length);
-      if (document.getElementById("stat-left")) document.getElementById("stat-left").innerText = String(leftOrders.length);
-      if (document.getElementById("stat-right")) document.getElementById("stat-right").innerText = String(rightOrders.length);
-      if (document.getElementById("stat-total")) document.getElementById("stat-total").innerText = String(currentOrders.length);
 
       if (activeTab === "live") {
         renderListLeft(leftOrders);
@@ -510,7 +516,7 @@
       const container = document.getElementById("list-left");
       container.innerHTML = "";
       if (orders.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding: 32px; color:var(--muted);">暫無待處理訂單</div>`;
+        container.innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">暫無訂單</div>`;
         return;
       }
 
@@ -526,14 +532,14 @@
         let rightActions = "";
 
         if (isNew) {
-          badge = `<span class="badge wait">新訂單</span>`;
-          rightActions = `<button class="btn btn-yellow btn-block" onclick="event.stopPropagation(); openReview('${escapeHtml(order.key)}')">審核訂單</button>`;
+          badge = `<span class="badge new">NEW</span>`;
+          rightActions = `<button class="btn btn-ghost btn-block" onclick="event.stopPropagation(); openReview('${escapeHtml(order.key)}')">Review</button>`;
         } else if (order.status === "ACCEPTED") {
-          badge = `<span class="badge wait" style="background:var(--card-subtle); color:var(--brand-yellow-dark);">製作中</span>`;
-          rightActions = `<button class="btn btn-primary btn-block" onclick="event.stopPropagation(); updateStatus('${escapeHtml(order.key)}','DONE', {}, this)"><i class="fa-solid fa-check"></i> 準備完成</button>`;
+          badge = `<span class="badge wait">DOING</span>`;
+          rightActions = `<button class="btn btn-primary btn-block" onclick="event.stopPropagation(); updateStatus('${escapeHtml(order.key)}','DONE', {}, this)">准备好了</button>`;
         } else {
-          badge = `<span class="badge wait" style="background:var(--card-subtle); color:var(--muted);">等待確認</span>`;
-          rightActions = `<button class="btn btn-ghost btn-block" style="cursor:not-allowed;" disabled>等待回覆</button>`;
+          badge = `<span class="badge wait" style="background:#e5e7eb; color:#4b5563;">等客戶確認</span>`;
+          rightActions = `<button class="btn btn-block" style="background:#f3f4f6; color:#9ca3af; cursor:not-allowed;" disabled>等待回覆</button>`;
         }
 
         tile.innerHTML = `
@@ -543,9 +549,9 @@
               ${badge}
               <span class="tile-meta">#${escapeHtml(order.key)}</span>
             </div>
-            <div class="tile-top" style="margin-top: 8px;">
-              <span class="tile-meta" style="font-size:14px; color:var(--text-secondary);">取餐時間: <strong style="color:var(--text-main);">${escapeHtml(order.time || "-")}</strong></span>
-              <span class="tile-meta" style="color: var(--brand-yellow-dark); font-weight: 900; font-size:14px;">${escapeHtml(eta)}</span>
+            <div class="tile-top" style="margin-top: 6px;">
+              <span class="tile-meta">取餐: ${escapeHtml(order.time || "-")}</span>
+              <span class="tile-meta" style="color: var(--brand-red); font-weight: 1100;">${escapeHtml(eta)}</span>
             </div>
             <div class="tile-items">${escapeHtml(shortItems(order.content))}</div>
           </div>
@@ -562,7 +568,7 @@
       const container = document.getElementById("list-right");
       container.innerHTML = "";
       if (orders.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding: 32px; color:var(--muted);">無待取餐訂單</div>`;
+        container.innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">無訂單</div>`;
         return;
       }
 
@@ -570,24 +576,23 @@
         const eta = formatEta(order.time);
         const tile = document.createElement("div");
         tile.className = "tile";
-        tile.style.borderColor = "var(--primary-border)";
         tile.onclick = () => openReview(order.key);
 
         tile.innerHTML = `
           <div>
             <div class="tile-top">
               <span class="tile-customer">${escapeHtml(order.customer || "顧客")}</span>
-              <span class="badge done">待取餐</span>
+              <span class="badge done">READY</span>
               <span class="tile-meta">#${escapeHtml(order.key)}</span>
             </div>
-            <div class="tile-top" style="margin-top: 8px;">
-              <span class="tile-meta" style="font-size:14px; color:var(--text-secondary);">取餐時間: <strong style="color:var(--text-main);">${escapeHtml(order.time || "-")}</strong></span>
-              <span class="tile-meta" style="color: var(--primary); font-weight: 900; font-size:14px;">${escapeHtml(eta)}</span>
+            <div class="tile-top" style="margin-top: 6px;">
+              <span class="tile-meta">取餐: ${escapeHtml(order.time || "-")}</span>
+              <span class="tile-meta" style="color: var(--brand-red); font-weight: 1100;">${escapeHtml(eta)}</span>
             </div>
             <div class="tile-items">${escapeHtml(shortItems(order.content))}</div>
           </div>
           <div class="tile-actions">
-            <button class="btn btn-primary btn-block" onclick="event.stopPropagation(); updateStatus('${escapeHtml(order.key)}','PICKED_UP', {}, this)"><i class="fa-solid fa-handshake"></i> 已交付顧客</button>
+            <button class="btn btn-yellow btn-block" onclick="event.stopPropagation(); updateStatus('${escapeHtml(order.key)}','PICKED_UP', {}, this)">已取餐</button>
           </div>
         `;
         container.appendChild(tile);
@@ -618,15 +623,17 @@
       const container = document.getElementById("list-history");
       container.innerHTML = "";
       if (orders.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding: 32px; color:var(--muted);">無歷史紀錄</div>`;
+        container.innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">無歷史紀錄</div>`;
         return;
       }
 
       const grouped = groupByDate(orders);
+      // Sort groups by date descending
       const sortedDates = Array.from(grouped.keys()).sort((a, b) => b.localeCompare(a));
 
       for (const date of sortedDates) {
         let items = grouped.get(date);
+        // Sort items: newest picked up at top (descending), fallback to newest created at top
         items.sort((a, b) => {
           const timeA = a.pickedUpAt || a.createdAt || 0;
           const timeB = b.pickedUpAt || b.createdAt || 0;
@@ -634,36 +641,34 @@
         });
 
         const header = document.createElement("div");
-        header.className = "history-date-header";
-        header.innerHTML = `<i class="fa-regular fa-calendar-days"></i> ${escapeHtml(date)} <span style="font-weight:600; color:var(--muted); font-size:13px;">(${items.length} 筆)</span>`;
+        header.style.padding = "10px 8px 2px";
+        header.style.fontWeight = "1100";
+        header.style.color = "#111827";
+        header.innerText = `${date} (${items.length})`;
         container.appendChild(header);
 
         items.forEach(order => {
-          const row = document.createElement("div");
-          row.className = "history-item-row";
-          row.onclick = () => openReview(order.key);
+          const tile = document.createElement("div");
+          tile.className = "tile";
+          tile.onclick = () => openReview(order.key);
+          const badge = order.status === "PICKED_UP"
+            ? `<span class="badge done">PICKED</span>`
+            : `<span class="badge">${escapeHtml(order.status)}</span>`;
 
-          const isPicked = order.status === "PICKED_UP";
-          const badgeHTML = isPicked
-            ? `<span class="badge done" style="font-size:12px; padding:2px 10px;">已完成</span>`
-            : `<span class="badge" style="background:var(--brand-red-light); color:var(--brand-red); font-size:12px; padding:2px 10px;">已取消</span>`;
-
-          const firstLineContent = order.content ? String(order.content).split('\n')[0] : "";
-          const totalPrice = order.total ? `$${order.total}` : "";
-
-          row.innerHTML = `
-            <div class="history-row-left">
-              <span class="history-row-key">#${escapeHtml(order.key)}</span>
-              <span class="history-row-customer">${escapeHtml(order.customer || "顧客")}</span>
-              <span class="history-row-content">${escapeHtml(firstLineContent)}</span>
+          tile.innerHTML = `
+            <div>
+              <div class="tile-top">
+                <span class="tile-customer">${escapeHtml(order.customer || "顧客")}</span>
+                ${badge}
+                <span class="tile-meta">#${escapeHtml(order.key)}</span>
+              </div>
+              <div class="tile-items">${escapeHtml(shortItems(order.content))}</div>
             </div>
-            <div class="history-row-right">
-              <span class="history-row-price">${escapeHtml(totalPrice)}</span>
-              ${badgeHTML}
-              <button class="mini-btn" style="padding: 4px 10px; font-size: 12px;" onclick="event.stopPropagation(); openReview('${escapeHtml(order.key)}')">查看</button>
+            <div class="tile-actions">
+              <button class="btn btn-ghost btn-block" onclick="event.stopPropagation(); openReview('${escapeHtml(order.key)}')">查看</button>
             </div>
           `;
-          container.appendChild(row);
+          container.appendChild(tile);
         });
       }
     }
@@ -681,6 +686,7 @@
         return;
       }
 
+      // Kiểm tra xem có BẤT KỲ bảng nào liên quan đến Review đang mở không
       const isReviewing =
         document.getElementById("reviewModal").style.display === "flex" ||
         document.getElementById("changeModal").style.display === "flex" ||
@@ -694,7 +700,7 @@
           return;
         }
       }
-      titleEl.innerText = `🔔 ${count} 筆 新訂單`;
+      titleEl.innerText = `${count} 單 新訂單`;
       alertEl.style.display = "flex";
       startContinuousAlarm();
     }
@@ -755,22 +761,22 @@
     function formatContentHtml(order) {
       const raw = String(order.content || "");
       if (order.reason === "Đơn qua tin nhắn" || order.reason === "訊息下單") {
-        return `<div class="detail-content" style="white-space:pre-wrap; font-size:20px; color:var(--text-main);">${escapeHtml(raw)}</div>`;
+        return `<div style="background:rgba(0,185,0,0.07); border:1.5px solid rgba(0,185,0,0.25); border-radius:16px; padding:18px; white-space:pre-wrap; line-height:1.7; font-size:22px;">${escapeHtml(raw)}</div>`;
       }
       const lines = raw.split("\n").map(l => l.trimEnd()).filter(l => l.trim() !== "");
-      if (lines.length === 0) return `<div class="detail-content">-</div>`;
+      if (lines.length === 0) return `<div style="background:rgba(0,185,0,0.07); border:1.5px solid rgba(0,185,0,0.25); border-radius:16px; padding:18px;">-</div>`;
 
       let inner = lines.map(line => {
         const t = line.trimStart();
         const isSub = t.startsWith("-") || t.startsWith("•") || t.startsWith("↳") || t.startsWith("－");
-        return `<div style="${isSub ? 'padding-left:16px; color:var(--muted); font-size:16px;' : 'font-weight:800; margin-top:8px; font-size:18px; color:var(--text-main);'}">${escapeHtml(line)}</div>`;
+        return `<div style="${isSub ? 'padding-left:16px; color:#4b5563; font-size:20px;' : 'font-weight:800; margin-top:8px; font-size:22px;'}">${escapeHtml(line)}</div>`;
       }).join("");
 
       if (order.note) {
-        inner += `<div style="color: var(--brand-yellow-dark); font-size: 16px; margin-top: 12px; font-weight: 800;">📝 備註：${escapeHtml(order.note)}</div>`;
+        inner += `<div style="color: #555; font-size: 18px; margin-top: 12px; font-weight: 800;">📝 ${escapeHtml(order.note)}</div>`;
       }
 
-      return `<div class="detail-content">${inner}</div>`;
+      return `<div style="background:rgba(0,185,0,0.07); border:1.5px solid rgba(0,185,0,0.25); border-radius:16px; padding:18px; line-height:1.7;">${inner}</div>`;
     }
 
     function closeModal() {
@@ -796,9 +802,11 @@
         });
         if (!response.ok) throw new Error(`update failed: ${response.status}`);
 
+        // Apply local override immediately for responsiveness
         localOverrides[key] = { status, time: Date.now() };
         renderAll();
 
+        // Still fetch to keep in sync
         await fetchOrders();
       } catch (e) {
         console.error(e);
@@ -822,9 +830,9 @@
 
     function reviewOpenChange() {
       if (!reviewingOrder?.key) return;
-      const savedKey = reviewingOrder.key;
+      const savedKey = reviewingOrder.key;  // Save key BEFORE closeModal wipes it
       closeModal();
-      currentOrderKey = savedKey;
+      currentOrderKey = savedKey;           // Restore after closeModal
       document.getElementById("change-reason").value = "口味售完";
       const checkboxes = document.querySelectorAll(".sold-item");
       if (checkboxes) checkboxes.forEach(cb => cb.checked = false);
@@ -834,20 +842,11 @@
 
     function reviewOpenReject() {
       if (!reviewingOrder?.key) return;
-      const savedKey = reviewingOrder.key;
+      const savedKey = reviewingOrder.key;  // Save key BEFORE closeModal wipes it
       closeModal();
-      currentOrderKey = savedKey;
+      currentOrderKey = savedKey;           // Restore after closeModal
       document.getElementById("reject-reason").selectedIndex = 0;
       document.getElementById("rejectModal").style.display = "flex";
-    }
-
-    async function cancelOrderFromReview(btn) {
-      if (!reviewingOrder?.key) return;
-      if (window.confirm("您確定要取消此訂單嗎？顧客端將不會收到回覆通知。")) {
-        await updateStatus(reviewingOrder.key, "REJECTED", { reason: "取消並不回覆客戶" }, btn);
-        closeModal();
-        switchTab("live");
-      }
     }
 
     async function markReadyFromReview(btn) {
@@ -983,9 +982,9 @@
       await playNewOrderSound();
     }
 
-    // --- System Settings & Operating Hours ---
-    const DAY_NAMES = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
+    // --- SETTINGS & OPERATING HOURS ---
     let storeOperatingHours = null;
+    const DAY_NAMES = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
 
     function openSettings() {
       activeTab = "settings";
@@ -1018,31 +1017,30 @@
 
     function renderOperatingHours() {
       const container = document.getElementById("settings-hours-container");
-      if (!container) return;
       container.innerHTML = "";
       for (let i = 1; i <= 7; i++) {
         const dayIdx = i === 7 ? 0 : i;
         const shifts = storeOperatingHours[dayIdx] || [];
         const isOpen = shifts.length > 0;
         const row = document.createElement("div");
-        row.style.cssText = "background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px;";
+        row.style.cssText = "background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 12px;";
         let shiftsHtml = "";
         shifts.forEach((shift, sIdx) => {
           shiftsHtml += `
             <div style="display:flex; gap:8px; align-items:center; margin-top:10px;">
-              <input type="time" id="sh-start-${dayIdx}-${sIdx}" value="${shift.start}" class="form-control" style="flex:1; padding:8px; font-size:15px;">
+              <input type="time" id="sh-start-${dayIdx}-${sIdx}" value="${shift.start}" style="flex:1; padding:8px; font-family:inherit; border:1px solid #ccc; border-radius:6px; font-size:15px;">
               <span style="font-weight:900;">-</span>
-              <input type="time" id="sh-end-${dayIdx}-${sIdx}" value="${shift.end}" class="form-control" style="flex:1; padding:8px; font-size:15px;">
+              <input type="time" id="sh-end-${dayIdx}-${sIdx}" value="${shift.end}" style="flex:1; padding:8px; font-family:inherit; border:1px solid #ccc; border-radius:6px; font-size:15px;">
               <button onclick="removeShift(${dayIdx}, ${sIdx})" style="background:none; border:none; color:var(--brand-red); cursor:pointer; font-size:20px; padding:0 4px;">✕</button>
             </div>`;
         });
         row.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:16px; font-weight:800;">
+            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:16px;">
               <input type="checkbox" ${isOpen ? 'checked' : ''} onchange="toggleDayStatus(${dayIdx}, this.checked)" style="width:18px; height:18px;">
-              <span style="color:${isOpen ? 'var(--text-main)' : 'var(--muted)'};">${DAY_NAMES[dayIdx]}</span>
+              <span style="font-weight:900; color:${isOpen ? '#111' : '#999'};">${DAY_NAMES[dayIdx]}</span>
             </label>
-            ${isOpen ? `<button onclick="addShift(${dayIdx})" class="mini-btn" style="color:var(--primary); font-weight:800;">+ 新增時段</button>` : `<span style="font-size:13px; color:var(--brand-red); font-weight:900;">公休</span>`}
+            ${isOpen ? `<button onclick="addShift(${dayIdx})" style="font-size:13px; background:#eff6ff; color:#3b82f6; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:900;">+ 新增時段</button>` : `<span style="font-size:13px; color:var(--brand-red); font-weight:900;">公休</span>`}
           </div>
           ${isOpen ? `<div id="shifts-box-${dayIdx}">${shiftsHtml}</div>` : ''}`;
         container.appendChild(row);
@@ -1082,8 +1080,8 @@
     async function saveOperatingHours() {
       syncOperatingHoursFromDOM();
       const btn = document.getElementById("btn-save-hours");
-      const oldText = btn ? btn.innerText : "";
-      if (btn) { btn.innerText = "儲存中..."; btn.disabled = true; }
+      const oldText = btn.innerText;
+      btn.innerText = "儲存中..."; btn.disabled = true;
       try {
         const res = await fetch(`${WORKER_BASE}/api/config`, {
           method: "POST",
@@ -1095,13 +1093,15 @@
       } catch (e) {
         alert("儲存失敗：" + e.message);
       } finally {
-        if (btn) { btn.innerText = oldText; btn.disabled = false; }
+        btn.innerText = oldText; btn.disabled = false;
       }
     }
 
-    // --- MENU EDITOR LOGIC ---
-    let currentMenuData = null;
-    let rawMenuData = null;
+    // --- MENU EDITOR LOGIC (ALing-POS style, Benmi fixed categories) ---
+    // Benmi menu structure: { small:{name:price}, large:{}, combo:{}, drinks:{}, topping:{} }
+    // We convert to array of categories with items for the editor, then convert back on save.
+    let currentMenuData = null;   // Array form for editor
+    let rawMenuData = null;       // Original object form from API
     let activeCategoryIndex = -1;
     let isMenuDirty = false;
 
@@ -1109,6 +1109,7 @@
       isMenuDirty = true;
       const btn = document.querySelector("#view-menu .btn-primary");
       if (btn) {
+        btn.style.backgroundColor = "var(--brand-red)";
         btn.innerText = "儲存變更 (尚未儲存 *)";
       }
     }
@@ -1117,7 +1118,8 @@
       isMenuDirty = false;
       const btn = document.querySelector("#view-menu .btn-primary");
       if (btn) {
-        btn.innerText = "儲存變更";
+        btn.style.backgroundColor = ""; // revert to CSS default
+        btn.innerText = "儲存變更 (儲存菜單)";
       }
     }
 
@@ -1139,22 +1141,24 @@
     }
 
     async function loadMenuData() {
-      const bodyEl = document.getElementById("menu-editor-body");
-      if (bodyEl) bodyEl.innerHTML = `<div style="text-align:center; padding: 22px; color:var(--muted);">載入菜單中...</div>`;
+      document.getElementById("menu-editor-body").innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">載入菜單中...</div>`;
       try {
         const res = await fetch(`${WORKER_BASE}/api/menu?_t=${Date.now()}`);
         if (!res.ok) throw new Error("Failed to load");
         rawMenuData = await res.json();
+        // Convert object format to editable array format
         currentMenuData = BENMI_CATS.map(cat => ({
           id: cat.id,
           title: cat.label,
-          items: Object.entries(rawMenuData[cat.id] || {}).map(([name, price]) => ({ name, price }))
+          items: Object.entries(rawMenuData[cat.id] || {}).map(([name, price]) => {
+            const isOos = rawMenuData.out_of_stock && rawMenuData.out_of_stock.includes(`${cat.id}:${name}`);
+            return { name, price, isOos };
+          })
         }));
         activeCategoryIndex = -1;
         renderMenuCategories();
-        if (bodyEl) bodyEl.innerHTML = `<div style="text-align:center; padding: 22px; color:var(--muted);">請先從左側選擇分類</div>`;
-        const titleEl = document.getElementById("menu-editor-title");
-        if (titleEl) titleEl.innerText = "分類項目";
+        document.getElementById("menu-editor-body").innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">請先從左側選擇分類</div>`;
+        document.getElementById("menu-editor-title").innerText = "分類項目";
       } catch (e) {
         alert("無法載入菜單資料：" + e.message);
       }
@@ -1162,16 +1166,15 @@
 
     function renderMenuCategories() {
       const container = document.getElementById("menu-categories");
-      if (!container) return;
       container.innerHTML = "";
       if (!currentMenuData) return;
       currentMenuData.forEach((cat, index) => {
         const div = document.createElement("div");
         div.style.cssText = `
-          padding: 16px; border-bottom: 1px solid var(--border); cursor: pointer; font-weight: 800; font-size: 15px;
-          background: ${activeCategoryIndex === index ? 'var(--card-subtle)' : 'var(--card)'};
-          border-left: 4px solid ${activeCategoryIndex === index ? 'var(--primary)' : 'transparent'};
-          display: flex; justify-content: space-between; align-items: center; color: var(--text-main);
+          padding: 16px; border-bottom: 1px solid #eee; cursor: pointer; font-weight: 1000; font-size: 16px;
+          background: ${activeCategoryIndex === index ? '#f3f4f6' : '#fff'};
+          border-left: 4px solid ${activeCategoryIndex === index ? 'var(--brand-red)' : 'transparent'};
+          display: flex; justify-content: space-between; align-items: center;
         `;
         div.innerHTML = `
           <span>${escapeHtml(cat.title)}</span>
@@ -1190,18 +1193,16 @@
     function renderMenuCategoryEditor(index) {
       if (!currentMenuData || !currentMenuData[index]) return;
       const cat = currentMenuData[index];
-      const titleEl = document.getElementById("menu-editor-title");
-      if (titleEl) titleEl.innerText = cat.title + " (共 " + cat.items.length + " 項)";
+      document.getElementById("menu-editor-title").innerText = cat.title + " (全部 " + cat.items.length + " 項)";
 
       const container = document.getElementById("menu-editor-body");
-      if (!container) return;
       container.innerHTML = "";
 
       let draggedItemIndex = null;
 
       cat.items.forEach((item, iIdx) => {
         const row = document.createElement("div");
-        row.style.cssText = "background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; transition: opacity 0.2s; cursor: grab;";
+        row.style.cssText = "background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; transition: opacity 0.2s; cursor: grab;";
         row.draggable = true;
 
         row.addEventListener("dragstart", (e) => {
@@ -1230,39 +1231,26 @@
           }
         });
 
+        const oosBg = item.isOos ? '#fee2e2' : '#ecfdf5';
+        const oosColor = item.isOos ? '#dc2626' : '#059669';
+        const oosBorder = item.isOos ? '#fca5a5' : '#6ee7b7';
+        const oosText = item.isOos ? '🔴 售完' : '🟢 在售';
+
         row.innerHTML = `
-          <div style="color: var(--muted); font-size: 20px; cursor: grab; flex-shrink:0;">☰</div>
-          <input type="text" value="${escapeHtml(item.name)}" data-name-cidx="${index}" data-name-iidx="${iIdx}" oninput="markMenuDirty()" class="form-control"
-            style="flex: 2; min-width: 120px; font-weight: 800;">
+          <div style="color: #ccc; font-size: 22px; cursor: grab; flex-shrink:0;">☰</div>
+          <input type="text" value="${escapeHtml(item.name)}" data-name-cidx="${index}" data-name-iidx="${iIdx}" oninput="markMenuDirty()"
+            style="flex: 2; min-width: 120px; font-size: 17px; font-weight: 900; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-family:inherit; box-sizing:border-box;">
           <label style="display:flex; align-items:center; gap:6px; font-weight:900; flex-shrink:0;">
             <span style="font-size:18px;">$</span>
-            <input type="number" value="${item.price !== null && item.price !== undefined ? item.price : ''}" data-cidx="${index}" data-iidx="${iIdx}" oninput="markMenuDirty()" class="form-control"
-              placeholder="隱藏" style="width: 90px; font-weight: 900;">
+            <input type="number" value="${item.price !== null && item.price !== undefined ? item.price : ''}" data-cidx="${index}" data-iidx="${iIdx}" oninput="markMenuDirty()"
+              placeholder="隱藏" style="width: 90px; font-size: 17px; font-weight: 900; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-family:inherit; box-sizing:border-box;">
           </label>
+          <button class="btn" style="padding: 8px 14px; font-size:14px; flex-shrink:0; background: ${oosBg}; color: ${oosColor}; border: 1px solid ${oosBorder}; border-radius: 8px; font-weight: 900;"
+            onclick="openStockModal(${index}, ${iIdx})">${oosText}</button>
           <button class="btn btn-ghost" style="padding: 8px 14px; font-size:14px; flex-shrink:0;" onclick="openImageModal('${cat.id}', '${escapeHtml(item.name)}')">📷 圖片</button>
           <button class="btn btn-ghost" style="padding: 8px 14px; color: var(--brand-red); font-size:14px; flex-shrink:0;" onclick="removeMenuItemAt(${index}, ${iIdx})">刪除</button>
         `;
         container.appendChild(row);
-      });
-    }
-
-    function syncMenuDataFromDOM() {
-      if (!currentMenuData) return;
-      document.querySelectorAll("#menu-editor-body input[data-name-cidx]").forEach(inp => {
-        const cIdx = parseInt(inp.getAttribute("data-name-cidx"));
-        const iIdx = parseInt(inp.getAttribute("data-name-iidx"));
-        const val = inp.value.trim();
-        if (currentMenuData[cIdx] && currentMenuData[cIdx].items[iIdx]) {
-          currentMenuData[cIdx].items[iIdx].name = val;
-        }
-      });
-      document.querySelectorAll("#menu-editor-body input[data-cidx]").forEach(inp => {
-        const cIdx = parseInt(inp.getAttribute("data-cidx"));
-        const iIdx = parseInt(inp.getAttribute("data-iidx"));
-        const val = inp.value.trim() === "" ? null : parseInt(inp.value);
-        if (currentMenuData[cIdx] && currentMenuData[cIdx].items[iIdx]) {
-          currentMenuData[cIdx].items[iIdx].price = val;
-        }
       });
     }
 
@@ -1285,11 +1273,30 @@
       renderMenuCategories();
     }
 
+    function syncMenuDataFromDOM() {
+      document.querySelectorAll("#menu-editor-body input[data-name-cidx]").forEach(inp => {
+        const cIdx = parseInt(inp.getAttribute("data-name-cidx"));
+        const iIdx = parseInt(inp.getAttribute("data-name-iidx"));
+        if (currentMenuData[cIdx] && currentMenuData[cIdx].items[iIdx]) {
+          currentMenuData[cIdx].items[iIdx].name = inp.value;
+        }
+      });
+      document.querySelectorAll("#menu-editor-body input[data-cidx]").forEach(inp => {
+        const cIdx = parseInt(inp.getAttribute("data-cidx"));
+        const iIdx = parseInt(inp.getAttribute("data-iidx"));
+        const val = inp.value.trim() === "" ? null : parseInt(inp.value);
+        if (currentMenuData[cIdx] && currentMenuData[cIdx].items[iIdx]) {
+          currentMenuData[cIdx].items[iIdx].price = val;
+        }
+      });
+    }
+
     async function saveMenuData() {
       if (!currentMenuData) return;
       if (!confirm("確定要儲存所有變更嗎？這會直接即時影響顧客端點餐頁面。")) return;
       syncMenuDataFromDOM();
 
+      // Convert back to Benmi object format
       const output = {};
       currentMenuData.forEach(cat => {
         output[cat.id] = {};
@@ -1301,8 +1308,8 @@
       });
 
       const btn = document.querySelector("#view-menu .btn-primary");
-      const oldText = btn ? btn.innerText : "";
-      if (btn) { btn.innerText = "儲存中..."; btn.disabled = true; }
+      const oldText = btn.innerText;
+      btn.innerText = "儲存中..."; btn.disabled = true;
 
       try {
         const res = await fetch(`${WORKER_BASE}/api/menu`, {
@@ -1317,7 +1324,7 @@
       } catch (e) {
         alert("儲存失敗：" + e.message);
       } finally {
-        if (btn) { btn.innerText = "儲存變更"; btn.disabled = false; }
+        btn.innerText = "儲存變更 (儲存菜單)"; btn.disabled = false;
       }
     }
 
@@ -1329,7 +1336,7 @@
         small: { "無骨鳳爪": 50, "日本山藥": 50 },
         combo: { "煙燻豆包": 30, "茶燻百葉": 30, "鳥蛋(5顆)": 30, "鴨米血": 30, "櫛瓜": 30, "木耳": 30, "蘋果": 30, "筍片": 30 },
         drinks: { "蝦子(一隻)": 25, "大黑豆乾": 25, "竹輪": 25, "皮蛋": 25, "甜不辣": 25 },
-        veggie: { "小黃瓜": 35, "高麗菜": 35, "玉米筍": 35, "龍鬚菜": 35, "娃娃菜": 35, "蓮藕片": 35, "豬耳朵": 35, "雞軟骨": 35, "烤馬涼薯": 35, "腐竹豆皮": 35, "滷蛋白丁": 35, "蘆筍": 35, "花椰菜": 35, "水蓮": 35, "山苦瓜": 35, "秋葵": 35, "芥藍芽": 35, "杏鮑菇": 35, "雞肝": 35, "雞診": 35, "鴨賞": 35, "雞心": 35, "蕎麥麵": 35, "金針菇": 35 },
+        veggie: { "小黃瓜": 35, "高麗菜": 35, "玉米筍": 35, "龍鬚菜": 35, "娃娃菜": 35, "蓮藕片": 35, "豬耳朵": 35, "雞軟骨": 35, "烤馬鈴薯": 35, "腐竹豆皮": 35, "滷蛋白丁": 35, "蘆筍": 35, "花椰菜": 35, "水蓮": 35, "山苦瓜": 35, "秋葵": 35, "芥藍芽": 35, "杏鮑菇": 35, "雞肝": 35, "雞胗": 35, "鴨賞": 35, "雞心": 35, "蕎麥麵": 35, "金針菇": 35 },
         topping: { "加香菜": 15, "檸檬汁": 20 }
       };
 
@@ -1341,7 +1348,7 @@
         });
         if (!res.ok) throw new Error("API returned " + res.status);
         alert("預設菜單已恢復成功！");
-        loadMenuData();
+        loadMenuData(); // Reload from server
       } catch (e) {
         alert("恢復預設菜單時出錯：" + e.message);
       }
@@ -1385,6 +1392,7 @@
       reader.onload = function (e) {
         const img = new Image();
         img.onload = function () {
+          // Resize if too large
           const MAX_WIDTH = 800;
           const MAX_HEIGHT = 800;
           let width = img.width;
@@ -1408,13 +1416,14 @@
           const ctx = canvas.getContext("2d");
           ctx.drawImage(img, 0, 0, width, height);
 
+          // Get base64 (webp is usually smaller)
           const dataUri = canvas.toDataURL("image/webp", 0.8);
           uploadImage(dataUri);
         }
         img.src = e.target.result;
       };
       reader.readAsDataURL(file);
-      event.target.value = '';
+      event.target.value = ''; // reset
     }
 
     async function uploadImage(dataUri) {
@@ -1461,20 +1470,25 @@
     let currentStockIidx = null;
 
     function openStockModal(cIdx, iIdx) {
+      // Lưu lại các thay đổi người dùng đang nhập dở trên input
       syncMenuDataFromDOM();
+
       currentStockCidx = cIdx;
       currentStockIidx = iIdx;
 
       const item = currentMenuData[cIdx].items[iIdx];
-      document.getElementById("stock-modal-title").innerText = `庫存管理: ${item.name}`;
+      document.getElementById("stock-modal-title").innerText = `庫存管理 (Kho): ${item.name}`;
 
+      // Set values
       const statusSelect = document.getElementById("stock-status-select");
       statusSelect.value = item.isOos ? "out_of_stock" : "in_stock";
 
+      // Reset duration & date
       document.getElementById("stock-duration-select").value = "today";
       document.getElementById("oos-until-date").value = "";
 
       handleStockStatusChange();
+
       document.getElementById("stockModal").style.display = "flex";
     }
 
@@ -1509,6 +1523,8 @@
 
     async function saveStockStatus() {
       if (currentStockCidx === null || currentStockIidx === null) return;
+
+      // Đồng bộ dữ liệu hiện tại từ DOM
       syncMenuDataFromDOM();
 
       const categorySlug = currentMenuData[currentStockCidx].id;
@@ -1544,6 +1560,7 @@
           throw new Error(errData.error || "Update failed");
         }
 
+        // 更新 local state
         item.isOos = (status === "out_of_stock");
 
         const targetCidx = currentStockCidx;
@@ -1557,9 +1574,16 @@
       }
     }
 
-    // Polling setup
+    function closeModal() {
+      document.querySelectorAll(".modal").forEach(m => m.style.display = "none");
+      reviewingOrder = null;
+      currentOrderKey = null;
+    }
+
+    setInterval(() => {
+      if (activeTab === "live" || activeTab === "history") fetchOrders();
+    }, 1500);
     fetchOrders();
-    setInterval(fetchOrders, 4000);
   </script>
 </body>
 
