@@ -57,6 +57,22 @@ html {
 }
 
 /* ==========================================================================
+   Page Reveal: content fades in gracefully after splash closes
+   ========================================================================== */
+body:not(.page-ready) .store-header,
+body:not(.page-ready) .sticky-nav,
+body:not(.page-ready) .main-layout {
+    opacity: 0;
+}
+
+body.page-ready .store-header,
+body.page-ready .sticky-nav,
+body.page-ready .main-layout {
+    opacity: 1;
+    transition: opacity 0.45s ease 0.05s;
+}
+
+/* ==========================================================================
    Full Page Restaurant Split Door Opening Animation
    ========================================================================== */
 .splash-screen {

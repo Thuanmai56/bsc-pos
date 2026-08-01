@@ -587,6 +587,10 @@
                 }
             }
 
+            // Run immediately so badge is populated BEFORE splash closes
+            setTodayDate();
+            checkStoreStatus();
+
             const splashStartTime = Date.now();
             function hideSplashScreen() {
                 const splash = document.getElementById("splash-screen");
@@ -595,6 +599,7 @@
                 const remaining = Math.max(0, 350 - elapsed);
                 setTimeout(() => {
                     splash.classList.add("fade-out");
+                    document.body.classList.add("page-ready");
                     setTimeout(() => { if (splash && splash.parentNode) splash.parentNode.removeChild(splash); }, 750);
                 }, remaining);
             }
@@ -604,6 +609,8 @@
                     await fetchMenu();
                     renderMenu();
                     renderStoreOperatingHours();
+                    // Re-check status after config loads (may override hours)
+                    checkStoreStatus();
                 } finally {
                     hideSplashScreen();
                 }
@@ -634,8 +641,6 @@
                         }
                     }
                 } catch (e) { }
-                setTodayDate();
-                checkStoreStatus();
                 setInterval(checkStoreStatus, 60000);
                 fetchWaitingCounter();
                 setInterval(fetchWaitingCounter, 30000);
