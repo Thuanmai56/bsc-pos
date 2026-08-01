@@ -311,22 +311,27 @@ export async function getOrders(request: Request, env: Env): Promise<Response> {
   const cacheKey = `tenant:${tenantId}:orders_cache`;
   const versionKey = `tenant:${tenantId}:orders_version`;
 
-  // 1. Lấy ETag version hiện tại từ Memory hoặc KV
-  let currentVersion = memoryOrdersVersion.get(tenantId);
-  if (!currentVersion && env.ORDER_STATE) {
+  // 1. Luôn lấy ETag version mới nhất từ Cloudflare KV (Đảm bảo đồng bộ giữa mọi máy chủ Edge)
+  let currentVersion: string | undefined = undefined;
+  if (env.ORDER_STATE) {
     try {
       currentVersion = (await env.ORDER_STATE.get(versionKey)) || undefined;
-    } catch {}
+    } catch (e) {
+      console.error("[getOrders] KV version read error:", e);
+    }
   }
 
   if (!currentVersion) {
-    currentVersion = Date.now().toString();
+    currentVersion = memoryOrdersVersion.get(tenantId) || Date.now().toString();
     memoryOrdersVersion.set(tenantId, currentVersion);
     if (env.ORDER_STATE) {
       try {
         await env.ORDER_STATE.put(versionKey, currentVersion);
       } catch {}
     }
+  } else {
+    // Đã có từ KV -> Cập nhật lại RAM local của Isolate này
+    memoryOrdersVersion.set(tenantId, currentVersion);
   }
 
   // 2. Client gửi Header "If-None-Match" -> Kiểm tra để trả về HTTP 304 Not Modified
