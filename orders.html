@@ -94,9 +94,9 @@
         </div>
         <div class="panel-body" style="padding: 24px; display: flex; flex-direction: column; gap: 20px;">
           <!-- Operating Hours -->
-          <div style="border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; background: rgba(0,0,0,0.2);">
-            <div style="padding: 16px 20px; background: rgba(255,255,255,0.05); border-bottom: 1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
-              <div style="font-weight: 900; font-size: 18px; color: #fff;">⏰ 營業時間設定</div>
+          <div style="border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; background: var(--card);">
+            <div style="padding: 16px 20px; background: var(--card-subtle); border-bottom: 1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+              <div style="font-weight: 900; font-size: 18px; color: var(--text-main);">⏰ 營業時間設定</div>
               <button class="btn btn-primary" style="padding: 8px 18px; font-size: 14px;" onclick="saveOperatingHours()" id="btn-save-hours">儲存時間</button>
             </div>
             <div id="settings-hours-container" style="padding: 16px; display: flex; flex-direction: column; gap: 10px;">
@@ -218,27 +218,27 @@
         <h3>📝 需要修改訂單</h3>
         <div class="modal-close" onclick="closeModal()">✕</div>
       </div>
-      <label style="display:block; margin-top: 10px; font-weight: 800; font-size: 16px; color: var(--text-main);">修改原因 / 建議：</label>
-      <select id="change-reason" style="width:100%; padding: 14px; margin-top: 10px; border-radius: 12px; border: 1px solid var(--border); background: #0B0F19; color: #fff; font-size: 18px;" onchange="onChangeReasonChange()">
+      <label class="form-label">修改原因 / 建議：</label>
+      <select id="change-reason" class="form-select" onchange="onChangeReasonChange()">
         <option value="口味售完">商品已售完</option>
       </select>
-      <textarea id="change-note" rows="3" placeholder="建議新時間 (例如：17:30)" style="width:100%; padding: 14px; margin-top: 16px; border-radius: 12px; border: 1px solid var(--border); background: #0B0F19; color: #fff; font-size: 18px; display: none;"></textarea>
+      <textarea id="change-note" class="form-control" rows="3" placeholder="建議新時間 (例如：17:30)" style="margin-top: 16px; display: none;"></textarea>
 
       <div id="change-items-div" style="display: none;">
-        <div style="margin-top: 16px; font-weight: 800; font-size: 16px; margin-bottom: 12px; color: var(--text-main);">選擇已售完的商品：</div>
+        <div class="form-label" style="margin-top: 16px;">選擇已售完的商品：</div>
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px;">
-          <label style="display:flex; align-items:center; gap:8px; background: rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px;"><input type="checkbox" value="雞胸肉" class="sold-item"> 雞胸肉</label>
-          <label style="display:flex; align-items:center; gap:8px; background: rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px;"><input type="checkbox" value="雞腿肉" class="sold-item"> 雞腿肉</label>
-          <label style="display:flex; align-items:center; gap:8px; background: rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px;"><input type="checkbox" value="松阪豬" class="sold-item"> 松阪豬</label>
-          <label style="display:flex; align-items:center; gap:8px; background: rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px;"><input type="checkbox" value="無骨鳳爪" class="sold-item"> 無骨鳳爪</label>
-          <label style="display:flex; align-items:center; gap:8px; background: rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px;"><input type="checkbox" value="日本山藥" class="sold-item"> 日本山藥</label>
-          <label style="display:flex; align-items:center; gap:8px; background: rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px;"><input type="checkbox" value="煙燻豆包" class="sold-item"> 煙燻豆包</label>
-          <label style="display:flex; align-items:center; gap:8px; background: rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px;"><input type="checkbox" value="茶燻百葉" class="sold-item"> 茶燻百葉</label>
-          <label style="display:flex; align-items:center; gap:8px; background: rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px;"><input type="checkbox" value="鳥蛋(5顆)" class="sold-item"> 鳥蛋(5顆)</label>
-          <label style="display:flex; align-items:center; gap:8px; background: rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px;"><input type="checkbox" value="鴨米血" class="sold-item"> 鴨米血</label>
-          <label style="display:flex; align-items:center; gap:8px; background: rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px;"><input type="checkbox" value="蝦子(一隻)" class="sold-item"> 蝦子(一隻)</label>
-          <label style="display:flex; align-items:center; gap:8px; background: rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px;"><input type="checkbox" value="甜不辣" class="sold-item"> 甜不辣</label>
-          <label style="display:flex; align-items:center; gap:8px; background: rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px;"><input type="checkbox" value="其他" class="sold-item"> 其他</label>
+          <label class="checkbox-label"><input type="checkbox" value="雞胸肉" class="sold-item"> 雞胸肉</label>
+          <label class="checkbox-label"><input type="checkbox" value="雞腿肉" class="sold-item"> 雞腿肉</label>
+          <label class="checkbox-label"><input type="checkbox" value="松阪豬" class="sold-item"> 松阪豬</label>
+          <label class="checkbox-label"><input type="checkbox" value="無骨鳳爪" class="sold-item"> 無骨鳳爪</label>
+          <label class="checkbox-label"><input type="checkbox" value="日本山藥" class="sold-item"> 日本山藥</label>
+          <label class="checkbox-label"><input type="checkbox" value="煙燻豆包" class="sold-item"> 煙燻豆包</label>
+          <label class="checkbox-label"><input type="checkbox" value="茶燻百葉" class="sold-item"> 茶燻百葉</label>
+          <label class="checkbox-label"><input type="checkbox" value="鳥蛋(5顆)" class="sold-item"> 鳥蛋(5顆)</label>
+          <label class="checkbox-label"><input type="checkbox" value="鴨米血" class="sold-item"> 鴨米血</label>
+          <label class="checkbox-label"><input type="checkbox" value="蝦子(一隻)" class="sold-item"> 蝦子(一隻)</label>
+          <label class="checkbox-label"><input type="checkbox" value="甜不辣" class="sold-item"> 甜不辣</label>
+          <label class="checkbox-label"><input type="checkbox" value="其他" class="sold-item"> 其他</label>
         </div>
       </div>
 
@@ -256,13 +256,13 @@
         <h3>🚫 拒單 / 無法接單</h3>
         <div class="modal-close" onclick="closeModal()">✕</div>
       </div>
-      <select id="reject-reason" style="width:100%; padding: 14px; margin-top: 16px; border-radius: 12px; border: 1px solid var(--border); background: #0B0F19; color: #fff; font-size: 18px;">
+      <select id="reject-reason" class="form-select" style="margin-top: 16px;">
         <option value="今日已售完">今日商品已售完</option>
         <option value="訂單過多">目前訂單過多，暫時不接單</option>
         <option value="已過營業時間">已過營業時間</option>
         <option value="取消並不回覆客戶">取消訂單且不回覆顧客</option>
       </select>
-      <div class="modal-actions" style="margin-top: 20px;">
+      <div class="modal-actions">
         <button class="btn btn-danger" onclick="confirmAction('REJECT', this)">確認拒單</button>
         <button class="btn btn-ghost" onclick="closeModal()">取消</button>
       </div>
@@ -299,23 +299,23 @@
         <div class="modal-close" onclick="closeStockModal()">✕</div>
       </div>
       <div style="margin-top: 16px;">
-        <label style="display: block; font-weight: 900; margin-bottom: 8px; font-size: 15px; color: var(--text-main);">狀態：</label>
-        <select id="stock-status-select" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: #0B0F19; color: #fff; font-size: 16px;" onchange="handleStockStatusChange()">
+        <label class="form-label">狀態：</label>
+        <select id="stock-status-select" class="form-select" onchange="handleStockStatusChange()">
           <option value="in_stock">🟢 販售中</option>
           <option value="out_of_stock">🔴 已售完</option>
         </select>
       </div>
       <div id="oos-options-container" style="margin-top: 16px; display: none;">
-        <label style="display: block; font-weight: 900; margin-bottom: 8px; font-size: 15px; color: var(--text-main);">售完期限：</label>
-        <select id="stock-duration-select" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: #0B0F19; color: #fff; font-size: 16px;" onchange="handleStockDurationChange()">
+        <label class="form-label">售完期限：</label>
+        <select id="stock-duration-select" class="form-select" onchange="handleStockDurationChange()">
           <option value="today">今天 (明天早上4點自動恢復)</option>
           <option value="multiple_days">指定日期</option>
           <option value="indefinite">永久 (手動恢復)</option>
         </select>
 
         <div id="oos-date-container" style="margin-top: 16px; display: none;">
-          <label style="display: block; font-weight: 900; margin-bottom: 8px; font-size: 15px; color: var(--text-main);">恢復販售日期：</label>
-          <input type="date" id="oos-until-date" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: #0B0F19; color: #fff; font-size: 16px;">
+          <label class="form-label">恢復販售日期：</label>
+          <input type="date" id="oos-until-date" class="form-control">
         </div>
       </div>
       <div class="modal-actions" style="margin-top: 24px;">
@@ -755,22 +755,22 @@
     function formatContentHtml(order) {
       const raw = String(order.content || "");
       if (order.reason === "Đơn qua tin nhắn" || order.reason === "訊息下單") {
-        return `<div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:18px; white-space:pre-wrap; line-height:1.7; font-size:20px; color:#F8FAFC;">${escapeHtml(raw)}</div>`;
+        return `<div class="detail-content" style="white-space:pre-wrap; font-size:20px; color:var(--text-main);">${escapeHtml(raw)}</div>`;
       }
       const lines = raw.split("\n").map(l => l.trimEnd()).filter(l => l.trim() !== "");
-      if (lines.length === 0) return `<div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:18px; color:var(--muted);">-</div>`;
+      if (lines.length === 0) return `<div class="detail-content">-</div>`;
 
       let inner = lines.map(line => {
         const t = line.trimStart();
         const isSub = t.startsWith("-") || t.startsWith("•") || t.startsWith("↳") || t.startsWith("－");
-        return `<div style="${isSub ? 'padding-left:16px; color:var(--muted); font-size:18px;' : 'font-weight:800; margin-top:8px; font-size:20px; color:#F8FAFC;'}">${escapeHtml(line)}</div>`;
+        return `<div style="${isSub ? 'padding-left:16px; color:var(--muted); font-size:16px;' : 'font-weight:800; margin-top:8px; font-size:18px; color:var(--text-main);'}">${escapeHtml(line)}</div>`;
       }).join("");
 
       if (order.note) {
-        inner += `<div style="color: var(--brand-yellow); font-size: 18px; margin-top: 12px; font-weight: 800;">📝 備註：${escapeHtml(order.note)}</div>`;
+        inner += `<div style="color: var(--brand-yellow-dark); font-size: 16px; margin-top: 12px; font-weight: 800;">📝 備註：${escapeHtml(order.note)}</div>`;
       }
 
-      return `<div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:18px; line-height:1.7;">${inner}</div>`;
+      return `<div class="detail-content">${inner}</div>`;
     }
 
     function closeModal() {
