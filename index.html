@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>干城鹹水雞 點餐</title>
+    <title>干城鹹水雞 點餐系統</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -12,16 +12,16 @@
 </head>
 
 <body>
+    <!-- Store Header (Hero Card) -->
     <div class="store-header">
         <div class="store-header-content">
             <div class="store-header-top">
                 <div class="store-logo-wrapper">
-                    <!-- Vui lòng đảm bảo file benmi_logo.png nằm cùng thư mục -->
                     <img src="./logo.png" alt="Gancheng Logo" class="store-logo">
                 </div>
                 <div class="store-info">
                     <h1 class="store-name">干城鹹水雞</h1>
-                    <p class="store-subtitle">台中黎明店</p>
+                    <p class="store-subtitle">台中黎明店 ✦ 現場/線上即時點餐</p>
                 </div>
                 <div class="store-status-wrapper">
                     <div id="store-status" class="store-status">營業中</div>
@@ -44,117 +44,108 @@
         </div>
     </div>
 
+    <!-- Sticky Navigation Bar -->
     <nav class="sticky-nav">
         <div class="sticky-nav-content" id="main-nav">
             <div class="nav-btn active" onclick="scrollToSec('sec-flavor')">🧪 口味選擇</div>
             <div class="nav-btn" onclick="scrollToSec('sec-meat')">🍗 肉類</div>
-            <div class="nav-btn" onclick="scrollToSec('sec-side50')">小菜$50</div>
-            <div class="nav-btn" onclick="scrollToSec('sec-side30')">小菜$30</div>
-            <div class="nav-btn" onclick="scrollToSec('sec-side25')">小菜$25</div>
-            <div class="nav-btn" onclick="scrollToSec('sec-veggie')">蔬菜/配菜</div>
-            <div class="nav-btn" onclick="scrollToSec('sec-checkout')">結帳</div>
+            <div class="nav-btn" onclick="scrollToSec('sec-side50')">⭐ 精選小菜$50</div>
+            <div class="nav-btn" onclick="scrollToSec('sec-side30')">🥘 特色小菜$30</div>
+            <div class="nav-btn" onclick="scrollToSec('sec-side25')">🥗 經典小菜$25</div>
+            <div class="nav-btn" onclick="scrollToSec('sec-veggie')">🥦 蔬菜/配菜</div>
+            <div class="nav-btn" onclick="scrollToSec('sec-checkout')">🛒 結帳</div>
         </div>
     </nav>
 
+    <!-- Main Content Area -->
     <div class="container main-layout">
         <div class="menu-column">
+            
+            <!-- Flavor & Customization Section -->
             <div class="section-container" id="sec-flavor">
                 <div class="section-title">🧪 口味與客製化選擇</div>
-                <div class="custom-panel"
-                    style="margin-bottom: 20px; padding: 16px; background: #fff; border-radius: 12px; border: 1px solid var(--border); font-size: 15px; color: #444;">
+                <div class="custom-panel">
+                    
+                    <!-- Flavor Choice Cards -->
                     <div class="custom-group">
-                        <label class="custom-label" style="font-weight: 800; display: block; margin-bottom: 8px;">✦
-                            口味選擇</label>
-                        <div class="radio-grid" style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 8px;">
-                            <div class="flavor-option-container"
-                                style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
-                                <label class="radio-label"><input type="radio" name="opt-flavor" value="特調胡椒" checked
-                                        onchange="toggleOriginalCustom()"> 特調胡椒</label>
+                        <label class="custom-label">✦ 口味選擇</label>
+                        <div class="choice-grid">
+                            <div class="flavor-option-container">
+                                <label class="radio-label"><input type="radio" name="opt-flavor" value="特調胡椒" checked onchange="toggleOriginalCustom()"> 特調胡椒</label>
                             </div>
-                            <div class="flavor-option-container"
-                                style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
-                                <label class="radio-label"><input type="radio" name="opt-flavor" value="泰式酸辣"
-                                        onchange="toggleOriginalCustom()"> 泰式酸辣</label>
+                            <div class="flavor-option-container">
+                                <label class="radio-label"><input type="radio" name="opt-flavor" value="泰式酸辣" onchange="toggleOriginalCustom()"> 泰式酸辣</label>
                             </div>
-                            <div class="flavor-option-container"
-                                style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
-                                <label class="radio-label"><input type="radio" name="opt-flavor" value="清爽檸檬"
-                                        onchange="toggleOriginalCustom()"> 清爽檸檬</label>
+                            <div class="flavor-option-container">
+                                <label class="radio-label"><input type="radio" name="opt-flavor" value="清爽檸檬" onchange="toggleOriginalCustom()"> 清爽檸檬</label>
                             </div>
-                            <div class="flavor-option-container"
-                                style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
-                                <label class="radio-label"><input type="radio" name="opt-flavor" value="檸檬香菜"
-                                        onchange="toggleOriginalCustom()"> 檸檬香菜</label>
+                            <div class="flavor-option-container">
+                                <label class="radio-label"><input type="radio" name="opt-flavor" value="檸檬香菜" onchange="toggleOriginalCustom()"> 檸檬香菜</label>
                             </div>
-                            <div class="flavor-option-container"
-                                style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
-                                <label class="radio-label"><input type="radio" name="opt-flavor" value="原味客製"
-                                        onchange="toggleOriginalCustom()"> 原味客製</label>
+                            <div class="flavor-option-container">
+                                <label class="radio-label"><input type="radio" name="opt-flavor" value="原味客製" onchange="toggleOriginalCustom()"> 原味客製</label>
                             </div>
                         </div>
-                        <div id="original-custom-sub"
-                            style="display: none; margin-top: 10px; padding-left: 10px; border-left: 2px solid #ddd; gap: 15px; flex-wrap: wrap;">
+
+                        <!-- Sub-options for 原味客製 -->
+                        <div id="original-custom-sub" style="display: none;">
                             <label class="checkbox-label"><input type="checkbox" id="chk-no-oil"> 不加香油</label>
                             <label class="checkbox-label"><input type="checkbox" id="chk-no-pepper"> 不加胡椒</label>
-                            <label class="checkbox-label"><input type="checkbox" id="chk-no-pepper-with-salt">
-                                不加胡椒加鹽巴</label>
+                            <label class="checkbox-label"><input type="checkbox" id="chk-no-pepper-with-salt"> 不加胡椒加鹽巴</label>
                         </div>
-                        <div id="lemon-custom-sub"
-                            style="display: none; margin-top: 10px; padding-left: 10px; border-left: 2px solid #ddd; gap: 15px; flex-wrap: wrap;">
+
+                        <!-- Sub-options for 清爽檸檬 / 檸檬香菜 -->
+                        <div id="lemon-custom-sub" style="display: none;">
                             <label class="checkbox-label"><input type="checkbox" id="chk-lemon-no-oil"> 不加香油</label>
                             <label class="checkbox-label"><input type="checkbox" id="chk-lemon-no-salt"> 不加鹽巴</label>
                         </div>
                     </div>
 
-                    <div class="custom-group" style="margin-top: 16px;">
-                        <label class="custom-label" style="font-weight: 800; display: block; margin-bottom: 8px;">✦
-                            鹹度調整</label>
-                        <div class="radio-grid" style="display: flex; flex-wrap: wrap; gap: 12px;">
-                            <label class="radio-label"><input type="radio" name="opt-salt" value="正常" checked>
-                                正常</label>
+                    <!-- Salt Option -->
+                    <div class="custom-group">
+                        <label class="custom-label">✦ 鹹度調整</label>
+                        <div class="choice-grid">
+                            <label class="radio-label"><input type="radio" name="opt-salt" value="正常" checked> 正常</label>
                             <label class="radio-label"><input type="radio" name="opt-salt" value="調味重"> 調味重</label>
                             <label class="radio-label"><input type="radio" name="opt-salt" value="調味清淡"> 調味清淡</label>
                         </div>
                     </div>
 
-                    <div class="custom-group" style="margin-top: 16px;">
-                        <label class="custom-label" style="font-weight: 800; display: block; margin-bottom: 8px;">✦ 辣度選擇
-                            (朝天椒)</label>
-                        <div class="radio-grid" style="display: flex; flex-wrap: wrap; gap: 12px;">
-                            <label class="radio-label"><input type="radio" name="opt-spicy" value="不辣" checked>
-                                不辣</label>
+                    <!-- Spicy Option -->
+                    <div class="custom-group">
+                        <label class="custom-label">✦ 辣度選擇 (朝天椒)</label>
+                        <div class="choice-grid">
+                            <label class="radio-label"><input type="radio" name="opt-spicy" value="不辣" checked> 不辣</label>
                             <label class="radio-label"><input type="radio" name="opt-spicy" value="微辣"> 微辣</label>
                             <label class="radio-label"><input type="radio" name="opt-spicy" value="小辣"> 小辣</label>
                             <label class="radio-label"><input type="radio" name="opt-spicy" value="中辣"> 中辣</label>
                             <label class="radio-label"><input type="radio" name="opt-spicy" value="大辣"> 大辣</label>
-                            <label class="radio-label"><input type="radio" name="opt-spicy" value="辣椒放餐盒角落">
-                                辣椒放餐盒角落</label>
+                            <label class="radio-label"><input type="radio" name="opt-spicy" value="辣椒放餐盒角落"> 辣椒放角落</label>
                         </div>
                     </div>
 
-                    <div class="custom-group" style="margin-top: 16px;">
-                        <label class="custom-label" style="font-weight: 800; display: block; margin-bottom: 8px;">✦
-                            配料調整</label>
-                        <div class="checkbox-grid-opts" style="display: flex; flex-wrap: wrap; gap: 15px;">
+                    <!-- Exclusions Option -->
+                    <div class="custom-group">
+                        <label class="custom-label">✦ 配料調整</label>
+                        <div class="choice-grid">
                             <label class="checkbox-label"><input type="checkbox" id="chk-no-green-onion"> 不加蔥花</label>
                             <label class="checkbox-label"><input type="checkbox" id="chk-no-garlic"> 不加蒜頭</label>
                             <label class="checkbox-label"><input type="checkbox" id="chk-no-onion"> 不加洋蔥</label>
                         </div>
                     </div>
 
-                    <div class="custom-group" style="margin-top: 16px; border-top: 1px dashed #eee; padding-top: 12px;">
-                        <label class="custom-label" style="font-weight: 800; display: block; margin-bottom: 8px;">✦ 加價配料
-                            (選加)</label>
-                        <div class="checkbox-grid-opts" style="display: flex; flex-wrap: wrap; gap: 20px;">
-                            <label class="checkbox-label" style="font-weight: 800; color: #b45309;"><input
-                                    type="checkbox" id="chk-coriander" onchange="updateTotal()"> 加香菜 (+$15)</label>
-                            <label class="checkbox-label" style="font-weight: 800; color: #b45309;"><input
-                                    type="checkbox" id="chk-lemon" onchange="updateTotal()"> 加檸檬汁 (+$20)</label>
+                    <!-- Paid Add-ons -->
+                    <div class="custom-group" style="border-top: 1px dashed var(--border); padding-top: 14px;">
+                        <label class="custom-label">✦ 加價配料 (選加)</label>
+                        <div class="choice-grid">
+                            <label class="checkbox-label" style="color: var(--orange); font-weight: 800;"><input type="checkbox" id="chk-coriander" onchange="updateTotal()"> 加香菜 (+$15)</label>
+                            <label class="checkbox-label" style="color: var(--orange); font-weight: 800;"><input type="checkbox" id="chk-lemon" onchange="updateTotal()"> 加檸檬汁 (+$20)</label>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Food Sections -->
             <div class="section-container" id="sec-meat">
                 <div class="section-title">🍗 肉類</div>
                 <div class="grid" id="meat-list"></div>
@@ -176,43 +167,45 @@
             </div>
 
             <div class="section-container" id="sec-veggie">
-                <div class="section-title">🥦 蔬菜/配菜 1份$35 / 3份$100</div>
+                <div class="section-title">🥦 蔬菜/配菜 <span style="font-size: 14px; font-weight: normal; color: var(--primary);">(1份$35 / 3份$100)</span></div>
                 <div class="grid" id="veggie-list"></div>
             </div>
+
+            <!-- Checkout Area -->
             <div class="checkout-column">
-                <div class="section-container" id="sec-checkout" style="margin-top: 20px;">
-                    <div class="section-title">🛍️ 購物車清單</div>
-                    <div id="cart-summary"
-                        style="margin-bottom: 20px; padding: 12px; background: #fff; border-radius: 12px; border: 1px solid var(--border); font-size: 15px; color: #444;">
+                <div class="section-container" id="sec-checkout">
+                    <div class="section-title">🛍️ 購物車明細</div>
+                    <div id="cart-summary" class="custom-panel" style="margin-bottom: 16px;">
                         <div style="text-align:center; color:#9ca3af;">(目前沒有已選商品)</div>
                     </div>
 
                     <div class="section-title">🕒 取餐日期</div>
                     <div class="input-group">
-                        <label style="font-weight: 800; color: var(--primary);">⚠️ 請選擇取餐日期</label>
+                        <label style="color: var(--primary);">⚠️ 請選擇預計取餐日期</label>
                         <div class="datetime-row">
                             <input type="date" id="pickup-date">
                         </div>
                     </div>
 
-                    <div class="section-title">📝 其他要求</div>
+                    <div class="section-title" style="margin-top: 16px;">📝 其他要求</div>
                     <div class="input-group">
                         <textarea id="note" rows="3" placeholder="例如：切半、多汁一點、洋蔥多一點"></textarea>
                     </div>
                 </div>
-
-                <div class="footer">
-                    <div class="total-wrap" onclick="scrollToSec('sec-checkout')">
-                        <span style="font-size: 32px; line-height:1;">🛒</span>
-                        <span id="cart-badge"
-                            style="display:none; position:absolute; top:-6px; right:-10px; background:var(--red); color:#fff; font-size:11px; font-weight:900; border-radius:99px; padding: 2px 6px; min-width:18px; text-align:center;">0</span>
-                        <span class="total-price">$<span id="total-price">0</span></span>
-                    </div>
-                    <button class="btn-send" id="btn-submit" onclick="submitOrder()">確認下單</button>
-                </div>
             </div>
         </div>
 
+        <!-- Floating Bottom Dock / Cart Bar -->
+        <div class="footer">
+            <div class="total-wrap" onclick="scrollToSec('sec-checkout')">
+                <span style="font-size: 28px; line-height: 1;">🛒</span>
+                <span id="cart-badge" style="display:none; position:absolute; top:-6px; right:-10px; background:var(--red); color:#fff; font-size:11px; font-weight:900; border-radius:99px; padding: 2px 6px; min-width:18px; text-align:center;">0</span>
+                <span class="total-price">$<span id="total-price">0</span></span>
+            </div>
+            <button class="btn-send" id="btn-submit" onclick="submitOrder()">確認下單</button>
+        </div>
+
+        <!-- Alert Modal -->
         <div id="custom-alert" class="custom-alert-overlay">
             <div class="custom-alert-box">
                 <div class="custom-alert-header">提醒</div>
@@ -221,7 +214,8 @@
             </div>
         </div>
 
-        <div id="pending-action-modal" class="custom-alert-overlay" style="display:none; z-index: 3000;">
+        <!-- Pending Order Action Notification Modal -->
+        <div id="pending-action-modal" class="custom-alert-overlay" style="z-index: 3000;">
             <div class="custom-alert-box" style="max-width: 380px;">
                 <div class="custom-alert-header" style="color: var(--primary);">⚠️ 訂單異動通知</div>
                 <div id="pending-action-text" class="custom-alert-body" style="white-space: pre-line; text-align: left; max-height: 250px; overflow-y: auto;"></div>
@@ -232,15 +226,13 @@
             </div>
         </div>
 
-        <div id="image-lightbox" class="custom-alert-overlay" style="display:none; z-index: 2000;"
-            onclick="closeImageLightbox()">
-            <img id="lightbox-img" src=""
-                style="max-width: 90%; max-height: 90%; border-radius: 16px; object-fit: contain; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+        <!-- Image Lightbox Modal -->
+        <div id="image-lightbox" class="custom-alert-overlay" style="z-index: 2000;" onclick="closeImageLightbox()">
+            <img id="lightbox-img" src="" style="max-width: 90%; max-height: 90%; border-radius: 16px; object-fit: contain; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
         </div>
 
         <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
         <script>
-
             const WORKER_BASE = "https://bsc-worker-test.thuanmnc.workers.dev";
             let menu = { large: {}, small: {}, combo: {}, drinks: {}, veggie: {}, topping: {} };
             let imageList = [];
@@ -961,9 +953,6 @@
                 const randomSeq = Math.floor(1000 + Math.random() * 9000);
                 return `B${month}${day}-${hours}${mins}-${randomSeq}`;
             }
-
-
-
         </script>
 </body>
 
