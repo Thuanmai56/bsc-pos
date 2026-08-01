@@ -45,7 +45,7 @@
         <div class="panel">
           <div class="panel-header">
             <div>
-              <div class="panel-title"><i class="fa-solid fa-fire" style="color: var(--brand-yellow);"></i> 準備中 (Preparing)</div>
+              <div class="panel-title"><i class="fa-solid fa-fire" style="color: var(--brand-yellow);"></i> 準備中</div>
               <div class="panel-sub">依取餐時間（由近到遠排序）</div>
             </div>
             <div class="badge wait" id="count-left">0</div>
@@ -59,7 +59,7 @@
         <div class="panel">
           <div class="panel-header">
             <div>
-              <div class="panel-title"><i class="fa-solid fa-circle-check" style="color: var(--primary);"></i> 待取餐 (Ready for Pickup)</div>
+              <div class="panel-title"><i class="fa-solid fa-circle-check" style="color: var(--primary);"></i> 待取餐</div>
               <div class="panel-sub">餐點已準備完成</div>
             </div>
             <div class="badge done" id="count-right">0</div>
@@ -90,7 +90,7 @@
     <div class="content" id="view-settings" style="display:none; max-width: 860px; margin: 0 auto; width: 100%;">
       <div class="panel" style="height: auto; padding-bottom: 24px;">
         <div class="panel-header">
-          <div class="panel-title">⚙️ 系統設定 (Settings)</div>
+          <div class="panel-title">⚙️ 系統設定</div>
         </div>
         <div class="panel-body" style="padding: 24px; display: flex; flex-direction: column; gap: 20px;">
           <!-- Operating Hours -->
@@ -192,20 +192,20 @@
 
       <div class="modal-actions" id="review-actions-accepted" style="display:none;">
         <button class="btn btn-primary" onclick="markReadyFromReview(this)">準備完成</button>
-        <button class="btn btn-danger" onclick="if(confirm('您確定要取消此訂單嗎？顧客端將不會收到回覆通知。')){ updateStatus(reviewingOrder.key, 'REJECTED', { reason: '取消並不回覆客戶' }, this).then(() => closeModal()); }">取消訂單</button>
+        <button class="btn btn-danger" onclick="reviewOpenReject()">取消訂單</button>
         <button class="btn btn-ghost" onclick="closeModal()">關閉</button>
       </div>
 
       <div class="modal-actions" id="review-actions-done" style="display:none;">
         <button class="btn btn-primary" onclick="updateStatus(reviewingOrder.key, 'PICKED_UP', {}, this).then(() => closeModal());">已交付顧客</button>
-        <button class="btn btn-danger" onclick="if(confirm('您確定要取消此訂單嗎？顧客端將不會收到回覆通知。')){ updateStatus(reviewingOrder.key, 'REJECTED', { reason: '取消並不回覆客戶' }, this).then(() => closeModal()); }">取消訂單</button>
+        <button class="btn btn-danger" onclick="reviewOpenReject()">取消訂單</button>
         <button class="btn btn-ghost" onclick="closeModal()">關閉</button>
       </div>
 
       <div class="modal-actions" id="review-actions-waiting" style="display:none;">
         <button class="btn btn-primary" onclick="reviewAccept(this)">接單 (確認)</button>
         <button class="btn btn-yellow" onclick="resendPendingMessage(this)">重新傳送訊息</button>
-        <button class="btn btn-danger" onclick="reviewForceCancel(this)">取消訂單</button>
+        <button class="btn btn-danger" onclick="reviewOpenReject()">取消訂單</button>
         <button class="btn btn-ghost" onclick="closeModal()">關閉</button>
       </div>
     </div>
@@ -972,6 +972,580 @@
     async function testSound() {
       await unlockSound();
       await playNewOrderSound();
+    }
+
+    // --- System Settings & Operating Hours ---
+    const DAY_NAMES = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
+    let storeOperatingHours = null;
+
+    function openSettings() {
+      activeTab = "settings";
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".content").forEach(c => c.style.display = "none");
+      document.getElementById("view-settings").style.display = "block";
+      loadOperatingHours();
+    }
+
+    async function loadOperatingHours() {
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/config?_t=${Date.now()}`);
+        if (res.ok) {
+          const data = await res.json();
+          storeOperatingHours = data.operatingHours || createDefaultOperatingHours();
+        } else {
+          storeOperatingHours = createDefaultOperatingHours();
+        }
+      } catch (e) {
+        storeOperatingHours = createDefaultOperatingHours();
+      }
+      renderOperatingHours();
+    }
+
+    function createDefaultOperatingHours() {
+      let hrs = {};
+      for (let i = 0; i < 7; i++) hrs[i] = [{ start: "08:00", end: "21:00" }];
+      return hrs;
+    }
+
+    function renderOperatingHours() {
+      const container = document.getElementById("settings-hours-container");
+      if (!container) return;
+      container.innerHTML = "";
+      for (let i = 1; i <= 7; i++) {
+        const dayIdx = i === 7 ? 0 : i;
+        const shifts = storeOperatingHours[dayIdx] || [];
+        const isOpen = shifts.length > 0;
+        const row = document.createElement("div");
+        row.style.cssText = "background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px;";
+        let shiftsHtml = "";
+        shifts.forEach((shift, sIdx) => {
+          shiftsHtml += `
+            <div style="display:flex; gap:8px; align-items:center; margin-top:10px;">
+              <input type="time" id="sh-start-${dayIdx}-${sIdx}" value="${shift.start}" class="form-control" style="flex:1; padding:8px; font-size:15px;">
+              <span style="font-weight:900;">-</span>
+              <input type="time" id="sh-end-${dayIdx}-${sIdx}" value="${shift.end}" class="form-control" style="flex:1; padding:8px; font-size:15px;">
+              <button onclick="removeShift(${dayIdx}, ${sIdx})" style="background:none; border:none; color:var(--brand-red); cursor:pointer; font-size:20px; padding:0 4px;">✕</button>
+            </div>`;
+        });
+        row.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:16px; font-weight:800;">
+              <input type="checkbox" ${isOpen ? 'checked' : ''} onchange="toggleDayStatus(${dayIdx}, this.checked)" style="width:18px; height:18px;">
+              <span style="color:${isOpen ? 'var(--text-main)' : 'var(--muted)'};">${DAY_NAMES[dayIdx]}</span>
+            </label>
+            ${isOpen ? `<button onclick="addShift(${dayIdx})" class="mini-btn" style="color:var(--primary); font-weight:800;">+ 新增時段</button>` : `<span style="font-size:13px; color:var(--brand-red); font-weight:900;">公休</span>`}
+          </div>
+          ${isOpen ? `<div id="shifts-box-${dayIdx}">${shiftsHtml}</div>` : ''}`;
+        container.appendChild(row);
+      }
+    }
+
+    function syncOperatingHoursFromDOM() {
+      for (let i = 0; i < 7; i++) {
+        const shifts = storeOperatingHours[i];
+        if (shifts && shifts.length > 0) {
+          shifts.forEach((shift, sIdx) => {
+            const elStart = document.getElementById(`sh-start-${i}-${sIdx}`);
+            const elEnd = document.getElementById(`sh-end-${i}-${sIdx}`);
+            if (elStart && elEnd) { shift.start = elStart.value; shift.end = elEnd.value; }
+          });
+        }
+      }
+    }
+
+    function toggleDayStatus(dayIdx, isChecked) {
+      storeOperatingHours[dayIdx] = isChecked ? [{ start: "08:00", end: "21:00" }] : [];
+      renderOperatingHours();
+    }
+
+    function addShift(dayIdx) {
+      syncOperatingHoursFromDOM();
+      storeOperatingHours[dayIdx].push({ start: "12:00", end: "13:00" });
+      renderOperatingHours();
+    }
+
+    function removeShift(dayIdx, sIdx) {
+      syncOperatingHoursFromDOM();
+      storeOperatingHours[dayIdx].splice(sIdx, 1);
+      renderOperatingHours();
+    }
+
+    async function saveOperatingHours() {
+      syncOperatingHoursFromDOM();
+      const btn = document.getElementById("btn-save-hours");
+      const oldText = btn ? btn.innerText : "";
+      if (btn) { btn.innerText = "儲存中..."; btn.disabled = true; }
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/config`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ operatingHours: storeOperatingHours })
+        });
+        if (!res.ok) throw new Error("API returned " + res.status);
+        alert("營業時間儲存成功！");
+      } catch (e) {
+        alert("儲存失敗：" + e.message);
+      } finally {
+        if (btn) { btn.innerText = oldText; btn.disabled = false; }
+      }
+    }
+
+    // --- MENU EDITOR LOGIC ---
+    let currentMenuData = null;
+    let rawMenuData = null;
+    let activeCategoryIndex = -1;
+    let isMenuDirty = false;
+
+    function markMenuDirty() {
+      isMenuDirty = true;
+      const btn = document.querySelector("#view-menu .btn-primary");
+      if (btn) {
+        btn.innerText = "儲存變更 (尚未儲存 *)";
+      }
+    }
+
+    function clearMenuDirty() {
+      isMenuDirty = false;
+      const btn = document.querySelector("#view-menu .btn-primary");
+      if (btn) {
+        btn.innerText = "儲存變更";
+      }
+    }
+
+    const BENMI_CATS = [
+      { id: "large", label: "肉類 (雞胸肉 / 雞腿肉 / 松阪豬)" },
+      { id: "small", label: "小菜 $50/份" },
+      { id: "combo", label: "小菜 $30/份" },
+      { id: "drinks", label: "小菜 $25/份" },
+      { id: "veggie", label: "蔬菜 $35/份 (1份$35 / 3份$100)" },
+      { id: "topping", label: "加料 (加香菜 / 檸檬汁)" }
+    ];
+
+    function openMenuSettings() {
+      activeTab = "menu";
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".content").forEach(c => c.style.display = "none");
+      document.getElementById("view-menu").style.display = "block";
+      if (!currentMenuData) loadMenuData();
+    }
+
+    async function loadMenuData() {
+      const bodyEl = document.getElementById("menu-editor-body");
+      if (bodyEl) bodyEl.innerHTML = `<div style="text-align:center; padding: 22px; color:var(--muted);">載入菜單中...</div>`;
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/menu?_t=${Date.now()}`);
+        if (!res.ok) throw new Error("Failed to load");
+        rawMenuData = await res.json();
+        currentMenuData = BENMI_CATS.map(cat => ({
+          id: cat.id,
+          title: cat.label,
+          items: Object.entries(rawMenuData[cat.id] || {}).map(([name, price]) => ({ name, price }))
+        }));
+        activeCategoryIndex = -1;
+        renderMenuCategories();
+        if (bodyEl) bodyEl.innerHTML = `<div style="text-align:center; padding: 22px; color:var(--muted);">請先從左側選擇分類</div>`;
+        const titleEl = document.getElementById("menu-editor-title");
+        if (titleEl) titleEl.innerText = "分類項目";
+      } catch (e) {
+        alert("無法載入菜單資料：" + e.message);
+      }
+    }
+
+    function renderMenuCategories() {
+      const container = document.getElementById("menu-categories");
+      if (!container) return;
+      container.innerHTML = "";
+      if (!currentMenuData) return;
+      currentMenuData.forEach((cat, index) => {
+        const div = document.createElement("div");
+        div.style.cssText = `
+          padding: 16px; border-bottom: 1px solid var(--border); cursor: pointer; font-weight: 800; font-size: 15px;
+          background: ${activeCategoryIndex === index ? 'var(--card-subtle)' : 'var(--card)'};
+          border-left: 4px solid ${activeCategoryIndex === index ? 'var(--primary)' : 'transparent'};
+          display: flex; justify-content: space-between; align-items: center; color: var(--text-main);
+        `;
+        div.innerHTML = `
+          <span>${escapeHtml(cat.title)}</span>
+          <span style="font-size: 13px; font-weight: 900; color: var(--muted);">${cat.items.length} 項</span>
+        `;
+        div.onclick = () => {
+          syncMenuDataFromDOM();
+          activeCategoryIndex = index;
+          renderMenuCategories();
+          renderMenuCategoryEditor(index);
+        };
+        container.appendChild(div);
+      });
+    }
+
+    function renderMenuCategoryEditor(index) {
+      if (!currentMenuData || !currentMenuData[index]) return;
+      const cat = currentMenuData[index];
+      const titleEl = document.getElementById("menu-editor-title");
+      if (titleEl) titleEl.innerText = cat.title + " (共 " + cat.items.length + " 項)";
+
+      const container = document.getElementById("menu-editor-body");
+      if (!container) return;
+      container.innerHTML = "";
+
+      let draggedItemIndex = null;
+
+      cat.items.forEach((item, iIdx) => {
+        const row = document.createElement("div");
+        row.style.cssText = "background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; transition: opacity 0.2s; cursor: grab;";
+        row.draggable = true;
+
+        row.addEventListener("dragstart", (e) => {
+          draggedItemIndex = iIdx;
+          e.dataTransfer.effectAllowed = "move";
+          setTimeout(() => row.style.opacity = "0.4", 0);
+        });
+        row.addEventListener("dragend", () => { row.style.opacity = "1"; });
+        row.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          row.style.border = "2px dashed var(--primary)";
+        });
+        row.addEventListener("dragleave", () => {
+          row.style.border = "1px solid var(--border)";
+        });
+        row.addEventListener("drop", (e) => {
+          e.preventDefault();
+          row.style.border = "1px solid var(--border)";
+          if (draggedItemIndex !== null && draggedItemIndex !== iIdx) {
+            syncMenuDataFromDOM();
+            const arr = currentMenuData[index].items;
+            const moved = arr.splice(draggedItemIndex, 1)[0];
+            arr.splice(iIdx, 0, moved);
+            markMenuDirty();
+            renderMenuCategoryEditor(index);
+          }
+        });
+
+        row.innerHTML = `
+          <div style="color: var(--muted); font-size: 20px; cursor: grab; flex-shrink:0;">☰</div>
+          <input type="text" value="${escapeHtml(item.name)}" data-name-cidx="${index}" data-name-iidx="${iIdx}" oninput="markMenuDirty()" class="form-control"
+            style="flex: 2; min-width: 120px; font-weight: 800;">
+          <label style="display:flex; align-items:center; gap:6px; font-weight:900; flex-shrink:0;">
+            <span style="font-size:18px;">$</span>
+            <input type="number" value="${item.price !== null && item.price !== undefined ? item.price : ''}" data-cidx="${index}" data-iidx="${iIdx}" oninput="markMenuDirty()" class="form-control"
+              placeholder="隱藏" style="width: 90px; font-weight: 900;">
+          </label>
+          <button class="btn btn-ghost" style="padding: 8px 14px; font-size:14px; flex-shrink:0;" onclick="openImageModal('${cat.id}', '${escapeHtml(item.name)}')">📷 圖片</button>
+          <button class="btn btn-ghost" style="padding: 8px 14px; color: var(--brand-red); font-size:14px; flex-shrink:0;" onclick="removeMenuItemAt(${index}, ${iIdx})">刪除</button>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function syncMenuDataFromDOM() {
+      if (!currentMenuData) return;
+      document.querySelectorAll("#menu-editor-body input[data-name-cidx]").forEach(inp => {
+        const cIdx = parseInt(inp.getAttribute("data-name-cidx"));
+        const iIdx = parseInt(inp.getAttribute("data-name-iidx"));
+        const val = inp.value.trim();
+        if (currentMenuData[cIdx] && currentMenuData[cIdx].items[iIdx]) {
+          currentMenuData[cIdx].items[iIdx].name = val;
+        }
+      });
+      document.querySelectorAll("#menu-editor-body input[data-cidx]").forEach(inp => {
+        const cIdx = parseInt(inp.getAttribute("data-cidx"));
+        const iIdx = parseInt(inp.getAttribute("data-iidx"));
+        const val = inp.value.trim() === "" ? null : parseInt(inp.value);
+        if (currentMenuData[cIdx] && currentMenuData[cIdx].items[iIdx]) {
+          currentMenuData[cIdx].items[iIdx].price = val;
+        }
+      });
+    }
+
+    function removeMenuItemAt(cIdx, iIdx) {
+      if (confirm("確定要刪除這個項目嗎?")) {
+        syncMenuDataFromDOM();
+        currentMenuData[cIdx].items.splice(iIdx, 1);
+        markMenuDirty();
+        renderMenuCategoryEditor(cIdx);
+        renderMenuCategories();
+      }
+    }
+
+    function addNewMenuItem() {
+      if (activeCategoryIndex < 0 || !currentMenuData) return;
+      syncMenuDataFromDOM();
+      currentMenuData[activeCategoryIndex].items.unshift({ name: "新項目", price: 0 });
+      markMenuDirty();
+      renderMenuCategoryEditor(activeCategoryIndex);
+      renderMenuCategories();
+    }
+
+    async function saveMenuData() {
+      if (!currentMenuData) return;
+      if (!confirm("確定要儲存所有變更嗎？這會直接即時影響顧客端點餐頁面。")) return;
+      syncMenuDataFromDOM();
+
+      const output = {};
+      currentMenuData.forEach(cat => {
+        output[cat.id] = {};
+        cat.items.forEach(item => {
+          if (item.name && item.name.trim() !== "" && item.price !== null) {
+            output[cat.id][item.name.trim()] = item.price;
+          }
+        });
+      });
+
+      const btn = document.querySelector("#view-menu .btn-primary");
+      const oldText = btn ? btn.innerText : "";
+      if (btn) { btn.innerText = "儲存中..."; btn.disabled = true; }
+
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/menu`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(output)
+        });
+        if (!res.ok) throw new Error("API returned " + res.status);
+        clearMenuDirty();
+        alert("儲存成功！");
+        renderMenuCategories();
+      } catch (e) {
+        alert("儲存失敗：" + e.message);
+      } finally {
+        if (btn) { btn.innerText = "儲存變更"; btn.disabled = false; }
+      }
+    }
+
+    async function restoreDefaultMenu() {
+      if (!confirm("您確定要將菜單重設為預設值嗎？這將覆蓋您已修改的所有品項！")) return;
+
+      const DEFAULT_MENU = {
+        large: { "雞胸肉": 60, "雞腿肉": 70, "松阪豬": 70 },
+        small: { "無骨鳳爪": 50, "日本山藥": 50 },
+        combo: { "煙燻豆包": 30, "茶燻百葉": 30, "鳥蛋(5顆)": 30, "鴨米血": 30, "櫛瓜": 30, "木耳": 30, "蘋果": 30, "筍片": 30 },
+        drinks: { "蝦子(一隻)": 25, "大黑豆乾": 25, "竹輪": 25, "皮蛋": 25, "甜不辣": 25 },
+        veggie: { "小黃瓜": 35, "高麗菜": 35, "玉米筍": 35, "龍鬚菜": 35, "娃娃菜": 35, "蓮藕片": 35, "豬耳朵": 35, "雞軟骨": 35, "烤馬涼薯": 35, "腐竹豆皮": 35, "滷蛋白丁": 35, "蘆筍": 35, "花椰菜": 35, "水蓮": 35, "山苦瓜": 35, "秋葵": 35, "芥藍芽": 35, "杏鮑菇": 35, "雞肝": 35, "雞診": 35, "鴨賞": 35, "雞心": 35, "蕎麥麵": 35, "金針菇": 35 },
+        topping: { "加香菜": 15, "檸檬汁": 20 }
+      };
+
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/menu`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(DEFAULT_MENU)
+        });
+        if (!res.ok) throw new Error("API returned " + res.status);
+        alert("預設菜單已恢復成功！");
+        loadMenuData();
+      } catch (e) {
+        alert("恢復預設菜單時出錯：" + e.message);
+      }
+    }
+
+    // --- Image Management ---
+    let currentImageItemName = null;
+
+    async function openImageModal(categoryId, itemName) {
+      currentImageItemName = `${categoryId}_${itemName}`;
+      document.getElementById("image-modal-title").innerText = `圖片管理: ${itemName}`;
+      document.getElementById("image-preview").style.display = "none";
+      document.getElementById("btn-delete-image").style.display = "none";
+      document.getElementById("image-status").innerText = "正在檢查圖片...";
+
+      document.getElementById("imageModal").style.display = "flex";
+
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/image_list?_t=${Date.now()}`);
+        if (res.ok) {
+          const list = await res.json();
+          if (list.includes(currentImageItemName)) {
+            document.getElementById("image-preview").src = `${WORKER_BASE}/api/image?name=${encodeURIComponent(currentImageItemName)}&_t=${Date.now()}`;
+            document.getElementById("image-preview").style.display = "block";
+            document.getElementById("btn-delete-image").style.display = "block";
+            document.getElementById("image-status").innerText = "此品項已有圖片";
+          } else {
+            document.getElementById("image-status").innerText = "此品項尚未上傳圖片";
+          }
+        }
+      } catch (e) {
+        document.getElementById("image-status").innerText = "載入圖片失敗";
+      }
+    }
+
+    function handleImageSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = new Image();
+        img.onload = function () {
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const dataUri = canvas.toDataURL("image/webp", 0.8);
+          uploadImage(dataUri);
+        }
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+      event.target.value = '';
+    }
+
+    async function uploadImage(dataUri) {
+      document.getElementById("image-status").innerText = "正在上傳圖片...";
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/image`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: currentImageItemName, dataUri })
+        });
+        if (!res.ok) throw new Error("Upload failed");
+
+        document.getElementById("image-preview").src = dataUri;
+        document.getElementById("image-preview").style.display = "block";
+        document.getElementById("btn-delete-image").style.display = "block";
+        document.getElementById("image-status").innerText = "上傳圖片成功！";
+      } catch (e) {
+        alert("上傳圖片失敗: " + e.message);
+        document.getElementById("image-status").innerText = "圖片上傳失敗";
+      }
+    }
+
+    async function deleteItemImage() {
+      if (!confirm("您確定要刪除此圖片嗎？")) return;
+      document.getElementById("image-status").innerText = "正在刪除圖片...";
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/image`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: currentImageItemName })
+        });
+        if (!res.ok) throw new Error("Delete failed");
+
+        document.getElementById("image-preview").style.display = "none";
+        document.getElementById("btn-delete-image").style.display = "none";
+        document.getElementById("image-status").innerText = "此品項尚未上傳圖片";
+      } catch (e) {
+        alert("刪除圖片失敗: " + e.message);
+      }
+    }
+
+    // --- Stock Management ---
+    let currentStockCidx = null;
+    let currentStockIidx = null;
+
+    function openStockModal(cIdx, iIdx) {
+      syncMenuDataFromDOM();
+      currentStockCidx = cIdx;
+      currentStockIidx = iIdx;
+
+      const item = currentMenuData[cIdx].items[iIdx];
+      document.getElementById("stock-modal-title").innerText = `庫存管理: ${item.name}`;
+
+      const statusSelect = document.getElementById("stock-status-select");
+      statusSelect.value = item.isOos ? "out_of_stock" : "in_stock";
+
+      document.getElementById("stock-duration-select").value = "today";
+      document.getElementById("oos-until-date").value = "";
+
+      handleStockStatusChange();
+      document.getElementById("stockModal").style.display = "flex";
+    }
+
+    function closeStockModal() {
+      document.getElementById("stockModal").style.display = "none";
+      currentStockCidx = null;
+      currentStockIidx = null;
+    }
+
+    function handleStockStatusChange() {
+      const status = document.getElementById("stock-status-select").value;
+      const optionsContainer = document.getElementById("oos-options-container");
+      if (status === "out_of_stock") {
+        optionsContainer.style.display = "block";
+      } else {
+        optionsContainer.style.display = "none";
+      }
+      handleStockDurationChange();
+    }
+
+    function handleStockDurationChange() {
+      const duration = document.getElementById("stock-duration-select").value;
+      const dateContainer = document.getElementById("oos-date-container");
+      const status = document.getElementById("stock-status-select").value;
+
+      if (status === "out_of_stock" && duration === "multiple_days") {
+        dateContainer.style.display = "block";
+      } else {
+        dateContainer.style.display = "none";
+      }
+    }
+
+    async function saveStockStatus() {
+      if (currentStockCidx === null || currentStockIidx === null) return;
+      syncMenuDataFromDOM();
+
+      const categorySlug = currentMenuData[currentStockCidx].id;
+      const item = currentMenuData[currentStockCidx].items[currentStockIidx];
+      const status = document.getElementById("stock-status-select").value;
+      const duration = document.getElementById("stock-duration-select").value;
+      const untilDate = document.getElementById("oos-until-date").value;
+
+      if (status === "out_of_stock" && duration === "multiple_days" && !untilDate) {
+        alert("請選擇恢復販售日期！");
+        return;
+      }
+
+      const tenantIdParam = new URLSearchParams(window.location.search).get("tenant_id") || "";
+
+      const body = {
+        category_slug: categorySlug,
+        name: item.originalName || item.name,
+        status: status,
+        duration: duration,
+        until_date: untilDate ? `${untilDate}T04:00:00+07:00` : null
+      };
+
+      try {
+        const res = await fetch(`${WORKER_BASE}/api/menu/stock-status${tenantIdParam ? '?tenant_id=' + tenantIdParam : ''}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || "Update failed");
+        }
+
+        item.isOos = (status === "out_of_stock");
+
+        const targetCidx = currentStockCidx;
+        closeStockModal();
+        renderMenuCategoryEditor(targetCidx);
+        renderMenuCategories();
+
+        alert("更新庫存狀態成功！");
+      } catch (e) {
+        alert("更新失敗：" + e.message);
+      }
     }
 
     // Polling setup
