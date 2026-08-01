@@ -1,25 +1,45 @@
-:root {
-  --primary: #10B981;
-  --primary-dark: #059669;
-  --primary-light: rgba(16, 185, 129, 0.15);
-  --brand-red: #EF4444;
-  --brand-red-light: rgba(239, 68, 68, 0.15);
-  --brand-yellow: #F59E0B;
-  --brand-yellow-light: rgba(245, 158, 11, 0.15);
-  --bg: #0B0F19;
-  --card: #182234;
-  --text-main: #F8FAFC;
-  --muted: #94A3B8;
-  --border: rgba(255, 255, 255, 0.08);
-  --border-hover: rgba(255, 255, 255, 0.18);
+/* ==========================================================================
+   bsc-pos - Modern Kitchen Display System (KDS) & POS Management CSS (Light Mode)
+   ========================================================================== */
 
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.7);
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+
+:root {
+  /* System Theme: Clean Light Food Studio */
+  --primary: #059669;
+  --primary-dark: #047857;
+  --primary-light: #ECFDF5;
+  --primary-border: #A7F3D0;
+  --primary-glow: rgba(5, 150, 105, 0.2);
+
+  --brand-red: #E02B1D;
+  --brand-red-dark: #B91C1C;
+  --brand-red-light: #FEF2F2;
+
+  --brand-yellow: #D97706;
+  --brand-yellow-dark: #B45309;
+  --brand-yellow-light: #FFFBEB;
+
+  --brand-blue: #2563EB;
+  --brand-blue-light: #EFF6FF;
+
+  --bg: #F9F7F4;
+  --card: #FFFFFF;
+  --card-subtle: #F4F1EA;
+  --text-main: #1C1917;
+  --text-secondary: #44403C;
+  --muted: #78716C;
+  --border: #E7E2D9;
+  --border-hover: #D6D0C4;
+
+  --shadow-sm: 0 2px 8px rgba(28, 25, 23, 0.04);
+  --shadow-md: 0 6px 20px rgba(28, 25, 23, 0.06);
+  --shadow-lg: 0 12px 32px rgba(28, 25, 23, 0.1);
 
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 24px;
+  --radius-full: 9999px;
 }
 
 * {
@@ -27,8 +47,11 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-body {
+html, body {
+  height: 100%;
   margin: 0;
+  padding: 0;
+  overflow: hidden;
   font-family: 'Outfit', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg);
   color: var(--text-main);
@@ -37,15 +60,15 @@ body {
 
 /* Custom KDS Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 99px;
+  background: #D6D0C4;
+  border-radius: var(--radius-full);
 }
 
 .app {
@@ -56,16 +79,18 @@ body {
 }
 
 /* ==========================================================================
-   Top Header Bar & KDS Quick Stats Bar
+   Top Header Bar & KDS Quick Stats Bar (Light Glassmorphic)
    ========================================================================== */
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 14px 24px;
-  background: #111827;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
   z-index: 10;
 }
@@ -79,16 +104,11 @@ body {
 .brand-title {
   font-weight: 900;
   font-size: 22px;
-  color: #FFFFFF;
+  color: var(--text-main);
   letter-spacing: -0.3px;
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-.brand-title::before {
-  content: '🍗';
-  font-size: 24px;
+  gap: 10px;
 }
 
 .brand-sub {
@@ -97,8 +117,11 @@ body {
   font-weight: 800;
   background: var(--primary-light);
   padding: 4px 12px;
-  border-radius: 99px;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--primary-border);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .pos-stats-bar {
@@ -111,13 +134,14 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
-  border-radius: 99px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 7px 16px;
+  border-radius: var(--radius-full);
+  background: var(--card);
+  border: 1px solid var(--border);
   font-size: 14px;
   font-weight: 700;
   color: var(--muted);
+  box-shadow: var(--shadow-sm);
 }
 
 .stat-pill strong {
@@ -128,69 +152,81 @@ body {
 
 .stat-pill.warning {
   background: var(--brand-yellow-light);
-  border-color: rgba(245, 158, 11, 0.3);
+  border-color: rgba(217, 119, 6, 0.3);
   color: var(--brand-yellow);
 }
 
 .stat-pill.warning strong {
-  color: var(--brand-yellow);
+  color: var(--brand-yellow-dark);
 }
 
 .stat-pill.success {
   background: var(--primary-light);
-  border-color: rgba(16, 185, 129, 0.3);
+  border-color: var(--primary-border);
   color: var(--primary);
 }
 
 .stat-pill.success strong {
-  color: var(--primary);
+  color: var(--primary-dark);
 }
 
 /* Tabs & Action Controls */
 .tabs {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .tab {
-  padding: 10px 20px;
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
+  padding: 8px 18px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: var(--card);
   color: var(--muted);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .tab:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--card-subtle);
   color: var(--text-main);
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
 }
 
 .tab.active {
   background: var(--primary);
   color: #FFFFFF;
   border-color: var(--primary);
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 14px var(--primary-glow);
 }
 
 .mini-btn {
   padding: 8px 14px;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text-main);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text-secondary);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: var(--shadow-sm);
 }
 
 .mini-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--card-subtle);
+  border-color: var(--border-hover);
+  color: var(--text-main);
+  transform: translateY(-1px);
 }
 
 /* ==========================================================================
@@ -198,14 +234,14 @@ body {
    ========================================================================== */
 .content {
   flex-grow: 1;
-  padding: 20px;
+  padding: 16px 20px;
   overflow: hidden;
 }
 
 .split {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: 16px;
   height: 100%;
 }
 
@@ -213,7 +249,7 @@ body {
   background: var(--card);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -221,7 +257,7 @@ body {
 
 .panel-header {
   padding: 16px 20px;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--card-subtle);
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -229,9 +265,9 @@ body {
 }
 
 .panel-title {
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 900;
-  color: #FFFFFF;
+  color: var(--text-main);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -246,22 +282,22 @@ body {
 
 .badge.wait {
   background: var(--brand-yellow-light);
-  color: var(--brand-yellow);
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--brand-yellow-dark);
+  border: 1px solid rgba(217, 119, 6, 0.3);
   font-size: 16px;
   font-weight: 900;
   padding: 4px 14px;
-  border-radius: 99px;
+  border-radius: var(--radius-full);
 }
 
 .badge.done {
   background: var(--primary-light);
-  color: var(--primary);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: var(--primary-dark);
+  border: 1px solid var(--primary-border);
   font-size: 16px;
   font-weight: 900;
   padding: 4px 14px;
-  border-radius: 99px;
+  border-radius: var(--radius-full);
 }
 
 .panel-body {
@@ -277,34 +313,32 @@ body {
    Touch KDS Order Card (Tile)
    ========================================================================== */
 .tile {
-  background: #1E293B;
-  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  background: var(--card);
+  border: 1.5px solid var(--border);
   border-radius: var(--radius-md);
   padding: 18px;
   box-shadow: var(--shadow-sm);
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 14px;
-  cursor: pointer;
+  gap: 12px;
 }
 
 .tile:hover {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--border-hover);
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
 
 .tile.new {
   border-color: var(--brand-yellow);
-  background: linear-gradient(135deg, #242A16 0%, #1E293B 100%);
+  background: var(--brand-yellow-light);
   animation: pulseTile 2s infinite alternate;
 }
 
 @keyframes pulseTile {
-  from { border-color: rgba(245, 158, 11, 0.4); }
-  to { border-color: rgba(245, 158, 11, 1); }
+  from { border-color: rgba(217, 119, 6, 0.4); }
+  to { border-color: rgba(217, 119, 6, 1); box-shadow: 0 4px 16px rgba(217, 119, 6, 0.15); }
 }
 
 .tile-top {
@@ -315,28 +349,28 @@ body {
 }
 
 .tile-customer {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 900;
-  color: #FFFFFF;
+  color: var(--text-main);
 }
 
 .tile-meta {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--muted);
   font-family: monospace;
 }
 
 .tile-items {
-  font-size: 17px;
-  line-height: 1.5;
-  color: #E2E8F0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-secondary);
   font-weight: 600;
   white-space: pre-line;
-  background: rgba(0, 0, 0, 0.25);
-  padding: 12px 14px;
+  background: var(--bg);
+  padding: 14px 16px;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
 }
 
 .tile-actions {
@@ -349,10 +383,10 @@ body {
    Buttons & Touch Action Controls
    ========================================================================== */
 .btn {
-  padding: 12px 20px;
+  padding: 11px 20px;
   border-radius: var(--radius-sm);
   border: none;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 900;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -369,7 +403,7 @@ body {
 .btn-primary {
   background: var(--primary);
   color: #FFFFFF;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 12px var(--primary-glow);
 }
 
 .btn-primary:hover {
@@ -378,33 +412,37 @@ body {
 
 .btn-yellow {
   background: var(--brand-yellow);
-  color: #000000;
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25);
 }
 
 .btn-yellow:hover {
-  background: #D97706;
-  color: #FFFFFF;
+  background: var(--brand-yellow-dark);
 }
 
 .btn-danger {
   background: var(--brand-red);
   color: #FFFFFF;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 12px rgba(224, 43, 29, 0.25);
+}
+
+.btn-danger:hover {
+  background: var(--brand-red-dark);
 }
 
 .btn-ghost {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--card-subtle);
   color: var(--text-main);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--border);
 }
 
 .btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: #EBE6DC;
+  border-color: var(--border-hover);
 }
 
 /* ==========================================================================
-   Modals & Alerts (Dark KDS Style)
+   Modals & Alerts (Light POS Style)
    ========================================================================== */
 .modal {
   position: fixed;
@@ -412,7 +450,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(8px);
   z-index: 2000;
   display: none;
@@ -422,8 +460,8 @@ body {
 }
 
 .modal-content {
-  background: #182234;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 28px;
   width: 100%;
@@ -443,108 +481,97 @@ body {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--border);
   padding-bottom: 14px;
 }
 
 .modal-title h3 {
-  font-size: 22px;
-  font-weight: 900;
   margin: 0;
-  color: #FFFFFF;
-}
-
-.modal-close {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--muted);
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-.modal-close:hover {
-  color: #FFFFFF;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.detail-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.detail-box {
-  background: rgba(0, 0, 0, 0.25);
-  padding: 12px 16px;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.detail-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--muted);
-}
-
-.detail-value {
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 900;
-  color: #FFFFFF;
-  margin-top: 4px;
 }
 
-.modal-actions {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
-  margin-top: 24px;
-}
-
-/* Fullscreen Alert Banner */
-.new-alert {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(11, 15, 25, 0.92);
-  backdrop-filter: blur(12px);
-  z-index: 3000;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-}
-
-.new-alert-box {
-  background: #182234;
-  border: 2px solid var(--brand-yellow);
-  border-radius: var(--radius-lg);
-  padding: 36px;
-  width: 100%;
-  max-width: 480px;
-  text-align: center;
-  box-shadow: 0 0 50px rgba(245, 158, 11, 0.3);
-}
-
-.new-alert-title {
-  font-size: 36px;
-  font-weight: 900;
-  color: var(--brand-yellow);
-  margin: 0 0 10px 0;
-}
-
-.new-alert-sub {
-  font-size: 16px;
-  color: var(--muted);
-  margin-bottom: 28px;
-}
-
-.new-alert-actions {
+/* ==========================================================================
+   Compact History Table & List View
+   ========================================================================== */
+.history-date-header {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-main);
+  padding: 10px 4px 6px 4px;
+  border-bottom: 1px solid var(--border);
+  margin-top: 12px;
+  margin-bottom: 8px;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.history-item-row {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.history-item-row:hover {
+  background: var(--card-subtle);
+  border-color: var(--border-hover);
+}
+
+.history-row-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  flex-grow: 1;
+}
+
+.history-row-key {
+  font-family: monospace;
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--muted);
+  width: 90px;
+  flex-shrink: 0;
+}
+
+.history-row-customer {
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--text-main);
+  width: 110px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-row-content {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-grow: 1;
+}
+
+.history-row-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.history-row-price {
+  font-weight: 900;
+  font-size: 15px;
+  color: var(--primary-dark);
 }

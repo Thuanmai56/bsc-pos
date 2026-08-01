@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="orders.css" />
 </head>
 
@@ -16,24 +17,24 @@
     <!-- Topbar Header -->
     <div class="topbar">
       <div class="brand">
-        <div class="brand-title">干城鹹水雞 KDS</div>
-        <div class="brand-sub">即時訂單看板</div>
+        <div class="brand-title"><i class="fa-solid fa-drumstick-bite" style="color: #EF4444;"></i> 干城鹹水雞 KDS</div>
+        <div class="brand-sub"><i class="fa-solid fa-desktop"></i> 即時訂單看板</div>
       </div>
       
       <!-- Quick Stats Bar -->
       <div class="pos-stats-bar">
-        <div class="stat-pill">📊 今日總單 <strong id="stat-total">0</strong></div>
-        <div class="stat-pill warning">🍳 準備中 <strong id="stat-left">0</strong></div>
-        <div class="stat-pill success">✅ 待取餐 <strong id="stat-right">0</strong></div>
+        <div class="stat-pill"><i class="fa-solid fa-chart-simple"></i> 今日總單 <strong id="stat-total">0</strong></div>
+        <div class="stat-pill warning"><i class="fa-solid fa-fire"></i> 準備中 <strong id="stat-left">0</strong></div>
+        <div class="stat-pill success"><i class="fa-solid fa-circle-check"></i> 待取餐 <strong id="stat-right">0</strong></div>
       </div>
 
       <!-- Navigation Tabs & Actions -->
       <div class="tabs">
-        <button class="tab active" id="tab-live" onclick="switchTab('live')">即時看板</button>
-        <button class="tab" id="tab-history" onclick="switchTab('history')">歷史訂單</button>
-        <button class="mini-btn" onclick="testSound()">🔔 測試鈴聲</button>
-        <button class="mini-btn" onclick="openMenuSettings()">📋 菜單設定</button>
-        <button class="mini-btn" onclick="openSettings()">⚙️ 系統設定</button>
+        <button class="tab active" id="tab-live" onclick="switchTab('live')"><i class="fa-solid fa-border-all"></i> 即時看板</button>
+        <button class="tab" id="tab-history" onclick="switchTab('history')"><i class="fa-solid fa-clock-rotate-left"></i> 歷史訂單</button>
+        <button class="mini-btn" onclick="testSound()"><i class="fa-solid fa-bell"></i> 測試鈴聲</button>
+        <button class="mini-btn" onclick="openMenuSettings()"><i class="fa-solid fa-bars-staggered"></i> 菜單設定</button>
+        <button class="mini-btn" onclick="openSettings()"><i class="fa-solid fa-gear"></i> 系統設定</button>
       </div>
     </div>
 
@@ -44,7 +45,7 @@
         <div class="panel">
           <div class="panel-header">
             <div>
-              <div class="panel-title">🍳 準備中 (Preparing)</div>
+              <div class="panel-title"><i class="fa-solid fa-fire" style="color: var(--brand-yellow);"></i> 準備中 (Preparing)</div>
               <div class="panel-sub">依取餐時間（由近到遠排序）</div>
             </div>
             <div class="badge wait" id="count-left">0</div>
@@ -58,7 +59,7 @@
         <div class="panel">
           <div class="panel-header">
             <div>
-              <div class="panel-title">✅ 待取餐 (Ready for Pickup)</div>
+              <div class="panel-title"><i class="fa-solid fa-circle-check" style="color: var(--primary);"></i> 待取餐 (Ready for Pickup)</div>
               <div class="panel-sub">餐點已準備完成</div>
             </div>
             <div class="badge done" id="count-right">0</div>
@@ -525,13 +526,13 @@
         let rightActions = "";
 
         if (isNew) {
-          badge = `<span class="badge wait" style="background:var(--brand-yellow-light); color:var(--brand-yellow);">NEW 新訂單</span>`;
+          badge = `<span class="badge wait">新訂單</span>`;
           rightActions = `<button class="btn btn-yellow btn-block" onclick="event.stopPropagation(); openReview('${escapeHtml(order.key)}')">審核訂單</button>`;
         } else if (order.status === "ACCEPTED") {
-          badge = `<span class="badge wait" style="background:rgba(255,255,255,0.08); color:var(--muted);">DOING 製作中</span>`;
-          rightActions = `<button class="btn btn-primary btn-block" onclick="event.stopPropagation(); updateStatus('${escapeHtml(order.key)}','DONE', {}, this)">✅ 準備完成</button>`;
+          badge = `<span class="badge wait" style="background:var(--card-subtle); color:var(--brand-yellow-dark);">製作中</span>`;
+          rightActions = `<button class="btn btn-primary btn-block" onclick="event.stopPropagation(); updateStatus('${escapeHtml(order.key)}','DONE', {}, this)"><i class="fa-solid fa-check"></i> 準備完成</button>`;
         } else {
-          badge = `<span class="badge wait" style="background:rgba(255,255,255,0.08); color:var(--muted);">等客戶確認</span>`;
+          badge = `<span class="badge wait" style="background:var(--card-subtle); color:var(--muted);">等待確認</span>`;
           rightActions = `<button class="btn btn-ghost btn-block" style="cursor:not-allowed;" disabled>等待回覆</button>`;
         }
 
@@ -543,8 +544,8 @@
               <span class="tile-meta">#${escapeHtml(order.key)}</span>
             </div>
             <div class="tile-top" style="margin-top: 8px;">
-              <span class="tile-meta" style="font-size:15px; color:#FFFFFF;">取餐時間: <strong>${escapeHtml(order.time || "-")}</strong></span>
-              <span class="tile-meta" style="color: var(--brand-yellow); font-weight: 900; font-size:15px;">${escapeHtml(eta)}</span>
+              <span class="tile-meta" style="font-size:14px; color:var(--text-secondary);">取餐時間: <strong style="color:var(--text-main);">${escapeHtml(order.time || "-")}</strong></span>
+              <span class="tile-meta" style="color: var(--brand-yellow-dark); font-weight: 900; font-size:14px;">${escapeHtml(eta)}</span>
             </div>
             <div class="tile-items">${escapeHtml(shortItems(order.content))}</div>
           </div>
@@ -569,24 +570,24 @@
         const eta = formatEta(order.time);
         const tile = document.createElement("div");
         tile.className = "tile";
-        tile.style.borderColor = "rgba(16, 185, 129, 0.4)";
+        tile.style.borderColor = "var(--primary-border)";
         tile.onclick = () => openReview(order.key);
 
         tile.innerHTML = `
           <div>
             <div class="tile-top">
               <span class="tile-customer">${escapeHtml(order.customer || "顧客")}</span>
-              <span class="badge done">READY 可取餐</span>
+              <span class="badge done">待取餐</span>
               <span class="tile-meta">#${escapeHtml(order.key)}</span>
             </div>
             <div class="tile-top" style="margin-top: 8px;">
-              <span class="tile-meta" style="font-size:15px; color:#FFFFFF;">取餐時間: <strong>${escapeHtml(order.time || "-")}</strong></span>
-              <span class="tile-meta" style="color: var(--primary); font-weight: 900; font-size:15px;">${escapeHtml(eta)}</span>
+              <span class="tile-meta" style="font-size:14px; color:var(--text-secondary);">取餐時間: <strong style="color:var(--text-main);">${escapeHtml(order.time || "-")}</strong></span>
+              <span class="tile-meta" style="color: var(--primary); font-weight: 900; font-size:14px;">${escapeHtml(eta)}</span>
             </div>
             <div class="tile-items">${escapeHtml(shortItems(order.content))}</div>
           </div>
           <div class="tile-actions">
-            <button class="btn btn-primary btn-block" onclick="event.stopPropagation(); updateStatus('${escapeHtml(order.key)}','PICKED_UP', {}, this)">🎉 已交付顧客</button>
+            <button class="btn btn-primary btn-block" onclick="event.stopPropagation(); updateStatus('${escapeHtml(order.key)}','PICKED_UP', {}, this)"><i class="fa-solid fa-handshake"></i> 已交付顧客</button>
           </div>
         `;
         container.appendChild(tile);
@@ -633,35 +634,36 @@
         });
 
         const header = document.createElement("div");
-        header.style.padding = "14px 8px 6px";
-        header.style.fontWeight = "900";
-        header.style.color = "#FFFFFF";
-        header.style.fontSize = "18px";
-        header.innerText = `📅 ${date} (${items.length} 筆)`;
+        header.className = "history-date-header";
+        header.innerHTML = `<i class="fa-regular fa-calendar-days"></i> ${escapeHtml(date)} <span style="font-weight:600; color:var(--muted); font-size:13px;">(${items.length} 筆)</span>`;
         container.appendChild(header);
 
         items.forEach(order => {
-          const tile = document.createElement("div");
-          tile.className = "tile";
-          tile.onclick = () => openReview(order.key);
-          const badge = order.status === "PICKED_UP"
-            ? `<span class="badge done">PICKED</span>`
-            : `<span class="badge" style="background:rgba(239,68,68,0.2); color:var(--brand-red);">${escapeHtml(order.status)}</span>`;
+          const row = document.createElement("div");
+          row.className = "history-item-row";
+          row.onclick = () => openReview(order.key);
 
-          tile.innerHTML = `
-            <div>
-              <div class="tile-top">
-                <span class="tile-customer">${escapeHtml(order.customer || "顧客")}</span>
-                ${badge}
-                <span class="tile-meta">#${escapeHtml(order.key)}</span>
-              </div>
-              <div class="tile-items">${escapeHtml(shortItems(order.content))}</div>
+          const isPicked = order.status === "PICKED_UP";
+          const badgeHTML = isPicked
+            ? `<span class="badge done" style="font-size:12px; padding:2px 10px;">已完成</span>`
+            : `<span class="badge" style="background:var(--brand-red-light); color:var(--brand-red); font-size:12px; padding:2px 10px;">已取消</span>`;
+
+          const firstLineContent = order.content ? String(order.content).split('\n')[0] : "";
+          const totalPrice = order.total ? `$${order.total}` : "";
+
+          row.innerHTML = `
+            <div class="history-row-left">
+              <span class="history-row-key">#${escapeHtml(order.key)}</span>
+              <span class="history-row-customer">${escapeHtml(order.customer || "顧客")}</span>
+              <span class="history-row-content">${escapeHtml(firstLineContent)}</span>
             </div>
-            <div class="tile-actions">
-              <button class="btn btn-ghost btn-block" onclick="event.stopPropagation(); openReview('${escapeHtml(order.key)}')">查看</button>
+            <div class="history-row-right">
+              <span class="history-row-price">${escapeHtml(totalPrice)}</span>
+              ${badgeHTML}
+              <button class="mini-btn" style="padding: 4px 10px; font-size: 12px;" onclick="event.stopPropagation(); openReview('${escapeHtml(order.key)}')">查看</button>
             </div>
           `;
-          container.appendChild(tile);
+          container.appendChild(row);
         });
       }
     }

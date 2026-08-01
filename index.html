@@ -8,6 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
     <link rel="stylesheet" href="index.css">
 </head>
 
@@ -25,16 +27,16 @@
                 </div>
                 <div class="store-status-wrapper">
                     <div id="store-status" class="store-status">營業中</div>
-                    <div id="waiting-counter-badge" class="waiting-badge">🍳 載入中...</div>
+                    <div id="waiting-counter-badge" class="waiting-badge" style="display: none;"></div>
                 </div>
             </div>
             <div class="store-details">
                 <div class="store-detail-row">
-                    <span class="detail-icon">📍</span>
+                    <span class="detail-icon"><i class="fa-solid fa-location-dot"></i></span>
                     <span>台中市南屯區黎明里干城街302號</span>
                 </div>
                 <div class="store-detail-row">
-                    <span class="detail-icon">🕒</span>
+                    <span class="detail-icon"><i class="fa-regular fa-clock"></i></span>
                     <div class="time-block" id="store-hours-display">
                         <div>週一、週五、週六、週日&nbsp;&nbsp;16:30-21:30</div>
                         <div>週二、週三、週四&nbsp;&nbsp;公休</div>
@@ -47,13 +49,13 @@
     <!-- Sticky Navigation Bar -->
     <nav class="sticky-nav">
         <div class="sticky-nav-content" id="main-nav">
-            <div class="nav-btn active" onclick="scrollToSec('sec-flavor')">🧪 口味選擇</div>
-            <div class="nav-btn" onclick="scrollToSec('sec-meat')">🍗 肉類</div>
-            <div class="nav-btn" onclick="scrollToSec('sec-side50')">⭐ 精選小菜$50</div>
-            <div class="nav-btn" onclick="scrollToSec('sec-side30')">🥘 特色小菜$30</div>
-            <div class="nav-btn" onclick="scrollToSec('sec-side25')">🥗 經典小菜$25</div>
-            <div class="nav-btn" onclick="scrollToSec('sec-veggie')">🥦 蔬菜/配菜</div>
-            <div class="nav-btn" onclick="scrollToSec('sec-checkout')">🛒 結帳</div>
+            <div class="nav-btn active" onclick="scrollToSec('sec-flavor')"><i class="fa-solid fa-pepper-hot"></i> 口味選擇</div>
+            <div class="nav-btn" onclick="scrollToSec('sec-meat')"><i class="fa-solid fa-drumstick-bite"></i> 肉類</div>
+            <div class="nav-btn" onclick="scrollToSec('sec-side50')"><i class="fa-solid fa-star"></i> 精選小菜$50</div>
+            <div class="nav-btn" onclick="scrollToSec('sec-side30')"><i class="fa-solid fa-bowl-food"></i> 特色小菜$30</div>
+            <div class="nav-btn" onclick="scrollToSec('sec-side25')"><i class="fa-solid fa-utensils"></i> 經典小菜$25</div>
+            <div class="nav-btn" onclick="scrollToSec('sec-veggie')"><i class="fa-solid fa-carrot"></i> 蔬菜/配菜</div>
+            <div class="nav-btn" onclick="scrollToSec('sec-checkout')"><i class="fa-solid fa-cart-shopping"></i> 結帳</div>
         </div>
     </nav>
 
@@ -63,7 +65,7 @@
             
             <!-- Flavor & Customization Section -->
             <div class="section-container" id="sec-flavor">
-                <div class="section-title">🧪 口味與客製化選擇</div>
+                <div class="section-title"><i class="fa-solid fa-pepper-hot"></i> 口味與客製化選擇</div>
                 <div class="custom-panel">
                     
                     <!-- Flavor Choice Cards -->
@@ -147,47 +149,49 @@
 
             <!-- Food Sections -->
             <div class="section-container" id="sec-meat">
-                <div class="section-title">🍗 肉類</div>
+                <div class="section-title"><i class="fa-solid fa-drumstick-bite"></i> 肉類</div>
                 <div class="grid" id="meat-list"></div>
             </div>
 
             <div class="section-container" id="sec-side50">
-                <div class="section-title">⭐ 精選小菜 $50/份</div>
+                <div class="section-title"><i class="fa-solid fa-star"></i> 精選小菜 $50/份</div>
                 <div class="grid" id="side50-list"></div>
             </div>
 
             <div class="section-container" id="sec-side30">
-                <div class="section-title">🥘 特色小菜 $30/份</div>
+                <div class="section-title"><i class="fa-solid fa-bowl-food"></i> 特色小菜 $30/份</div>
                 <div class="grid" id="side30-list"></div>
             </div>
 
             <div class="section-container" id="sec-side25">
-                <div class="section-title">🥗 經典小菜 $25/份</div>
+                <div class="section-title"><i class="fa-solid fa-utensils"></i> 經典小菜 $25/份</div>
                 <div class="grid" id="side25-list"></div>
             </div>
 
             <div class="section-container" id="sec-veggie">
-                <div class="section-title">🥦 蔬菜/配菜 <span style="font-size: 14px; font-weight: normal; color: var(--primary);">(1份$35 / 3份$100)</span></div>
+                <div class="section-title"><i class="fa-solid fa-carrot"></i> 蔬菜/配菜 <span style="font-size: 14px; font-weight: normal; color: var(--primary);">(1份$35 / 3份$100)</span></div>
                 <div class="grid" id="veggie-list"></div>
             </div>
 
             <!-- Checkout Area -->
             <div class="checkout-column">
                 <div class="section-container" id="sec-checkout">
-                    <div class="section-title">🛍️ 購物車明細</div>
+                    <div class="section-title"><i class="fa-solid fa-bag-shopping"></i> 購物車明細</div>
                     <div id="cart-summary" class="custom-panel" style="margin-bottom: 16px;">
                         <div style="text-align:center; color:#9ca3af;">(目前沒有已選商品)</div>
                     </div>
 
-                    <div class="section-title">🕒 取餐日期</div>
+                    <div class="section-title"><i class="fa-regular fa-calendar-days"></i> 取餐日期</div>
                     <div class="input-group">
-                        <label style="color: var(--primary);">⚠️ 請選擇預計取餐日期</label>
+                        <label style="color: var(--primary); display: flex; align-items: center; gap: 4px;">
+                            <i class="fa-solid fa-circle-exclamation"></i> 請選擇預計取餐日期
+                        </label>
                         <div class="datetime-row">
                             <input type="date" id="pickup-date">
                         </div>
                     </div>
 
-                    <div class="section-title" style="margin-top: 16px;">📝 其他要求</div>
+                    <div class="section-title" style="margin-top: 16px;"><i class="fa-solid fa-pen-to-square"></i> 其他要求</div>
                     <div class="input-group">
                         <textarea id="note" rows="3" placeholder="例如：切半、多汁一點、洋蔥多一點"></textarea>
                     </div>
@@ -198,7 +202,7 @@
         <!-- Floating Bottom Dock / Cart Bar -->
         <div class="footer">
             <div class="total-wrap" onclick="scrollToSec('sec-checkout')">
-                <span style="font-size: 28px; line-height: 1;">🛒</span>
+                <i class="fa-solid fa-cart-shopping" style="font-size: 22px; color: #fff;"></i>
                 <span id="cart-badge" style="display:none; position:absolute; top:-6px; right:-10px; background:var(--red); color:#fff; font-size:11px; font-weight:900; border-radius:99px; padding: 2px 6px; min-width:18px; text-align:center;">0</span>
                 <span class="total-price">$<span id="total-price">0</span></span>
             </div>
@@ -628,7 +632,12 @@
                         const acceptedCount = orders.filter(o => o && o.status === "ACCEPTED").length;
                         const badge = document.getElementById("waiting-counter-badge");
                         if (badge) {
-                            badge.innerText = acceptedCount > 0 ? `🍳 ${acceptedCount} 單製作中` : "🍳 暫無排隊";
+                            if (acceptedCount > 0) {
+                                badge.innerHTML = `<i class="fa-solid fa-fire"></i> 目前前方等待單數：${acceptedCount} 單`;
+                                badge.style.display = "inline-flex";
+                            } else {
+                                badge.style.display = "none";
+                            }
                         }
                     }
                 } catch (e) {
@@ -704,7 +713,7 @@
                 div.className = 'card';
                 div.id = `item-${category}-${origName}`;
 
-                const badgeHTML = isRecommended ? `<span class="badge">👍 推薦</span>` : '';
+                const badgeHTML = isRecommended ? `<span class="badge"><i class="fa-solid fa-thumbs-up"></i> 推薦</span>` : '';
 
                 const imageKey = `${category}_${origName}`;
                 const hasImage = imageList.includes(imageKey);
