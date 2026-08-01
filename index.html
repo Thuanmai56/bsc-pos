@@ -299,15 +299,6 @@
                 const hasItem = Object.values(cart).some(q => q > 0);
                 if (!hasItem) return customAlert('請選擇品項');
 
-                const secCheckout = document.getElementById('sec-checkout');
-                if (secCheckout) {
-                    const rect = secCheckout.getBoundingClientRect();
-                    if (rect.top > 100) {
-                        secCheckout.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        return;
-                    }
-                }
-
                 const dateInput = document.getElementById('pickup-date').value;
 
                 if (!dateInput) {
@@ -355,9 +346,13 @@
                 const currentTotal = updateTotal();
                 const orderNum = generateOrderNumber();
 
-                const flavor = document.querySelector('input[name="opt-flavor"]:checked').value;
-                const salt = document.querySelector('input[name="opt-salt"]:checked').value;
-                const spicy = document.querySelector('input[name="opt-spicy"]:checked').value;
+                const flavorEl = document.querySelector('input[name="opt-flavor"]:checked');
+                const saltEl = document.querySelector('input[name="opt-salt"]:checked');
+                const spicyEl = document.querySelector('input[name="opt-spicy"]:checked');
+
+                const flavor = flavorEl ? flavorEl.value : '招牌鹹水';
+                const salt = saltEl ? saltEl.value : '正常';
+                const spicy = spicyEl ? spicyEl.value : '不辣';
 
                 let flavorDetails = '';
                 if (flavor === '原味客製') {
@@ -411,7 +406,7 @@
                 msg += `\n💰 總金額：$${currentTotal}`;
 
                 let profile = { userId: "", displayName: "Khách (Web)" };
-                if (liff.isLoggedIn()) {
+                if (typeof liff !== 'undefined' && liff.isLoggedIn && liff.isLoggedIn()) {
                     try {
                         const p = await liff.getProfile();
                         if (p && p.userId) profile = p;
@@ -461,17 +456,23 @@
                 } catch (err) {
                     console.warn("Primary API flow failed, trying LIFF sendMessages fallback:", err);
 
-                    try {
-                        await liff.sendMessages([{ type: 'text', text: msg }]);
-                        customAlert('<div style="margin-bottom: 15px;"><svg width="64" height="64" viewBox="0 0 24 24" fill="#10b981"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div><div style="font-size: 18px; line-height: 1.4; color: #111;">感謝您的訂單！餐點製作完成後，我們會再次通知您前來取餐，謝謝！</div>', () => {
-                            liff.closeWindow();
-                        });
-                    } catch (liffErr) {
-                        console.error("LIFF sendMessages fallback failed:", liffErr);
-                        customAlert('傳送失敗，請重試或向店員反應。');
-                        isSubmitting = false;
-                        submitBtn.disabled = false;
-                        submitBtn.innerText = '確認下單';
+                    if (typeof liff !== 'undefined' && liff.sendMessages) {
+                        try {
+                            await liff.sendMessages([{ type: 'text', text: msg }]);
+                            customAlert('<div style="margin-bottom: 15px;"><svg width="64" height="64" viewBox="0 0 24 24" fill="#10b981"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div><div style="font-size: 18px; line-height: 1.4; color: #111;">感謝您的訂單！餐點製作完成後，我們會再次通知您前來取餐，謝謝！</div>', () => {
+                                if (liff.closeWindow) liff.closeWindow();
+                            });
+                            return;
+                        } catch (liffErr) {
+                            console.error("LIFF sendMessages fallback failed:", liffErr);
+                        }
+                    }
+
+                    customAlert('傳送失敗，請重試或向店員反應。');
+                    isSubmitting = false;
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = '確認下單';
+                }
                     }
                 }
             }
