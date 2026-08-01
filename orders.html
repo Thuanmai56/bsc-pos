@@ -192,20 +192,20 @@
 
       <div class="modal-actions" id="review-actions-accepted" style="display:none;">
         <button class="btn btn-primary" onclick="markReadyFromReview(this)">準備完成</button>
-        <button class="btn btn-danger" onclick="reviewOpenReject()">取消訂單</button>
+        <button class="btn btn-danger" onclick="cancelOrderFromReview(this)">取消訂單</button>
         <button class="btn btn-ghost" onclick="closeModal()">關閉</button>
       </div>
 
       <div class="modal-actions" id="review-actions-done" style="display:none;">
         <button class="btn btn-primary" onclick="updateStatus(reviewingOrder.key, 'PICKED_UP', {}, this).then(() => closeModal());">已交付顧客</button>
-        <button class="btn btn-danger" onclick="reviewOpenReject()">取消訂單</button>
+        <button class="btn btn-danger" onclick="cancelOrderFromReview(this)">取消訂單</button>
         <button class="btn btn-ghost" onclick="closeModal()">關閉</button>
       </div>
 
       <div class="modal-actions" id="review-actions-waiting" style="display:none;">
         <button class="btn btn-primary" onclick="reviewAccept(this)">接單 (確認)</button>
         <button class="btn btn-yellow" onclick="resendPendingMessage(this)">重新傳送訊息</button>
-        <button class="btn btn-danger" onclick="reviewOpenReject()">取消訂單</button>
+        <button class="btn btn-danger" onclick="cancelOrderFromReview(this)">取消訂單</button>
         <button class="btn btn-ghost" onclick="closeModal()">關閉</button>
       </div>
     </div>
@@ -839,6 +839,15 @@
       currentOrderKey = savedKey;
       document.getElementById("reject-reason").selectedIndex = 0;
       document.getElementById("rejectModal").style.display = "flex";
+    }
+
+    async function cancelOrderFromReview(btn) {
+      if (!reviewingOrder?.key) return;
+      if (window.confirm("您確定要取消此訂單嗎？顧客端將不會收到回覆通知。")) {
+        await updateStatus(reviewingOrder.key, "REJECTED", { reason: "取消並不回覆客戶" }, btn);
+        closeModal();
+        switchTab("live");
+      }
     }
 
     async function markReadyFromReview(btn) {
