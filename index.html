@@ -14,6 +14,19 @@
 </head>
 
 <body>
+    <!-- Full Page Split Door Opening Splash Screen -->
+    <div class="splash-screen" id="splash-screen">
+        <div class="splash-door left"></div>
+        <div class="splash-door right"></div>
+        <div class="splash-content">
+            <div class="splash-circle">
+                <img src="./logo.png" alt="Logo" class="splash-logo-img">
+                <div class="splash-title">干城鹹水雞</div>
+                <div class="splash-sub">線上即時點餐</div>
+            </div>
+        </div>
+    </div>
+
     <!-- Store Header (Hero Card) -->
     <div class="store-header">
         <div class="store-header-content">
@@ -574,10 +587,26 @@
                 }
             }
 
+            const splashStartTime = Date.now();
+            function hideSplashScreen() {
+                const splash = document.getElementById("splash-screen");
+                if (!splash || splash.classList.contains("fade-out")) return;
+                const elapsed = Date.now() - splashStartTime;
+                const remaining = Math.max(0, 350 - elapsed);
+                setTimeout(() => {
+                    splash.classList.add("fade-out");
+                    setTimeout(() => { if (splash && splash.parentNode) splash.parentNode.removeChild(splash); }, 750);
+                }, remaining);
+            }
+
             async function initApp() {
-                await fetchMenu();
-                renderMenu();
-                renderStoreOperatingHours();
+                try {
+                    await fetchMenu();
+                    renderMenu();
+                    renderStoreOperatingHours();
+                } finally {
+                    hideSplashScreen();
+                }
 
                 const targetLiffId = (storeConfig && storeConfig.liffId) ? storeConfig.liffId : '2009555608-DMioljsI';
                 try {

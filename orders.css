@@ -71,6 +71,7 @@ html, body {
   border-radius: var(--radius-full);
 }
 
+
 .app {
   height: 100vh;
   display: flex;

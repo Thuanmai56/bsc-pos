@@ -56,6 +56,118 @@ html {
     scroll-behavior: smooth;
 }
 
+/* ==========================================================================
+   Full Page Restaurant Split Door Opening Animation
+   ========================================================================== */
+.splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.splash-door {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 50%;
+    background: var(--bg);
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.05);
+    transition: transform 0.65s cubic-bezier(0.77, 0, 0.175, 1);
+    z-index: 10001;
+}
+
+.splash-door.left {
+    left: 0;
+    border-right: 1px solid var(--border);
+}
+
+.splash-door.right {
+    right: 0;
+    border-left: 1px solid var(--border);
+}
+
+.splash-content {
+    position: relative;
+    z-index: 10002;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.splash-screen.fade-out {
+    pointer-events: none;
+}
+
+.splash-screen.fade-out .splash-content {
+    opacity: 0;
+    transform: scale(0.92);
+}
+
+.splash-screen.fade-out .splash-door.left {
+    transform: translateX(-100%);
+}
+
+.splash-screen.fade-out .splash-door.right {
+    transform: translateX(100%);
+}
+
+.splash-circle {
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: var(--card);
+    border: 4px solid var(--border);
+    box-shadow: 0 12px 36px rgba(28, 25, 23, 0.12);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 20px;
+    text-align: center;
+    animation: pulseLogo 1.5s infinite ease-in-out alternate;
+}
+
+.splash-logo-img {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border);
+}
+
+.splash-title {
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--text);
+    margin-top: 2px;
+}
+
+.splash-sub {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+}
+
+@keyframes pulseLogo {
+    from { transform: scale(0.96); opacity: 0.85; }
+    to { transform: scale(1.04); opacity: 1; }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
 /* SVG Icon Helper System */
 .icon {
     width: 1.15em;
