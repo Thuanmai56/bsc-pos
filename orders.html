@@ -5,6 +5,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>干城鹹水雞 管理後台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="orders.css" />
 </head>
 
@@ -15,12 +18,17 @@
         <div class="brand-title">🍗 干城鹹水雞 後台系統</div>
         <div class="brand-sub">即時訂單管理</div>
       </div>
+      <div class="pos-stats-bar">
+        <div class="stat-pill"><span class="stat-icon">📊</span> 今日總單 <strong id="stat-total">0</strong></div>
+        <div class="stat-pill warning"><span class="stat-icon">🍳</span> 準備中 <strong id="stat-left">0</strong></div>
+        <div class="stat-pill success"><span class="stat-icon">✅</span> 待取餐 <strong id="stat-right">0</strong></div>
+      </div>
       <div class="tabs">
         <button class="tab active" id="tab-live" onclick="switchTab('live')">即時單</button>
         <button class="tab" id="tab-history" onclick="switchTab('history')">歷史單</button>
-        <button class="mini-btn" onclick="testSound()">測試鈴聲</button>
-        <button class="mini-btn" onclick="openMenuSettings()">菜單</button>
-        <button class="mini-btn" onclick="openSettings()">系統設定</button>
+        <button class="mini-btn" onclick="testSound()">🔔 測試鈴聲</button>
+        <button class="mini-btn" onclick="openMenuSettings()">📋 菜單設定</button>
+        <button class="mini-btn" onclick="openSettings()">⚙️ 系統設定</button>
       </div>
     </div>
 
@@ -503,6 +511,9 @@
 
       document.getElementById("count-left").innerText = String(leftOrders.length);
       document.getElementById("count-right").innerText = String(rightOrders.length);
+      if (document.getElementById("stat-left")) document.getElementById("stat-left").innerText = String(leftOrders.length);
+      if (document.getElementById("stat-right")) document.getElementById("stat-right").innerText = String(rightOrders.length);
+      if (document.getElementById("stat-total")) document.getElementById("stat-total").innerText = String(currentOrders.length);
 
       if (activeTab === "live") {
         renderListLeft(leftOrders);
