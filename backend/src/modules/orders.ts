@@ -350,7 +350,7 @@ export async function getWaitingCount(request: Request, env: Env): Promise<Respo
     const row = await env.DB.prepare(
       `SELECT COUNT(*) as cnt FROM orders 
        WHERE tenant_id = ? 
-         AND status IN ('NEW', 'ACCEPTED', 'WAITING_CUSTOMER_CHANGE', 'WAITING_CUSTOMER_REJECT')
+         AND status = 'ACCEPTED'
          AND created_at >= DATETIME('now', '-24 hours')`
     ).bind(tenantId).first<{ cnt: number }>();
 
