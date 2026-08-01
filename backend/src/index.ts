@@ -1,7 +1,7 @@
 import { Env } from './types/env';
 import { corsHeaders, json } from './utils/http';
 import { handleLineWebhook } from './modules/line';
-import { createOrder, updateOrder, getOrders, handleOrdersMigration, getPendingActionsApi, cleanupExpiredPendingActions } from './modules/orders';
+import { createOrder, updateOrder, getOrders, getWaitingCount, handleOrdersMigration, getPendingActionsApi, cleanupExpiredPendingActions } from './modules/orders';
 import { setupAlertRichMenu } from './modules/lineRichMenu';
 import { getConfig, updateConfig } from './modules/config';
 import { getMenu, updateMenu, updateStockStatus } from './modules/menu';
@@ -28,6 +28,7 @@ export default {
       }
       if (request.method === "POST" && path === "/api/create") return await createOrder(request, env, ctx);
       if (request.method === "POST" && path === "/api/update") return await updateOrder(request, env, ctx);
+      if (request.method === "GET" && path === "/api/orders/waiting-count") return await getWaitingCount(request, env);
       if (request.method === "GET" && path === "/api/orders") return await getOrders(request, env);
       if (request.method === "GET" && path === "/api/pending-actions") return await getPendingActionsApi(request, env);
       if (request.method === "POST" && path === "/api/setup-alert-richmenu") {

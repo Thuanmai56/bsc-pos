@@ -302,9 +302,64 @@ interface MemoryOrdersCache {
   orders: Order[];
   timestamp: number;
 }
+interface MemoryCountCache {
+  count: number;
+  timestamp: number;
+}
 const memoryOrdersCache = new Map<string, MemoryOrdersCache>();
+const memoryCountCache = new Map<string, MemoryCountCache>();
 const memoryOrdersVersion = new Map<string, string>();
 const MEMORY_CACHE_TTL_MS = 2000; // 2 giây
+
+export async function getWaitingCount(request: Request, env: Env): Promise<Response> {
+  const tenantId = "bsc";
+  const versionKey = `tenant:${tenantId}:orders_version`;
+
+  let currentVersion: string | undefined = memoryOrdersVersion.get(tenantId);
+  if (!currentVersion && env.ORDER_STATE) {
+    try {
+      currentVersion = (await env.ORDER_STATE.get(versionKey)) || undefined;
+    } catch {}
+  }
+  if (!currentVersion) {
+    currentVersion = Date.now().toString();
+    memoryOrdersVersion.set(tenantId, currentVersion);
+  } else {
+    memoryOrdersVersion.set(tenantId, currentVersion);
+  }
+
+  const clientETag = request.headers.get("if-none-match")?.replace(/^W\//, '').replace(/"/g, '');
+  if (clientETag && clientETag === currentVersion) {
+    return new Response(null, {
+      status: 304,
+      headers: {
+        "ETag": `"${currentVersion}"`,
+        ...corsHeaders(),
+      },
+    });
+  }
+
+  const memCached = memoryCountCache.get(tenantId);
+  if (memCached && Date.now() - memCached.timestamp < MEMORY_CACHE_TTL_MS) {
+    return jsonWithETag({ waitingCount: memCached.count }, currentVersion);
+  }
+
+  if (!env.DB) return jsonWithETag({ waitingCount: 0 }, currentVersion);
+
+  try {
+    const row = await env.DB.prepare(
+      `SELECT COUNT(*) as cnt FROM orders 
+       WHERE tenant_id = ? AND status IN ('NEW', 'ACCEPTED', 'WAITING_CUSTOMER_CHANGE', 'WAITING_CUSTOMER_REJECT')`
+    ).bind(tenantId).first<{ cnt: number }>();
+
+    const waitingCount = row?.cnt || 0;
+    memoryCountCache.set(tenantId, { count: waitingCount, timestamp: Date.now() });
+    return jsonWithETag({ waitingCount }, currentVersion);
+  } catch (e: any) {
+    console.error("[getWaitingCount] D1 error:", e);
+    return jsonWithETag({ waitingCount: 0 }, currentVersion);
+  }
+}
 
 export async function getOrders(request: Request, env: Env): Promise<Response> {
   const tenantId = "bsc";
@@ -446,6 +501,7 @@ export async function saveOrder(env: Env, order: Order): Promise<void> {
   const newVersion = Date.now().toString();
   memoryOrdersVersion.set(tenantId, newVersion);
   memoryOrdersCache.delete(tenantId);
+  memoryCountCache.delete(tenantId);
 
   if (env.ORDER_STATE) {
     try {

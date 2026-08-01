@@ -77,6 +77,15 @@ body {
     line-height: 1.4;
 }
 
+.store-status-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-self: flex-start;
+    margin-top: 4px;
+}
+
 .store-status {
     background-color: #5ea7ab;
     color: white;
@@ -84,10 +93,22 @@ body {
     font-weight: 900;
     padding: 6px 14px;
     border-radius: 99px;
-    align-self: flex-start;
-    margin-top: 4px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     white-space: nowrap;
+}
+
+.waiting-badge {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+    font-size: 13px;
+    font-weight: 800;
+    padding: 6px 14px;
+    border-radius: 99px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
 }
 
 .store-status.closed {
