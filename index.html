@@ -23,7 +23,7 @@
                 </div>
                 <div class="store-status-wrapper">
                     <div id="store-status" class="store-status">營業中</div>
-                    <div id="waiting-counter-badge" class="waiting-badge">🍳 載入中...</div>
+                    <div id="waiting-counter-badge" class="waiting-badge" style="display: none;"></div>
                 </div>
             </div>
             <div class="store-details">
@@ -622,19 +622,22 @@
                 try {
                     const headers = {};
                     if (indexOrdersETag) headers["If-None-Match"] = indexOrdersETag;
-                    const res = await fetch(`${WORKER_BASE}/api/orders`, { headers });
+                    const res = await fetch(`${WORKER_BASE}/api/orders/waiting-count`, { headers });
                     if (res.status === 304) return;
                     if (!res.ok) return;
 
                     const etag = res.headers.get("ETag");
                     if (etag) indexOrdersETag = etag;
 
-                    const orders = await res.json();
-                    if (Array.isArray(orders)) {
-                        const acceptedCount = orders.filter(o => o && o.status === "ACCEPTED").length;
-                        const badge = document.getElementById("waiting-counter-badge");
-                        if (badge) {
-                            badge.innerText = acceptedCount > 0 ? `🍳 ${acceptedCount} 單製作中` : "🍳 暫無排隊";
+                    const data = await res.json();
+                    const badge = document.getElementById("waiting-counter-badge");
+                    if (badge) {
+                        const count = data.waitingCount || 0;
+                        if (count > 0) {
+                            badge.innerText = `目前前方等待單數：${count} 單`;
+                            badge.style.display = "inline-flex";
+                        } else {
+                            badge.style.display = "none";
                         }
                     }
                 } catch (e) {

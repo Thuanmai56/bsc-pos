@@ -306,6 +306,42 @@ const memoryOrdersCache = new Map<string, MemoryOrdersCache>();
 const memoryOrdersVersion = new Map<string, string>();
 const MEMORY_CACHE_TTL_MS = 2000; // 2 giây
 
+export async function getWaitingCount(request: Request, env: Env): Promise<Response> {
+  const tenantId = "bsc";
+
+  if (!env.DB) return jsonWithETag({ waitingCount: 0 }, "0");
+
+  try {
+    const row = await env.DB.prepare(
+      `SELECT COUNT(*) as cnt, MAX(updated_at) as last_updated FROM orders 
+       WHERE tenant_id = ? 
+         AND status = 'ACCEPTED'
+         AND created_at >= DATETIME('now', '-24 hours')`
+    ).bind(tenantId).first<{ cnt: number; last_updated: string | null }>();
+
+    const waitingCount = row?.cnt || 0;
+    const lastUpdated = row?.last_updated || "0";
+    const currentVersion = `${waitingCount}_${lastUpdated}`;
+
+    const clientETag = request.headers.get("if-none-match")?.replace(/^W\//, '').replace(/"/g, '');
+    if (clientETag && clientETag === currentVersion) {
+      return new Response(null, {
+        status: 304,
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "ETag": `"${currentVersion}"`,
+          ...corsHeaders(),
+        },
+      });
+    }
+
+    return jsonWithETag({ waitingCount }, currentVersion);
+  } catch (e: any) {
+    console.error("[getWaitingCount] D1 error:", e);
+    return jsonWithETag({ waitingCount: 0 }, "0");
+  }
+}
+
 export async function getOrders(request: Request, env: Env): Promise<Response> {
   const tenantId = "bsc";
   const cacheKey = `tenant:${tenantId}:orders_cache`;
