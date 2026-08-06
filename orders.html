@@ -802,11 +802,30 @@
         });
         if (!response.ok) throw new Error(`update failed: ${response.status}`);
 
-        // Apply local override immediately for responsiveness
-        localOverrides[key] = { status, time: Date.now() };
+        // Apply local override immediately for responsiveness with correct display status mapping
+        let targetStatus = status;
+        if (status === "CHANGED") {
+          targetStatus = "WAITING_CUSTOMER_CHANGE";
+        } else if (status === "REJECTED") {
+          if (extra.reason === "取消並不回復客戶" || extra.reason === "取消並不回覆客戶") {
+            targetStatus = "REJECTED";
+          } else {
+            targetStatus = "WAITING_CUSTOMER_REJECT";
+          }
+        } else if (status === "FORCE_REJECT") {
+          targetStatus = "REJECTED";
+        }
+
+        localOverrides[key] = {
+          status: targetStatus,
+          reason: extra.reason !== undefined ? extra.reason : undefined,
+          note: extra.note !== undefined ? extra.note : undefined,
+          time: Date.now()
+        };
         renderAll();
 
-        // Still fetch to keep in sync
+        // Clear ETag to ensure fresh fetch from server
+        lastOrdersETag = "";
         await fetchOrders();
       } catch (e) {
         console.error(e);

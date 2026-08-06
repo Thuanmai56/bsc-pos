@@ -494,21 +494,6 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
             continue; // KẾT THÚC LUỒNG XỬ LÝ RIÊNG
           }
 
-          // CÁC TRƯỜNG HỢP KHÁC (ví dụ: Hết món, Đổi món): DÙNG AI ĐỂ XỬ LÝ
-          let aiSaysNo = false;
-          const isExplicitSwapKeyword = lowerText.includes("換") || lowerText.includes("改");
-
-          if (questionText && !isExplicitSwapKeyword) {
-            const prompt = `店家詢問顧客：「${questionText}」\n顧客的回覆是：「${userText}」\n請問顧客的回覆是否提出了更換品項、選擇口味或確認決定？\n- 如果顧客明確選擇了替換品項（例如：「換雞肉」、「改成高麗菜」、「換成紅茶」等），請嚴格回覆 YES。\n- 如果顧客只是反問或無關訊息，請回覆 NO。\n請只回覆 YES 或 NO。`;
-            const aiRes = await callAI(prompt, env);
-            if (aiRes) {
-              const up = aiRes.toUpperCase();
-              if (up.includes("NO") && !up.includes("YES")) {
-                aiSaysNo = true;
-              }
-            }
-          }
-
           if (pendingType === "CHANGE") {
             const isCancel = lowerText.includes("不要了") || lowerText.includes("取消") || lowerText.includes("不用了") || lowerText === "不要";
 
@@ -520,13 +505,8 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
               continue;
             }
 
-            if (aiSaysNo) {
-              await replyText(replyToken, `請您明確告訴我們想換什麼品項，或者回覆「取消」直接取消訂單。`, env);
-              continue; // Yêu cầu khách nhập rõ ràng
-            }
-
-            const isItemSwap = currentReason === "口味售完" || currentReason === "品項售完" || currentReason === "今日已售完" || isExplicitSwapKeyword || (pendingType === "CHANGE" && !aiSaysNo);
-            if (isItemSwap) {
+            // Trường hợp hết món: Bất kỳ phản hồi đổi món nào của khách (trừ Hủy) đều là yêu cầu đổi món
+            if (currentReason === "口味售完" || currentReason === "品項售完" || currentReason === "今日已售完") {
               order.content = `【顧客換單】：${userText}\n----原本訂單/Đơn cũ 👇----\n${order.content}`;
               order.reason = "";
               order.note = "";
@@ -535,6 +515,26 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
               const cleanup = async () => { await saveOrder(env, order); await finishPending(); };
               if (ctx && ctx.waitUntil) ctx.waitUntil(cleanup()); else await cleanup();
               continue;
+            }
+
+            // CÁC TRƯỜNG HỢP KHÁC: DÙNG AI ĐỂ XỬ LÝ NẾU KHÔNG CÓ TỪ KHÓA ĐỔI
+            let aiSaysNo = false;
+            const isExplicitSwapKeyword = lowerText.includes("換") || lowerText.includes("改");
+
+            if (questionText && !isExplicitSwapKeyword) {
+              const prompt = `店家剛才詢問顧客：「${questionText}」\n顧客的回覆是：「${userText}」\n請問顧客的回覆是否針對問題做出了決定（如已明確選擇換的口味、同意、拒絕等）？\nSTRICTLY return YES or NO.`;
+              const aiRes = await callAI(prompt, env);
+              if (aiRes) {
+                const up = aiRes.toUpperCase();
+                if (up.includes("NO") && !up.includes("YES")) {
+                  aiSaysNo = true;
+                }
+              }
+            }
+
+            if (aiSaysNo) {
+              await replyText(replyToken, `請您明確告訴我們想換什麼品項，或者回覆「取消」直接取消訂單。`, env);
+              continue; // Yêu cầu khách nhập rõ ràng
             }
 
             // Fallback for explicitly agreed non-flavor changes
