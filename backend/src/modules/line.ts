@@ -535,7 +535,7 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
             // AI xác nhận YES -> Thực hiện đổi món
             const isItemSwap = currentReason === "口味售完" || currentReason === "品項售完" || currentReason === "今日已售完" || isExplicitSwapKeyword || aiSaysYes;
             if (isItemSwap) {
-              order.content = `【顧客換單】：${userText}\n----原本訂單/Đơn cũ 👇----\n${order.content}`;
+              order.content = `【顧客換單】：${userText}\n----原本訂單 👇----\n${order.content}`;
               order.reason = "";
               order.note = "";
               order.status = "NEW";
