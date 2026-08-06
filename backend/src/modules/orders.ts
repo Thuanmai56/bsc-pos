@@ -294,14 +294,8 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
   return json({ success: true });
 }
 
-// In-Memory Cache (RAM) trong Worker Isolate
-interface MemoryOrdersCache {
-  orders: Order[];
-  timestamp: number;
-}
-const memoryOrdersCache = new Map<string, MemoryOrdersCache>();
+// Version tracking cho ETag (chỉ dùng KV, không dùng RAM cache)
 const memoryOrdersVersion = new Map<string, string>();
-const MEMORY_CACHE_TTL_MS = 2000; // 2 giây
 
 export async function getWaitingCount(request: Request, env: Env): Promise<Response> {
   const tenantId = "bsc";
@@ -341,10 +335,9 @@ export async function getWaitingCount(request: Request, env: Env): Promise<Respo
 
 export async function getOrders(request: Request, env: Env): Promise<Response> {
   const tenantId = "bsc";
-  const cacheKey = `tenant:${tenantId}:orders_cache`;
   const versionKey = `tenant:${tenantId}:orders_version`;
 
-  // 1. Luôn lấy ETag version mới nhất từ Cloudflare KV (Đảm bảo đồng bộ giữa mọi máy chủ Edge)
+  // 1. Lấy ETag version mới nhất từ KV
   let currentVersion: string | undefined = undefined;
   if (env.ORDER_STATE) {
     try {
@@ -363,11 +356,10 @@ export async function getOrders(request: Request, env: Env): Promise<Response> {
       } catch {}
     }
   } else {
-    // Đã có từ KV -> Cập nhật lại RAM local của Isolate này
     memoryOrdersVersion.set(tenantId, currentVersion);
   }
 
-  // 2. Client gửi Header "If-None-Match" -> Kiểm tra để trả về HTTP 304 Not Modified
+  // 2. Client gửi Header "If-None-Match" -> Trả về HTTP 304 nếu chưa có thay đổi
   const clientETag = request.headers.get("if-none-match")?.replace(/^W\//, '').replace(/"/g, '');
   if (clientETag && clientETag === currentVersion) {
     return new Response(null, {
@@ -379,29 +371,9 @@ export async function getOrders(request: Request, env: Env): Promise<Response> {
     });
   }
 
-  // 3. Kiểm tra RAM Cache trước (0ms latency, 0 KV reads, 0 D1 reads)
-  const memCached = memoryOrdersCache.get(tenantId);
-  if (memCached && Date.now() - memCached.timestamp < MEMORY_CACHE_TTL_MS) {
-    return jsonWithETag(memCached.orders, currentVersion);
-  }
-
-  // 4. RAM Cache Miss -> Kiểm tra KV Cache
-  if (env.ORDER_STATE) {
-    try {
-      const cached = await env.ORDER_STATE.get(cacheKey);
-      if (cached) {
-        const parsedOrders: Order[] = JSON.parse(cached);
-        memoryOrdersCache.set(tenantId, { orders: parsedOrders, timestamp: Date.now() });
-        return jsonWithETag(parsedOrders, currentVersion);
-      }
-    } catch (e) {
-      console.error("[getOrders] KV Cache read error:", e);
-    }
-  }
-
   if (!env.DB) return jsonWithETag([], currentVersion);
 
-  // 5. RAM & KV Cache Miss -> Truy vấn từ D1 Database
+  // 3. Truy vấn trực tiếp từ D1 Database (không qua cache)
   try {
     const { results } = await env.DB.prepare(
       "SELECT key, customer_name, pickup_time, status, total_amount, order_content, reason, note, created_at FROM orders WHERE tenant_id = ? ORDER BY created_at DESC LIMIT 200"
@@ -427,18 +399,6 @@ export async function getOrders(request: Request, env: Env): Promise<Response> {
         note: row.note || ""
       };
     });
-
-    // Cập nhật RAM Cache
-    memoryOrdersCache.set(tenantId, { orders, timestamp: Date.now() });
-
-    // Cập nhật KV Cache (TTL 60s)
-    if (env.ORDER_STATE) {
-      try {
-        await env.ORDER_STATE.put(cacheKey, JSON.stringify(orders), { expirationTtl: 60 });
-      } catch (e) {
-        console.error("[getOrders] KV Cache write error:", e);
-      }
-    }
 
     return jsonWithETag(orders, currentVersion);
   } catch (e: any) {
@@ -475,17 +435,15 @@ export async function saveOrder(env: Env, order: Order): Promise<void> {
     Math.floor((order.createdAt || Date.now()) / 1000)
   ).run();
 
-  // Invalidate RAM Cache & Update version cho tenant "bsc"
+  // Bump version cho ETag
   const newVersion = Date.now().toString();
   memoryOrdersVersion.set(tenantId, newVersion);
-  memoryOrdersCache.delete(tenantId);
 
   if (env.ORDER_STATE) {
     try {
-      await env.ORDER_STATE.delete(`tenant:${tenantId}:orders_cache`);
       await env.ORDER_STATE.put(`tenant:${tenantId}:orders_version`, newVersion);
     } catch (e) {
-      console.error("[saveOrder] KV Cache update error:", e);
+      console.error("[saveOrder] KV version update error:", e);
     }
   }
 }
