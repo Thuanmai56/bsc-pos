@@ -512,7 +512,24 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
             if (isExplicitSwapKeyword) {
               aiSaysYes = true;
             } else if (questionText) {
-              const prompt = `店家剛才詢問顧客：「${questionText}」\n顧客的回覆是：「${userText}」\n\n請分析顧客的回覆是否在回答店家的問題（例如：選擇替換的餐點/食材/口味、直接回答食材名稱如「高麗菜/雞肉」、表達更換意願或確認決定）？\n- 如果顧客給出了餐點/食材/口味選擇、指定了替換品項、或表達同意 $\rightarrow$ 請嚴格回覆 YES。\n- 如果顧客是在發問無關事項、純聊天或離題 $\rightarrow$ 請回覆 NO。\n請只回覆 YES 或 NO。`;
+              // Lấy danh sách tên món từ D1 để cung cấp context cho AI
+              let menuItemNames: string[] = [];
+              try {
+                if (env.DB) {
+                  const { results } = await env.DB.prepare(
+                    "SELECT name FROM menu_items WHERE tenant_id = ? ORDER BY sort_order ASC"
+                  ).bind("bsc").all<{ name: string }>();
+                  menuItemNames = (results || []).map(r => r.name);
+                }
+              } catch (e) {
+                console.error("[LINE] Failed to fetch menu items for AI prompt:", e);
+              }
+
+              const menuContext = menuItemNames.length > 0
+                ? `\n本店目前的菜單品項有：${menuItemNames.join("、")}。\n`
+                : "";
+
+              const prompt = `店家剛才詢問顧客：「${questionText}」\n顧客的回覆是：「${userText}」\n${menuContext}\n請分析顧客的回覆是否在回答店家的問題（例如：選擇替換的餐點/食材/口味、直接回答食材名稱、表達更換意願或確認決定）？\n- 如果顧客給出了餐點/食材/口味選擇、指定了替換品項、或表達同意 → 請嚴格回覆 YES。\n- 如果顧客是在發問無關事項、純聊天或離題 → 請回覆 NO。\n請只回覆 YES 或 NO。`;
               const aiRes = await callAI(prompt, env);
               if (aiRes) {
                 const up = aiRes.toUpperCase();
