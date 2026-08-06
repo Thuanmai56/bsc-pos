@@ -196,6 +196,8 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
              created_at = CURRENT_TIMESTAMP`
         ).bind("bsc", order.userId, order.key, "CHANGE", notifyText, order.reason || "", order.note || "").run();
       }
+
+      await pushLineMessage(order.userId, notifyText, env);
     }
 
     return json({ success: true });
@@ -245,6 +247,8 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
              created_at = CURRENT_TIMESTAMP`
         ).bind("bsc", order.userId, order.key, "REJECT", notifyText, order.reason || "", order.note || "").run();
       }
+
+      await pushLineMessage(order.userId, notifyText, env);
     }
 
     return json({ success: true });
