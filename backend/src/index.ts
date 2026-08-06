@@ -2,7 +2,6 @@ import { Env } from './types/env';
 import { corsHeaders, json } from './utils/http';
 import { handleLineWebhook } from './modules/line';
 import { createOrder, updateOrder, getOrders, getWaitingCount, handleOrdersMigration, getPendingActionsApi, cleanupExpiredPendingActions } from './modules/orders';
-import { setupAlertRichMenu } from './modules/lineRichMenu';
 import { getConfig, updateConfig } from './modules/config';
 import { getMenu, updateMenu, updateStockStatus } from './modules/menu';
 import { handleAuth, handleAuthChange, handleCreateTempLink, handleVerifyTempLink } from './modules/auth';
@@ -31,10 +30,6 @@ export default {
       if (request.method === "GET" && path === "/api/orders") return await getOrders(request, env);
       if (request.method === "GET" && path === "/api/orders/waiting-count") return await getWaitingCount(request, env);
       if (request.method === "GET" && path === "/api/pending-actions") return await getPendingActionsApi(request, env);
-      if (request.method === "POST" && path === "/api/setup-alert-richmenu") {
-        const richMenuId = await setupAlertRichMenu(env);
-        return json({ success: !!richMenuId, richMenuId });
-      }
       if (request.method === "GET" && path === "/api/migrate-orders") return await handleOrdersMigration(request, env);
       if (request.method === "GET" && path === "/api/config") return await getConfig(env);
       if (request.method === "POST" && path === "/api/config") return await updateConfig(request, env);

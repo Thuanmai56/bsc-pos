@@ -3,7 +3,6 @@ import { Order } from '../types/index';
 import { corsHeaders, json } from '../utils/http';
 import { syncToGoogleSheets } from '../integrations/googleSheets';
 import { pushLineMessage } from './line';
-import { linkAlertRichMenuToUser, unlinkAlertRichMenuFromUser } from './lineRichMenu';
 
 function jsonWithETag(data: any, version: string, status: number = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -129,7 +128,6 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
           ).bind("bsc", order.userId, order.key).run();
         } catch { }
       }
-      await unlinkAlertRichMenuFromUser(order.userId, env);
       if (!wasWaiting) {
         await pushLineMessage(order.userId, `干城鹹水雞 已收到您的訂單 #${order.key}，謝謝您！`, env);
       }
@@ -198,8 +196,6 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
              created_at = CURRENT_TIMESTAMP`
         ).bind("bsc", order.userId, order.key, "CHANGE", notifyText, order.reason || "", order.note || "").run();
       }
-
-      await linkAlertRichMenuToUser(order.userId, env);
     }
 
     return json({ success: true });
@@ -249,8 +245,6 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
              created_at = CURRENT_TIMESTAMP`
         ).bind("bsc", order.userId, order.key, "REJECT", notifyText, order.reason || "", order.note || "").run();
       }
-
-      await linkAlertRichMenuToUser(order.userId, env);
     }
 
     return json({ success: true });
@@ -269,7 +263,6 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
           ).bind("bsc", order.userId, order.key).run();
         } catch { }
       }
-      await unlinkAlertRichMenuFromUser(order.userId, env);
       await pushLineMessage(order.userId, `干城鹹水雞：由於未收到您的回覆，訂單 #${order.key} 已自動取消。期待下次為您服務！`, env);
     }
 
@@ -588,8 +581,6 @@ export async function cleanupExpiredPendingActions(env: Env): Promise<void> {
         await env.DB.prepare(
           "DELETE FROM pending_actions WHERE tenant_id = ? AND user_id = ? AND order_key = ?"
         ).bind("bsc", row.user_id, row.order_key).run();
-
-        await unlinkAlertRichMenuFromUser(row.user_id, env);
       }
       console.log(`[PendingActions] Cleaned up ${results.length} expired pending actions`);
     }
