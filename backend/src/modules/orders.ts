@@ -294,9 +294,6 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
   return json({ success: true });
 }
 
-// Version tracking cho ETag (chỉ dùng KV, không dùng RAM cache)
-const memoryOrdersVersion = new Map<string, string>();
-
 export async function getWaitingCount(request: Request, env: Env): Promise<Response> {
   const tenantId = "bsc";
 
@@ -319,7 +316,6 @@ export async function getWaitingCount(request: Request, env: Env): Promise<Respo
       return new Response(null, {
         status: 304,
         headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
           "ETag": `"${currentVersion}"`,
           ...corsHeaders(),
         },
@@ -335,46 +331,30 @@ export async function getWaitingCount(request: Request, env: Env): Promise<Respo
 
 export async function getOrders(request: Request, env: Env): Promise<Response> {
   const tenantId = "bsc";
-  const versionKey = `tenant:${tenantId}:orders_version`;
 
-  // 1. Lấy ETag version mới nhất từ KV
-  let currentVersion: string | undefined = undefined;
-  if (env.ORDER_STATE) {
-    try {
-      currentVersion = (await env.ORDER_STATE.get(versionKey)) || undefined;
-    } catch (e) {
-      console.error("[getOrders] KV version read error:", e);
-    }
-  }
+  if (!env.DB) return jsonWithETag([], "0");
 
-  if (!currentVersion) {
-    currentVersion = memoryOrdersVersion.get(tenantId) || Date.now().toString();
-    memoryOrdersVersion.set(tenantId, currentVersion);
-    if (env.ORDER_STATE) {
-      try {
-        await env.ORDER_STATE.put(versionKey, currentVersion);
-      } catch {}
-    }
-  } else {
-    memoryOrdersVersion.set(tenantId, currentVersion);
-  }
-
-  // 2. Client gửi Header "If-None-Match" -> Trả về HTTP 304 nếu chưa có thay đổi
-  const clientETag = request.headers.get("if-none-match")?.replace(/^W\//, '').replace(/"/g, '');
-  if (clientETag && clientETag === currentVersion) {
-    return new Response(null, {
-      status: 304,
-      headers: {
-        "ETag": `"${currentVersion}"`,
-        ...corsHeaders(),
-      },
-    });
-  }
-
-  if (!env.DB) return jsonWithETag([], currentVersion);
-
-  // 3. Truy vấn trực tiếp từ D1 Database (không qua cache)
   try {
+    // 1. Lấy version từ D1 (strongly consistent, không dùng KV)
+    const versionRow = await env.DB.prepare(
+      "SELECT MAX(updated_at) as version FROM orders WHERE tenant_id = ?"
+    ).bind(tenantId).first<{ version: string | null }>();
+
+    const currentVersion = versionRow?.version || Date.now().toString();
+
+    // 2. So sánh ETag → 304 nếu chưa có thay đổi
+    const clientETag = request.headers.get("if-none-match")?.replace(/^W\//, '').replace(/"/g, '');
+    if (clientETag && clientETag === currentVersion) {
+      return new Response(null, {
+        status: 304,
+        headers: {
+          "ETag": `"${currentVersion}"`,
+          ...corsHeaders(),
+        },
+      });
+    }
+
+    // 3. Truy vấn trực tiếp từ D1 Database
     const { results } = await env.DB.prepare(
       "SELECT key, customer_name, pickup_time, status, total_amount, order_content, reason, note, created_at FROM orders WHERE tenant_id = ? ORDER BY created_at DESC LIMIT 200"
     ).bind(tenantId).all<any>();
@@ -434,18 +414,6 @@ export async function saveOrder(env: Env, order: Order): Promise<void> {
     order.note || "",
     Math.floor((order.createdAt || Date.now()) / 1000)
   ).run();
-
-  // Bump version cho ETag
-  const newVersion = Date.now().toString();
-  memoryOrdersVersion.set(tenantId, newVersion);
-
-  if (env.ORDER_STATE) {
-    try {
-      await env.ORDER_STATE.put(`tenant:${tenantId}:orders_version`, newVersion);
-    } catch (e) {
-      console.error("[saveOrder] KV version update error:", e);
-    }
-  }
 }
 
 export async function handleOrdersMigration(request: Request, env: Env): Promise<Response> {
