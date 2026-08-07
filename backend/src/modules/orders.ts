@@ -10,6 +10,7 @@ function jsonWithETag(data: any, version: string, status: number = 200): Respons
     headers: {
       ...corsHeaders(),
       "Content-Type": "application/json",
+      "Cache-Control": "no-cache, no-store, must-revalidate",
       "ETag": `"${version}"`,
     },
   });
@@ -348,6 +349,7 @@ export async function getOrders(request: Request, env: Env): Promise<Response> {
       return new Response(null, {
         status: 304,
         headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
           "ETag": `"${currentVersion}"`,
           ...corsHeaders(),
         },
@@ -393,14 +395,14 @@ export async function saveOrder(env: Env, order: Order): Promise<void> {
 
   await env.DB.prepare(
     `INSERT INTO orders (key, tenant_id, user_id, customer_name, pickup_time, status, total_amount, order_content, reason, note, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime(?, 'unixepoch'), datetime('now'))
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime(?, 'unixepoch'), strftime('%Y-%m-%d %H:%M:%f', 'now'))
      ON CONFLICT(key) DO UPDATE SET
        status = excluded.status,
        total_amount = excluded.total_amount,
        order_content = excluded.order_content,
        reason = excluded.reason,
        note = excluded.note,
-       updated_at = datetime('now')`
+       updated_at = strftime('%Y-%m-%d %H:%M:%f', 'now')`
   ).bind(
     order.key,
     tenantId,

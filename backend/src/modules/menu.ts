@@ -2,6 +2,66 @@ import { Env } from '../types/env';
 import { Menu } from '../types/index';
 import { json } from '../utils/http';
 
+export interface CustomizationOption {
+  name: string;
+  sub_options?: string[];
+}
+
+export interface CustomizationGroup {
+  key: string;
+  title: string;
+  type: 'radio' | 'checkbox';
+  options: CustomizationOption[];
+}
+
+export const DEFAULT_CUSTOMIZATIONS: CustomizationGroup[] = [
+  {
+    key: "flavor",
+    title: "✦ 口味選擇",
+    type: "radio",
+    options: [
+      { name: "特調胡椒" },
+      { name: "泰式酸辣" },
+      { name: "清爽檸檬", sub_options: ["不加香油", "不加鹽巴"] },
+      { name: "檸檬香菜", sub_options: ["不加香油", "不加鹽巴"] },
+      { name: "原味客製", sub_options: ["不加香油", "不加胡椒", "不加胡椒加鹽巴"] }
+    ]
+  },
+  {
+    key: "salt",
+    title: "✦ 鹹度調整",
+    type: "radio",
+    options: [
+      { name: "正常" },
+      { name: "調味重" },
+      { name: "調味清淡" }
+    ]
+  },
+  {
+    key: "spicy",
+    title: "✦ 辣度選擇 (朝天椒)",
+    type: "radio",
+    options: [
+      { name: "不辣" },
+      { name: "微辣" },
+      { name: "小辣" },
+      { name: "中辣" },
+      { name: "大辣" },
+      { name: "辣椒放餐盒角落" }
+    ]
+  },
+  {
+    key: "ingredients",
+    title: "✦ 配料調整",
+    type: "checkbox",
+    options: [
+      { name: "不加蔥花" },
+      { name: "不加蒜頭" },
+      { name: "不加洋蔥" }
+    ]
+  }
+];
+
 export const DEFAULT_MENU: Menu = {
   small: { "燒肉": 56, "火腿": 56, "雞肉": 68, "烤肉": 72, "雙層烤肉": 78, "綜合": 79 },
   large: { "燒肉": 80, "火腿": 80, "雞肉": 100, "烤肉": 105, "雙層烤肉": 115, "綜合": 130 },
@@ -11,7 +71,8 @@ export const DEFAULT_MENU: Menu = {
     "9 小烤肉+飲料": 95, "10 小雙層烤肉+飲料": 99, "11 小綜合+飲料": 100
   },
   drinks: { "越南咖啡": 48, "豆漿": 37, "紅茶": 37, "可樂": 37, "雪碧": 37 },
-  topping: { "起司": 15, "火腿": 20, "燒肉": 20, "烤肉": 25, "雞肉": 25 }
+  topping: { "起司": 15, "火腿": 20, "燒肉": 20, "烤肉": 25, "雞肉": 25 },
+  customizations: DEFAULT_CUSTOMIZATIONS
 };
 
 // Helper để trích xuất Tenant ID từ Request
@@ -64,7 +125,10 @@ export async function getMenu(request: Request, env: Env): Promise<Response> {
     // 1. Kiểm tra bộ nhớ đệm KV trước
     const cachedMenu = await env.ORDER_STATE.get(cacheKey);
     if (cachedMenu) {
-      return json(JSON.parse(cachedMenu));
+      const parsed = JSON.parse(cachedMenu);
+      if (parsed.customizations) {
+        return json(parsed);
+      }
     }
   } catch (e) {
     console.error("KV read failed:", e);
@@ -77,9 +141,10 @@ export async function getMenu(request: Request, env: Env): Promise<Response> {
     }
 
     // Sử dụng batch queries để giảm thiểu số vòng kết nối mạng
-    const [categoriesRes, itemsRes] = await env.DB.batch([
+    const [categoriesRes, itemsRes, customizationsRes] = await env.DB.batch([
       env.DB.prepare("SELECT id, name, slug FROM menu_categories WHERE tenant_id = ? ORDER BY sort_order ASC").bind(tenantId),
-      env.DB.prepare("SELECT id, category_id, name, price, description, out_of_stock_until FROM menu_items WHERE tenant_id = ? ORDER BY sort_order ASC").bind(tenantId)
+      env.DB.prepare("SELECT id, category_id, name, price, description, out_of_stock_until FROM menu_items WHERE tenant_id = ? ORDER BY sort_order ASC").bind(tenantId),
+      env.DB.prepare("SELECT key, title, type, options_json FROM menu_customizations WHERE tenant_id = ? ORDER BY sort_order ASC").bind(tenantId)
     ]);
 
     const categories = categoriesRes.results as Array<{ id: string; name: string; slug: string }>;
@@ -101,6 +166,36 @@ export async function getMenu(request: Request, env: Env): Promise<Response> {
     const menuData: Menu = {
       out_of_stock: []
     };
+
+    // Nạp dữ liệu Customizations từ D1 (tự động seed nếu rỗng)
+    const customRows = (customizationsRes.results || []) as Array<{
+      key: string;
+      title: string;
+      type: 'radio' | 'checkbox';
+      options_json: string;
+    }>;
+
+    if (customRows.length === 0) {
+      menuData.customizations = DEFAULT_CUSTOMIZATIONS;
+      // Seed vào D1 ngầm
+      try {
+        for (let i = 0; i < DEFAULT_CUSTOMIZATIONS.length; i++) {
+          const c = DEFAULT_CUSTOMIZATIONS[i];
+          await env.DB.prepare(
+            "INSERT OR IGNORE INTO menu_customizations (id, tenant_id, key, title, type, sort_order, options_json) VALUES (?, ?, ?, ?, ?, ?, ?)"
+          ).bind(`${tenantId}_${c.key}`, tenantId, c.key, c.title, c.type, i, JSON.stringify(c.options)).run();
+        }
+      } catch (e) {
+        console.error("Failed to seed menu_customizations into D1:", e);
+      }
+    } else {
+      menuData.customizations = customRows.map(row => ({
+        key: row.key,
+        title: row.title,
+        type: row.type,
+        options: JSON.parse(row.options_json || "[]")
+      }));
+    }
 
     // Tạo các mảng danh mục rỗng
     const catMap = new Map<string, string>(); // category_id -> slug

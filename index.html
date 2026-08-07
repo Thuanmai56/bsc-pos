@@ -56,102 +56,7 @@
 
     <div class="container main-layout">
         <div class="menu-column">
-            <div class="section-container" id="sec-flavor">
-                <div class="section-title">🧪 口味與客製化選擇</div>
-                <div class="custom-panel"
-                    style="margin-bottom: 20px; padding: 16px; background: #fff; border-radius: 12px; border: 1px solid var(--border); font-size: 15px; color: #444;">
-                    <div class="custom-group">
-                        <label class="custom-label" style="font-weight: 800; display: block; margin-bottom: 8px;">✦
-                            口味選擇</label>
-                        <div class="radio-grid" style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 8px;">
-                            <div class="flavor-option-container"
-                                style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
-                                <label class="radio-label"><input type="radio" name="opt-flavor" value="特調胡椒" checked
-                                        onchange="toggleOriginalCustom()"> 特調胡椒</label>
-                            </div>
-                            <div class="flavor-option-container"
-                                style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
-                                <label class="radio-label"><input type="radio" name="opt-flavor" value="泰式酸辣"
-                                        onchange="toggleOriginalCustom()"> 泰式酸辣</label>
-                            </div>
-                            <div class="flavor-option-container"
-                                style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
-                                <label class="radio-label"><input type="radio" name="opt-flavor" value="清爽檸檬"
-                                        onchange="toggleOriginalCustom()"> 清爽檸檬</label>
-                            </div>
-                            <div class="flavor-option-container"
-                                style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
-                                <label class="radio-label"><input type="radio" name="opt-flavor" value="檸檬香菜"
-                                        onchange="toggleOriginalCustom()"> 檸檬香菜</label>
-                            </div>
-                            <div class="flavor-option-container"
-                                style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
-                                <label class="radio-label"><input type="radio" name="opt-flavor" value="原味客製"
-                                        onchange="toggleOriginalCustom()"> 原味客製</label>
-                            </div>
-                        </div>
-                        <div id="original-custom-sub"
-                            style="display: none; margin-top: 10px; padding-left: 10px; border-left: 2px solid #ddd; gap: 15px; flex-wrap: wrap;">
-                            <label class="checkbox-label"><input type="checkbox" id="chk-no-oil"> 不加香油</label>
-                            <label class="checkbox-label"><input type="checkbox" id="chk-no-pepper"> 不加胡椒</label>
-                            <label class="checkbox-label"><input type="checkbox" id="chk-no-pepper-with-salt">
-                                不加胡椒加鹽巴</label>
-                        </div>
-                        <div id="lemon-custom-sub"
-                            style="display: none; margin-top: 10px; padding-left: 10px; border-left: 2px solid #ddd; gap: 15px; flex-wrap: wrap;">
-                            <label class="checkbox-label"><input type="checkbox" id="chk-lemon-no-oil"> 不加香油</label>
-                            <label class="checkbox-label"><input type="checkbox" id="chk-lemon-no-salt"> 不加鹽巴</label>
-                        </div>
-                    </div>
-
-                    <div class="custom-group" style="margin-top: 16px;">
-                        <label class="custom-label" style="font-weight: 800; display: block; margin-bottom: 8px;">✦
-                            鹹度調整</label>
-                        <div class="radio-grid" style="display: flex; flex-wrap: wrap; gap: 12px;">
-                            <label class="radio-label"><input type="radio" name="opt-salt" value="正常" checked>
-                                正常</label>
-                            <label class="radio-label"><input type="radio" name="opt-salt" value="調味重"> 調味重</label>
-                            <label class="radio-label"><input type="radio" name="opt-salt" value="調味清淡"> 調味清淡</label>
-                        </div>
-                    </div>
-
-                    <div class="custom-group" style="margin-top: 16px;">
-                        <label class="custom-label" style="font-weight: 800; display: block; margin-bottom: 8px;">✦ 辣度選擇
-                            (朝天椒)</label>
-                        <div class="radio-grid" style="display: flex; flex-wrap: wrap; gap: 12px;">
-                            <label class="radio-label"><input type="radio" name="opt-spicy" value="不辣" checked>
-                                不辣</label>
-                            <label class="radio-label"><input type="radio" name="opt-spicy" value="微辣"> 微辣</label>
-                            <label class="radio-label"><input type="radio" name="opt-spicy" value="小辣"> 小辣</label>
-                            <label class="radio-label"><input type="radio" name="opt-spicy" value="中辣"> 中辣</label>
-                            <label class="radio-label"><input type="radio" name="opt-spicy" value="大辣"> 大辣</label>
-                            <label class="radio-label"><input type="radio" name="opt-spicy" value="辣椒放餐盒角落">
-                                辣椒放餐盒角落</label>
-                        </div>
-                    </div>
-
-                    <div class="custom-group" style="margin-top: 16px;">
-                        <label class="custom-label" style="font-weight: 800; display: block; margin-bottom: 8px;">✦
-                            配料調整</label>
-                        <div class="checkbox-grid-opts" style="display: flex; flex-wrap: wrap; gap: 15px;">
-                            <label class="checkbox-label"><input type="checkbox" id="chk-no-green-onion"> 不加蔥花</label>
-                            <label class="checkbox-label"><input type="checkbox" id="chk-no-garlic"> 不加蒜頭</label>
-                            <label class="checkbox-label"><input type="checkbox" id="chk-no-onion"> 不加洋蔥</label>
-                        </div>
-                    </div>
-
-                    <div class="custom-group" style="margin-top: 16px; border-top: 1px dashed #eee; padding-top: 12px;">
-                        <label class="custom-label" style="font-weight: 800; display: block; margin-bottom: 8px;">✦ 加價配料
-                            (選加)</label>
-                        <div class="checkbox-grid-opts" style="display: flex; flex-wrap: wrap; gap: 20px;">
-                            <label class="checkbox-label" style="font-weight: 800; color: #b45309;"><input
-                                    type="checkbox" id="chk-coriander" onchange="updateTotal()"> 加香菜 (+$15)</label>
-                            <label class="checkbox-label" style="font-weight: 800; color: #b45309;"><input
-                                    type="checkbox" id="chk-lemon" onchange="updateTotal()"> 加檸檬汁 (+$20)</label>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <div class="section-container" id="sec-flavor"></div>
 
             <div class="section-container" id="sec-meat">
                 <div class="section-title">🍗 肉類</div>
@@ -357,34 +262,33 @@
                 const currentTotal = updateTotal();
                 const orderNum = generateOrderNumber();
 
-                const flavor = document.querySelector('input[name="opt-flavor"]:checked').value;
-                const salt = document.querySelector('input[name="opt-salt"]:checked').value;
-                const spicy = document.querySelector('input[name="opt-spicy"]:checked').value;
+                const flavorRadio = document.querySelector('input[name="opt-flavor"]:checked');
+                const flavor = flavorRadio ? flavorRadio.value : '特調胡椒';
 
                 let flavorDetails = '';
-                if (flavor === '原味客製') {
+                const activeSubContainer = document.querySelector(`.sub-option-container[data-parent-flavor="${flavor}"]`);
+                if (activeSubContainer) {
                     let subOpts = [];
-                    if (document.getElementById('chk-no-oil')?.checked) subOpts.push('不加香油');
-                    if (document.getElementById('chk-no-pepper')?.checked) subOpts.push('不加胡椒');
-                    if (document.getElementById('chk-no-pepper-with-salt')?.checked) subOpts.push('不加胡椒加鹽巴');
-                    if (subOpts.length > 0) {
-                        flavorDetails = ` (${subOpts.join('、')})`;
-                    }
-                } else if (flavor === '清爽檸檬' || flavor === '檸檬香菜') {
-                    let subOpts = [];
-                    if (document.getElementById('chk-lemon-no-oil')?.checked) subOpts.push('不加香油');
-                    if (document.getElementById('chk-lemon-no-salt')?.checked) subOpts.push('不加鹽巴');
+                    activeSubContainer.querySelectorAll('input[type="checkbox"]:checked').forEach(chk => {
+                        subOpts.push(chk.value);
+                    });
                     if (subOpts.length > 0) {
                         flavorDetails = ` (${subOpts.join('、')})`;
                     }
                 }
 
+                const saltRadio = document.querySelector('input[name="opt-salt"]:checked');
+                const salt = saltRadio ? saltRadio.value : '正常';
+
+                const spicyRadio = document.querySelector('input[name="opt-spicy"]:checked');
+                const spicy = spicyRadio ? spicyRadio.value : '不辣';
+
                 let configStr = `鹹度：${salt} | 辣度：${spicy}`;
 
                 let exclusions = [];
-                if (document.getElementById('chk-no-green-onion')?.checked) exclusions.push('不加蔥花');
-                if (document.getElementById('chk-no-garlic')?.checked) exclusions.push('不加蒜頭');
-                if (document.getElementById('chk-no-onion')?.checked) exclusions.push('不加洋蔥');
+                document.querySelectorAll('input[name="opt-ingredients"]:checked').forEach(chk => {
+                    exclusions.push(chk.value);
+                });
                 let exclusionsStr = exclusions.length > 0 ? `配料調整：${exclusions.join('、')}` : '';
 
                 let addOns = [];
@@ -795,6 +699,132 @@
                 }
             }
 
+            const DEFAULT_CUSTOMIZATIONS = [
+                {
+                    key: "flavor",
+                    title: "✦ 口味選擇",
+                    type: "radio",
+                    options: [
+                        { name: "特調胡椒" },
+                        { name: "泰式酸辣" },
+                        { name: "清爽檸檬", sub_options: ["不加香油", "不加鹽巴"] },
+                        { name: "檸檬香菜", sub_options: ["不加香油", "不加鹽巴"] },
+                        { name: "原味客製", sub_options: ["不加香油", "不加胡椒", "不加胡椒加鹽巴"] }
+                    ]
+                },
+                {
+                    key: "salt",
+                    title: "✦ 鹹度調整",
+                    type: "radio",
+                    options: [
+                        { name: "正常" },
+                        { name: "調味重" },
+                        { name: "調味清淡" }
+                    ]
+                },
+                {
+                    key: "spicy",
+                    title: "✦ 辣度選擇 (朝天椒)",
+                    type: "radio",
+                    options: [
+                        { name: "不辣" },
+                        { name: "微辣" },
+                        { name: "小辣" },
+                        { name: "中辣" },
+                        { name: "大辣" },
+                        { name: "辣椒放餐盒角落" }
+                    ]
+                },
+                {
+                    key: "ingredients",
+                    title: "✦ 配料調整",
+                    type: "checkbox",
+                    options: [
+                        { name: "不加蔥花" },
+                        { name: "不加蒜頭" },
+                        { name: "不加洋蔥" }
+                    ]
+                }
+            ];
+
+            function escapeHtml(str) {
+                if (!str) return '';
+                return String(str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
+            }
+
+            function renderCustomizations(customizations) {
+                const list = (Array.isArray(customizations) && customizations.length > 0) ? customizations : DEFAULT_CUSTOMIZATIONS;
+                const secFlavor = document.getElementById('sec-flavor');
+                if (!secFlavor) return;
+
+                let html = `<div class="section-title">🧪 口味與客製化選擇</div>
+                <div class="custom-panel" style="margin-bottom: 20px; padding: 16px; background: #fff; border-radius: 12px; border: 1px solid var(--border); font-size: 15px; color: #444;">`;
+
+                list.forEach((group, groupIdx) => {
+                    const topMargin = groupIdx > 0 ? 'margin-top: 16px;' : '';
+                    html += `<div class="custom-group" style="${topMargin}">
+                        <label class="custom-label" style="font-weight: 800; display: block; margin-bottom: 8px;">${escapeHtml(group.title)}</label>
+                        <div class="${group.type === 'radio' ? 'radio-grid' : 'checkbox-grid-opts'}" style="display: flex; flex-wrap: wrap; gap: 12px;">`;
+
+                    group.options.forEach((opt, optIdx) => {
+                        const inputName = `opt-${group.key}`;
+                        const isChecked = group.type === 'radio' ? (optIdx === 0 ? 'checked' : '') : '';
+                        const onchangeAttr = group.key === 'flavor' ? 'onchange="toggleFlavorSubOptions()"' : '';
+
+                        if (group.type === 'radio') {
+                            html += `<div class="flavor-option-container" style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
+                                <label class="radio-label"><input type="radio" name="${inputName}" value="${escapeHtml(opt.name)}" ${isChecked} ${onchangeAttr}> ${escapeHtml(opt.name)}</label>`;
+
+                            if (Array.isArray(opt.sub_options) && opt.sub_options.length > 0) {
+                                html += `<div class="sub-option-container" data-parent-flavor="${escapeHtml(opt.name)}" style="display: none; margin-top: 10px; padding-left: 10px; border-left: 2px solid #ddd; gap: 15px; flex-wrap: wrap;">`;
+                                opt.sub_options.forEach((sub) => {
+                                    html += `<label class="checkbox-label"><input type="checkbox" class="sub-opt-chk" data-flavor="${escapeHtml(opt.name)}" value="${escapeHtml(sub)}"> ${escapeHtml(sub)}</label>`;
+                                });
+                                html += `</div>`;
+                            }
+
+                            html += `</div>`;
+                        } else {
+                            html += `<label class="checkbox-label"><input type="checkbox" name="${inputName}" value="${escapeHtml(opt.name)}"> ${escapeHtml(opt.name)}</label>`;
+                        }
+                    });
+
+                    html += `</div></div>`;
+                });
+
+                html += `
+                    <div class="custom-group" style="margin-top: 16px; border-top: 1px dashed #eee; padding-top: 12px;">
+                        <label class="custom-label" style="font-weight: 800; display: block; margin-bottom: 8px;">✦ 加價配料 (選加)</label>
+                        <div class="checkbox-grid-opts" style="display: flex; flex-wrap: wrap; gap: 20px;">
+                            <label class="checkbox-label" style="font-weight: 800; color: #b45309;"><input type="checkbox" id="chk-coriander" onchange="updateTotal()"> 加香菜 (+$15)</label>
+                            <label class="checkbox-label" style="font-weight: 800; color: #b45309;"><input type="checkbox" id="chk-lemon" onchange="updateTotal()"> 加檸檬汁 (+$20)</label>
+                        </div>
+                    </div>
+                </div>`;
+
+                secFlavor.innerHTML = html;
+                toggleFlavorSubOptions();
+            }
+
+            function toggleFlavorSubOptions() {
+                const selectedRadio = document.querySelector('input[name="opt-flavor"]:checked');
+                const selectedFlavor = selectedRadio ? selectedRadio.value : '';
+
+                document.querySelectorAll('.sub-option-container').forEach(container => {
+                    const parentFlavor = container.getAttribute('data-parent-flavor');
+                    if (parentFlavor === selectedFlavor) {
+                        container.style.display = 'flex';
+                    } else {
+                        container.style.display = 'none';
+                        container.querySelectorAll('input[type="checkbox"]').forEach(chk => chk.checked = false);
+                    }
+                });
+            }
+
             function renderMenu() {
                 for (let name in menu.large) createItem(name, menu.large[name], 'large', 'meat-list', name, false);
                 for (let name in menu.small) createItem(name, menu.small[name], 'small', 'side50-list', name, false);
@@ -802,59 +832,10 @@
                 for (let name in menu.drinks) createItem(name, menu.drinks[name], 'drinks', 'side25-list', name, false);
                 for (let name in menu.veggie) createItem(name, menu.veggie[name], 'veggie', 'veggie-list', name, false);
 
+                renderCustomizations(menu.customizations);
                 updateToppingStockStatus();
 
                 document.querySelectorAll('.section-container').forEach(sec => observer.observe(sec));
-            }
-
-            // --- CART LOGIC ---
-            function updateQty(category, origName, change) {
-                const key = category + '_' + origName;
-                cart[key] = (cart[key] || 0) + change;
-                if (cart[key] < 0) cart[key] = 0;
-
-                const qtySpan = document.getElementById('qty-' + category + '-' + origName);
-                if (qtySpan) {
-                    qtySpan.innerText = cart[key];
-                    qtySpan.style.color = cart[key] > 0 ? 'var(--primary)' : 'inherit';
-                }
-
-                updateTotal();
-            }
-
-            function toggleOriginalCustom() {
-                const flavorRadio = document.querySelector('input[name="opt-flavor"]:checked');
-                const flavor = flavorRadio ? flavorRadio.value : '';
-                const container = flavorRadio ? flavorRadio.closest('.flavor-option-container') : null;
-
-                const subDiv = document.getElementById('original-custom-sub');
-                if (subDiv) {
-                    if (flavor === '原味客製') {
-                        if (container) container.appendChild(subDiv);
-                        subDiv.style.display = 'flex';
-                    } else {
-                        subDiv.style.display = 'none';
-                        const noOil = document.getElementById('chk-no-oil');
-                        const noPepper = document.getElementById('chk-no-pepper');
-                        const noPepperWithSalt = document.getElementById('chk-no-pepper-with-salt');
-                        if (noOil) noOil.checked = false;
-                        if (noPepper) noPepper.checked = false;
-                        if (noPepperWithSalt) noPepperWithSalt.checked = false;
-                    }
-                }
-                const lemonSubDiv = document.getElementById('lemon-custom-sub');
-                if (lemonSubDiv) {
-                    if (flavor === '清爽檸檬' || flavor === '檸檬香菜') {
-                        if (container) container.appendChild(lemonSubDiv);
-                        lemonSubDiv.style.display = 'flex';
-                    } else {
-                        lemonSubDiv.style.display = 'none';
-                        const lemonNoOil = document.getElementById('chk-lemon-no-oil');
-                        const lemonNoSalt = document.getElementById('chk-lemon-no-salt');
-                        if (lemonNoOil) lemonNoOil.checked = false;
-                        if (lemonNoSalt) lemonNoSalt.checked = false;
-                    }
-                }
             }
 
             function updateTotal() {
