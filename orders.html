@@ -476,12 +476,13 @@
       const now = Date.now();
       const currentOrders = latestOrders.map(o => {
         const override = localOverrides[o.key];
-        if (override && (now - override.time < 15000)) {
+        if (override) {
+          // Xóa override ngay khi server đã cập nhật đúng status hoặc chuyển sang trạng thái mới/kết thúc
+          if (o.status === override.status || ["REJECTED", "PICKED_UP", "DONE"].includes(o.status) || (now - override.time >= 15000)) {
+            delete localOverrides[o.key];
+            return o;
+          }
           return { ...o, status: override.status };
-        }
-        // Cleanup old overrides
-        if (override && (now - override.time >= 15000)) {
-          delete localOverrides[o.key];
         }
         return o;
       });
