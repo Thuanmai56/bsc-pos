@@ -366,6 +366,37 @@ async function syncMenuToD1(tenantId: string, menuData: any, env: Env): Promise<
     );
   }
 
+  // Handle menu_customizations if present in data payload
+  if (Array.isArray(menuData.customizations)) {
+    const activeCustomKeys: string[] = [];
+    for (let i = 0; i < menuData.customizations.length; i++) {
+      const c = menuData.customizations[i];
+      const customId = `${tenantId}_${c.key}`;
+      activeCustomKeys.push(customId);
+      statements.push(
+        env.DB.prepare(
+          `INSERT INTO menu_customizations (id, tenant_id, key, title, type, sort_order, options_json)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             title = excluded.title,
+             type = excluded.type,
+             sort_order = excluded.sort_order,
+             options_json = excluded.options_json,
+             updated_at = CURRENT_TIMESTAMP`
+        ).bind(customId, tenantId, c.key, c.title, c.type, i, JSON.stringify(c.options || []))
+      );
+    }
+
+    if (activeCustomKeys.length > 0) {
+      const placeholders = activeCustomKeys.map(() => "?").join(",");
+      statements.push(
+        env.DB.prepare(
+          `DELETE FROM menu_customizations WHERE tenant_id = ? AND id NOT IN (${placeholders})`
+        ).bind(tenantId, ...activeCustomKeys)
+      );
+    }
+  }
+
   // Run all statements in a single batch
   await env.DB.batch(statements);
 }

@@ -1166,6 +1166,7 @@
         const res = await fetch(`${WORKER_BASE}/api/menu?_t=${Date.now()}`);
         if (!res.ok) throw new Error("Failed to load");
         rawMenuData = await res.json();
+        
         // Convert object format to editable array format
         currentMenuData = BENMI_CATS.map(cat => ({
           id: cat.id,
@@ -1175,6 +1176,49 @@
             return { name, price, isOos };
           })
         }));
+
+        // Append Customizations category dynamically from D1 response
+        const customGroups = rawMenuData.customizations || [
+          {
+            key: "flavor",
+            title: "✦ 口味選擇",
+            type: "radio",
+            options: [
+              { name: "特調胡椒" },
+              { name: "泰式酸辣" },
+              { name: "清爽檸檬", sub_options: ["不加香油", "不加鹽巴"] },
+              { name: "檸檬香菜", sub_options: ["不加香油", "不加鹽巴"] },
+              { name: "原味客製", sub_options: ["不加香油", "不加胡椒", "不加胡椒加鹽巴"] }
+            ]
+          },
+          {
+            key: "salt",
+            title: "✦ 鹹度調整",
+            type: "radio",
+            options: [{ name: "正常" }, { name: "調味重" }, { name: "調味清淡" }]
+          },
+          {
+            key: "spicy",
+            title: "✦ 辣度選擇 (朝天椒)",
+            type: "radio",
+            options: [{ name: "不辣" }, { name: "微辣" }, { name: "小辣" }, { name: "中辣" }, { name: "大辣" }, { name: "辣椒放餐盒角落" }]
+          },
+          {
+            key: "ingredients",
+            title: "✦ 配料調整",
+            type: "checkbox",
+            options: [{ name: "不加蔥花" }, { name: "不加蒜頭" }, { name: "不加洋蔥" }]
+          }
+        ];
+
+        currentMenuData.push({
+          id: "customizations",
+          title: "🧪 口味與客製化選擇",
+          isCustomizations: true,
+          groups: customGroups,
+          items: []
+        });
+
         activeCategoryIndex = -1;
         renderMenuCategories();
         document.getElementById("menu-editor-body").innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">請先從左側選擇分類</div>`;
@@ -1196,9 +1240,13 @@
           border-left: 4px solid ${activeCategoryIndex === index ? 'var(--brand-red)' : 'transparent'};
           display: flex; justify-content: space-between; align-items: center;
         `;
+        const countText = cat.isCustomizations
+          ? (cat.groups ? cat.groups.reduce((acc, g) => acc + (g.options ? g.options.length : 0), 0) : 0) + ' 項'
+          : cat.items.length + ' 項';
+
         div.innerHTML = `
           <span>${escapeHtml(cat.title)}</span>
-          <span style="font-size: 13px; font-weight: 900; color: var(--muted);">${cat.items.length} 項</span>
+          <span style="font-size: 13px; font-weight: 900; color: var(--muted);">${countText}</span>
         `;
         div.onclick = () => {
           syncMenuDataFromDOM();
@@ -1213,6 +1261,12 @@
     function renderMenuCategoryEditor(index) {
       if (!currentMenuData || !currentMenuData[index]) return;
       const cat = currentMenuData[index];
+
+      if (cat.isCustomizations) {
+        renderCustomizationsEditor(index);
+        return;
+      }
+
       document.getElementById("menu-editor-title").innerText = cat.title + " (全部 " + cat.items.length + " 項)";
 
       const container = document.getElementById("menu-editor-body");
@@ -1274,6 +1328,70 @@
       });
     }
 
+    function renderCustomizationsEditor(cIdx) {
+      const cat = currentMenuData[cIdx];
+      const count = cat.groups ? cat.groups.reduce((acc, g) => acc + (g.options ? g.options.length : 0), 0) : 0;
+      document.getElementById("menu-editor-title").innerText = cat.title + " (共 " + count + " 個選項)";
+
+      const container = document.getElementById("menu-editor-body");
+      container.innerHTML = "";
+
+      (cat.groups || []).forEach((group, gIdx) => {
+        const groupCard = document.createElement("div");
+        groupCard.style.cssText = "background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px;";
+
+        let optionsHTML = "";
+        (group.options || []).forEach((opt, oIdx) => {
+          const subText = Array.isArray(opt.sub_options) && opt.sub_options.length > 0 ? opt.sub_options.join(", ") : "";
+          optionsHTML += `
+            <div style="display:flex; align-items:center; gap:10px; margin-top:8px; padding-left:12px; border-left:3px solid var(--primary);">
+              <input type="text" value="${escapeHtml(opt.name)}" data-gidx="${gIdx}" data-oidx="${oIdx}" data-field="name" oninput="markMenuDirty()"
+                placeholder="選項名稱" style="flex:1; font-weight:800; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:15px;">
+              <input type="text" value="${escapeHtml(subText)}" data-gidx="${gIdx}" data-oidx="${oIdx}" data-field="sub" oninput="markMenuDirty()"
+                placeholder="子選項 (用逗號隔開)" style="flex:1.5; font-size:14px; padding:8px; border:1px solid #ccc; border-radius:6px;">
+              <button class="btn btn-ghost" style="color:var(--brand-red); font-weight:800; padding:6px 10px;" onclick="removeCustomOption(${cIdx}, ${gIdx}, ${oIdx})">✕ 刪除</button>
+            </div>
+          `;
+        });
+
+        groupCard.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <input type="text" value="${escapeHtml(group.title)}" data-gidx="${gIdx}" data-field="title" oninput="markMenuDirty()"
+              style="font-size:16px; font-weight:900; color:#111; padding:6px 10px; border:1px solid #ccc; border-radius:6px; flex:1; max-width:250px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <select data-gidx="${gIdx}" data-field="type" onchange="markMenuDirty()" style="padding:6px; border-radius:6px; border:1px solid #ccc; font-weight:800;">
+                <option value="radio" ${group.type === 'radio' ? 'selected' : ''}>單選 (Radio)</option>
+                <option value="checkbox" ${group.type === 'checkbox' ? 'selected' : ''}>多選 (Checkbox)</option>
+              </select>
+              <button class="btn btn-yellow" style="padding:6px 12px; font-size:13px; font-weight:800;" onclick="addCustomOption(${cIdx}, ${gIdx})">+ 新增選項</button>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">${optionsHTML}</div>
+        `;
+        container.appendChild(groupCard);
+      });
+    }
+
+    function addCustomOption(cIdx, gIdx) {
+      syncMenuDataFromDOM();
+      if (currentMenuData[cIdx] && currentMenuData[cIdx].groups[gIdx]) {
+        currentMenuData[cIdx].groups[gIdx].options.push({ name: "新選項" });
+        markMenuDirty();
+        renderMenuCategoryEditor(cIdx);
+        renderMenuCategories();
+      }
+    }
+
+    function removeCustomOption(cIdx, gIdx, oIdx) {
+      syncMenuDataFromDOM();
+      if (currentMenuData[cIdx] && currentMenuData[cIdx].groups[gIdx]) {
+        currentMenuData[cIdx].groups[gIdx].options.splice(oIdx, 1);
+        markMenuDirty();
+        renderMenuCategoryEditor(cIdx);
+        renderMenuCategories();
+      }
+    }
+
     function removeMenuItemAt(cIdx, iIdx) {
       if (confirm("確定要刪除這個項目嗎?")) {
         syncMenuDataFromDOM();
@@ -1287,6 +1405,7 @@
     function addNewMenuItem() {
       if (activeCategoryIndex < 0 || !currentMenuData) return;
       syncMenuDataFromDOM();
+      if (currentMenuData[activeCategoryIndex].isCustomizations) return;
       currentMenuData[activeCategoryIndex].items.unshift({ name: "新項目", price: 0 });
       markMenuDirty();
       renderMenuCategoryEditor(activeCategoryIndex);
@@ -1294,6 +1413,7 @@
     }
 
     function syncMenuDataFromDOM() {
+      // Sync dish items
       document.querySelectorAll("#menu-editor-body input[data-name-cidx]").forEach(inp => {
         const cIdx = parseInt(inp.getAttribute("data-name-cidx"));
         const iIdx = parseInt(inp.getAttribute("data-name-iidx"));
@@ -1309,6 +1429,38 @@
           currentMenuData[cIdx].items[iIdx].price = val;
         }
       });
+
+      // Sync customizations if active
+      const customCat = currentMenuData ? currentMenuData.find(c => c.isCustomizations) : null;
+      if (customCat && customCat.groups) {
+        document.querySelectorAll("#menu-editor-body input[data-field='title']").forEach(inp => {
+          const gIdx = parseInt(inp.getAttribute("data-gidx"));
+          if (customCat.groups[gIdx]) customCat.groups[gIdx].title = inp.value;
+        });
+        document.querySelectorAll("#menu-editor-body select[data-field='type']").forEach(sel => {
+          const gIdx = parseInt(sel.getAttribute("data-gidx"));
+          if (customCat.groups[gIdx]) customCat.groups[gIdx].type = sel.value;
+        });
+        document.querySelectorAll("#menu-editor-body input[data-field='name']").forEach(inp => {
+          const gIdx = parseInt(inp.getAttribute("data-gidx"));
+          const oIdx = parseInt(inp.getAttribute("data-oidx"));
+          if (customCat.groups[gIdx] && customCat.groups[gIdx].options[oIdx]) {
+            customCat.groups[gIdx].options[oIdx].name = inp.value;
+          }
+        });
+        document.querySelectorAll("#menu-editor-body input[data-field='sub']").forEach(inp => {
+          const gIdx = parseInt(inp.getAttribute("data-gidx"));
+          const oIdx = parseInt(inp.getAttribute("data-oidx"));
+          if (customCat.groups[gIdx] && customCat.groups[gIdx].options[oIdx]) {
+            const rawSub = inp.value.trim();
+            if (rawSub) {
+              customCat.groups[gIdx].options[oIdx].sub_options = rawSub.split(",").map(s => s.trim()).filter(Boolean);
+            } else {
+              delete customCat.groups[gIdx].options[oIdx].sub_options;
+            }
+          }
+        });
+      }
     }
 
     async function saveMenuData() {
@@ -1316,15 +1468,21 @@
       if (!confirm("確定要儲存所有變更嗎？這會直接即時影響顧客端點餐頁面。")) return;
       syncMenuDataFromDOM();
 
-      // Convert back to Benmi object format
-      const output = {};
+      // Convert back to Benmi object format including customizations
+      const output = {
+        customizations: []
+      };
       currentMenuData.forEach(cat => {
-        output[cat.id] = {};
-        cat.items.forEach(item => {
-          if (item.name && item.name.trim() !== "" && item.price !== null) {
-            output[cat.id][item.name.trim()] = item.price;
-          }
-        });
+        if (cat.isCustomizations) {
+          output.customizations = cat.groups;
+        } else {
+          output[cat.id] = {};
+          cat.items.forEach(item => {
+            if (item.name && item.name.trim() !== "" && item.price !== null) {
+              output[cat.id][item.name.trim()] = item.price;
+            }
+          });
+        }
       });
 
       const btn = document.querySelector("#view-menu .btn-primary");
