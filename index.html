@@ -770,26 +770,28 @@
                         <label class="custom-label" style="font-weight: 800; display: block; margin-bottom: 8px;">${escapeHtml(group.title)}</label>
                         <div class="${group.type === 'radio' ? 'radio-grid' : 'checkbox-grid-opts'}" style="display: flex; flex-wrap: wrap; gap: 12px;">`;
 
-                    group.options.forEach((opt, optIdx) => {
+                    (group.options || []).forEach((opt, optIdx) => {
+                        const optName = typeof opt === 'string' ? opt : (opt ? opt.name || '' : '');
+                        const subOpts = (typeof opt === 'object' && opt && Array.isArray(opt.sub_options)) ? opt.sub_options : [];
                         const inputName = `opt-${group.key}`;
                         const isChecked = group.type === 'radio' ? (optIdx === 0 ? 'checked' : '') : '';
                         const onchangeAttr = group.key === 'flavor' ? 'onchange="toggleFlavorSubOptions()"' : '';
 
                         if (group.type === 'radio') {
                             html += `<div class="flavor-option-container" style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
-                                <label class="radio-label"><input type="radio" name="${inputName}" value="${escapeHtml(opt.name)}" ${isChecked} ${onchangeAttr}> ${escapeHtml(opt.name)}</label>`;
+                                <label class="radio-label"><input type="radio" name="${inputName}" value="${escapeHtml(optName)}" ${isChecked} ${onchangeAttr}> ${escapeHtml(optName)}</label>`;
 
-                            if (Array.isArray(opt.sub_options) && opt.sub_options.length > 0) {
-                                html += `<div class="sub-option-container" data-parent-flavor="${escapeHtml(opt.name)}" style="display: none; margin-top: 10px; padding-left: 10px; border-left: 2px solid #ddd; gap: 15px; flex-wrap: wrap;">`;
-                                opt.sub_options.forEach((sub) => {
-                                    html += `<label class="checkbox-label"><input type="checkbox" class="sub-opt-chk" data-flavor="${escapeHtml(opt.name)}" value="${escapeHtml(sub)}"> ${escapeHtml(sub)}</label>`;
+                            if (subOpts.length > 0) {
+                                html += `<div class="sub-option-container" data-parent-flavor="${escapeHtml(optName)}" style="display: none; margin-top: 10px; padding-left: 10px; border-left: 2px solid #ddd; gap: 15px; flex-wrap: wrap;">`;
+                                subOpts.forEach((sub) => {
+                                    html += `<label class="checkbox-label"><input type="checkbox" class="sub-opt-chk" data-flavor="${escapeHtml(optName)}" value="${escapeHtml(sub)}"> ${escapeHtml(sub)}</label>`;
                                 });
                                 html += `</div>`;
                             }
 
                             html += `</div>`;
                         } else {
-                            html += `<label class="checkbox-label"><input type="checkbox" name="${inputName}" value="${escapeHtml(opt.name)}"> ${escapeHtml(opt.name)}</label>`;
+                            html += `<label class="checkbox-label"><input type="checkbox" name="${inputName}" value="${escapeHtml(optName)}"> ${escapeHtml(optName)}</label>`;
                         }
                     });
 
