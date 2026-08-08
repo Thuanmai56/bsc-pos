@@ -126,7 +126,7 @@ export async function getMenu(request: Request, env: Env): Promise<Response> {
     const cachedMenu = await env.ORDER_STATE.get(cacheKey);
     if (cachedMenu) {
       const parsed = JSON.parse(cachedMenu);
-      if (parsed.customizations) {
+      if (Array.isArray(parsed.customizations) && parsed.customizations.length > 0) {
         return json(parsed);
       }
     }
@@ -200,6 +200,7 @@ export async function getMenu(request: Request, env: Env): Promise<Response> {
     // Tạo các mảng danh mục rỗng
     const catMap = new Map<string, string>(); // category_id -> slug
     for (const cat of categories) {
+      if (cat.slug === "customizations") continue;
       menuData[cat.slug] = {};
       catMap.set(cat.id, cat.slug);
     }
@@ -298,7 +299,7 @@ async function syncMenuToD1(tenantId: string, menuData: any, env: Env): Promise<
 
   let catSortOrder = 1;
   for (const slug of Object.keys(menuData)) {
-    if (slug === "out_of_stock") continue;
+    if (slug === "out_of_stock" || slug === "customizations") continue;
 
     let catId = catIdMap.get(slug);
     if (!catId) {

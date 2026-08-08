@@ -795,7 +795,7 @@
                         const subOpts = (typeof opt === 'object' && opt && Array.isArray(opt.sub_options)) ? opt.sub_options : [];
                         const inputName = `opt-${group.key}`;
                         const isChecked = group.type === 'radio' ? (optIdx === 0 ? 'checked' : '') : '';
-                        const onchangeAttr = group.key === 'flavor' ? 'onchange="toggleFlavorSubOptions()"' : '';
+                        const onchangeAttr = group.type === 'radio' ? 'onchange="toggleFlavorSubOptions()"' : '';
 
                         if (group.type === 'radio') {
                             html += `<div class="flavor-option-container" style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">

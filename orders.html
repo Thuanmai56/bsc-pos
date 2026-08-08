@@ -1461,7 +1461,7 @@
           if (customCat.groups[gIdx] && customCat.groups[gIdx].options[oIdx]) {
             const rawSub = inp.value.trim();
             if (rawSub) {
-              customCat.groups[gIdx].options[oIdx].sub_options = rawSub.split(",").map(s => s.trim()).filter(Boolean);
+              customCat.groups[gIdx].options[oIdx].sub_options = rawSub.split(/[,，、]+/).map(s => s.trim()).filter(Boolean);
             } else {
               delete customCat.groups[gIdx].options[oIdx].sub_options;
             }
