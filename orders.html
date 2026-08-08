@@ -1268,6 +1268,17 @@
       if (!currentMenuData || !currentMenuData[index]) return;
       const cat = currentMenuData[index];
 
+      const btnAdd = document.getElementById("btn-add-menu-item");
+      if (btnAdd) {
+        if (cat.isCustomizations) {
+          btnAdd.innerText = "+ 新增客製化大類";
+          btnAdd.onclick = () => addCustomGroup(index);
+        } else {
+          btnAdd.innerText = "+ 新增項目";
+          btnAdd.onclick = () => addNewMenuItem();
+        }
+      }
+
       if (cat.isCustomizations) {
         renderCustomizationsEditor(index);
         return;
@@ -1356,13 +1367,13 @@
                 placeholder="選項名稱" style="flex:1; font-weight:800; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:15px;">
               <input type="text" value="${escapeHtml(subText)}" data-gidx="${gIdx}" data-oidx="${oIdx}" data-field="sub" oninput="markMenuDirty()"
                 placeholder="子選項 (用逗號隔開)" style="flex:1.5; font-size:14px; padding:8px; border:1px solid #ccc; border-radius:6px;">
-              <button class="btn btn-ghost" style="color:var(--brand-red); font-weight:800; padding:6px 10px;" onclick="removeCustomOption(${cIdx}, ${gIdx}, ${oIdx})">✕ 刪除</button>
+              <button class="btn btn-ghost" style="color:var(--brand-red); font-weight:800; padding:6px 10px;" onclick="removeCustomOption(${cIdx}, ${gIdx}, ${oIdx})">✕ 刪除選項</button>
             </div>
           `;
         });
 
         groupCard.innerHTML = `
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:8px;">
             <input type="text" value="${escapeHtml(group.title)}" data-gidx="${gIdx}" data-field="title" oninput="markMenuDirty()"
               style="font-size:16px; font-weight:900; color:#111; padding:6px 10px; border:1px solid #ccc; border-radius:6px; flex:1; max-width:250px;">
             <div style="display:flex; align-items:center; gap:8px;">
@@ -1371,12 +1382,44 @@
                 <option value="checkbox" ${group.type === 'checkbox' ? 'selected' : ''}>多選 (Checkbox)</option>
               </select>
               <button class="btn btn-yellow" style="padding:6px 12px; font-size:13px; font-weight:800;" onclick="addCustomOption(${cIdx}, ${gIdx})">+ 新增選項</button>
+              <button class="btn btn-ghost" style="color:var(--brand-red); font-weight:800; padding:6px 10px; font-size:13px;" onclick="removeCustomGroup(${cIdx}, ${gIdx})">🗑️ 刪除大類</button>
             </div>
           </div>
           <div style="display:flex; flex-direction:column; gap:6px;">${optionsHTML}</div>
         `;
         container.appendChild(groupCard);
       });
+    }
+
+    function addCustomGroup(cIdx) {
+      syncMenuDataFromDOM();
+      const cat = currentMenuData[cIdx];
+      if (cat && cat.isCustomizations) {
+        if (!Array.isArray(cat.groups)) cat.groups = [];
+        const newKey = "group_" + Math.random().toString(36).substring(2, 7);
+        cat.groups.push({
+          key: newKey,
+          title: "✦ 新客製化大類",
+          type: "radio",
+          options: [{ name: "預設選項" }]
+        });
+        markMenuDirty();
+        renderMenuCategoryEditor(cIdx);
+        renderMenuCategories();
+      }
+    }
+
+    function removeCustomGroup(cIdx, gIdx) {
+      if (confirm("確定要刪除整個客製化大類嗎？")) {
+        syncMenuDataFromDOM();
+        const cat = currentMenuData[cIdx];
+        if (cat && cat.isCustomizations && Array.isArray(cat.groups)) {
+          cat.groups.splice(gIdx, 1);
+          markMenuDirty();
+          renderMenuCategoryEditor(cIdx);
+          renderMenuCategories();
+        }
+      }
     }
 
     function addCustomOption(cIdx, gIdx) {
@@ -1451,19 +1494,33 @@
         document.querySelectorAll("#menu-editor-body input[data-field='name']").forEach(inp => {
           const gIdx = parseInt(inp.getAttribute("data-gidx"));
           const oIdx = parseInt(inp.getAttribute("data-oidx"));
-          if (customCat.groups[gIdx] && customCat.groups[gIdx].options[oIdx]) {
-            customCat.groups[gIdx].options[oIdx].name = inp.value;
+          if (customCat.groups[gIdx] && Array.isArray(customCat.groups[gIdx].options)) {
+            const currentOpt = customCat.groups[gIdx].options[oIdx];
+            if (typeof currentOpt === 'string') {
+              customCat.groups[gIdx].options[oIdx] = { name: inp.value };
+            } else if (currentOpt) {
+              currentOpt.name = inp.value;
+            } else {
+              customCat.groups[gIdx].options[oIdx] = { name: inp.value };
+            }
           }
         });
         document.querySelectorAll("#menu-editor-body input[data-field='sub']").forEach(inp => {
           const gIdx = parseInt(inp.getAttribute("data-gidx"));
           const oIdx = parseInt(inp.getAttribute("data-oidx"));
-          if (customCat.groups[gIdx] && customCat.groups[gIdx].options[oIdx]) {
-            const rawSub = inp.value.trim();
-            if (rawSub) {
-              customCat.groups[gIdx].options[oIdx].sub_options = rawSub.split(/[,，、]+/).map(s => s.trim()).filter(Boolean);
-            } else {
-              delete customCat.groups[gIdx].options[oIdx].sub_options;
+          if (customCat.groups[gIdx] && Array.isArray(customCat.groups[gIdx].options)) {
+            let currentOpt = customCat.groups[gIdx].options[oIdx];
+            if (typeof currentOpt === 'string') {
+              currentOpt = { name: currentOpt };
+              customCat.groups[gIdx].options[oIdx] = currentOpt;
+            }
+            if (currentOpt) {
+              const rawSub = inp.value.trim();
+              if (rawSub) {
+                currentOpt.sub_options = rawSub.split(/[,，、]+/).map(s => s.trim()).filter(Boolean);
+              } else {
+                delete currentOpt.sub_options;
+              }
             }
           }
         });

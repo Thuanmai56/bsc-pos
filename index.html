@@ -269,39 +269,47 @@
                     const currentTotal = updateTotal();
                     const orderNum = generateOrderNumber();
 
-                    const flavorRadio = document.querySelector('input[name="opt-flavor"]:checked');
-                    const flavor = flavorRadio ? flavorRadio.value : '特調胡椒';
+                    let customSummaries = [];
 
-                    let flavorDetails = '';
-                    const activeSubContainer = document.querySelector(`.sub-option-container[data-parent-flavor="${flavor}"]`);
-                    if (activeSubContainer) {
-                        let subOpts = [];
-                        activeSubContainer.querySelectorAll('input[type="checkbox"]:checked').forEach(chk => {
-                            subOpts.push(chk.value);
-                        });
-                        if (subOpts.length > 0) {
-                            flavorDetails = ` (${subOpts.join('、')})`;
+                    (loadedCustomizations || []).forEach(group => {
+                        const inputName = `opt-${group.key}`;
+                        if (group.type === 'radio') {
+                            const checkedRadio = document.querySelector(`input[name="${inputName}"]:checked`);
+                            const val = checkedRadio ? checkedRadio.value : '';
+
+                            let subDetails = '';
+                            if (val) {
+                                const activeSubContainer = document.querySelector(`.sub-option-container[data-parent-flavor="${val}"]`);
+                                if (activeSubContainer) {
+                                    let subOpts = [];
+                                    activeSubContainer.querySelectorAll('input[type="checkbox"]:checked').forEach(chk => {
+                                        subOpts.push(chk.value);
+                                    });
+                                    if (subOpts.length > 0) {
+                                        subDetails = ` (${subOpts.join('、')})`;
+                                    }
+                                }
+                                const groupTitle = (group.title || '').replace(/^✦\s*/, '');
+                                customSummaries.push(`${groupTitle}：${val}${subDetails}`);
+                            }
+                        } else {
+                            let selectedChecks = [];
+                            document.querySelectorAll(`input[name="${inputName}"]:checked`).forEach(chk => {
+                                selectedChecks.push(chk.value);
+                            });
+                            if (selectedChecks.length > 0) {
+                                const groupTitle = (group.title || '').replace(/^✦\s*/, '');
+                                customSummaries.push(`${groupTitle}：${selectedChecks.join('、')}`);
+                            }
                         }
-                    }
-
-                    const saltRadio = document.querySelector('input[name="opt-salt"]:checked');
-                    const salt = saltRadio ? saltRadio.value : '正常';
-
-                    const spicyRadio = document.querySelector('input[name="opt-spicy"]:checked');
-                    const spicy = spicyRadio ? spicyRadio.value : '不辣';
-
-                    let configStr = `鹹度：${salt} | 辣度：${spicy}`;
-
-                    let exclusions = [];
-                    document.querySelectorAll('input[name="opt-ingredients"]:checked').forEach(chk => {
-                        exclusions.push(chk.value);
                     });
-                    let exclusionsStr = exclusions.length > 0 ? `配料調整：${exclusions.join('、')}` : '';
 
                     let addOns = [];
                     if (document.getElementById('chk-coriander')?.checked) addOns.push('加香菜(+$15)');
                     if (document.getElementById('chk-lemon')?.checked) addOns.push('加檸檬汁(+$20)');
-                    let addOnsStr = addOns.length > 0 ? `加價配料：${addOns.join('、')}` : '';
+                    if (addOns.length > 0) {
+                        customSummaries.push(`加價配料：${addOns.join('、')}`);
+                    }
 
                     let msg = `訂單編號：${orderNum}\n📦 訂單內容：\n`;
 
@@ -312,11 +320,12 @@
                         }
                     }
 
-                    msg += `\n\n⚙️ 客製化設定：`;
-                    msg += `\n- 口味：${flavor}${flavorDetails}`;
-                    msg += `\n- ${configStr}`;
-                    if (exclusionsStr) msg += `\n- ${exclusionsStr}`;
-                    if (addOnsStr) msg += `\n- ${addOnsStr}`;
+                    if (customSummaries.length > 0) {
+                        msg += `\n\n⚙️ 客製化設定：`;
+                        customSummaries.forEach(s => {
+                            msg += `\n- ${s}`;
+                        });
+                    }
 
                     msg += `\n\n🕒 取餐日期：${dateInput}`;
                     const mainNote = document.getElementById('note')?.value || '';
@@ -776,8 +785,11 @@
                     .replace(/"/g, '&quot;');
             }
 
+            let loadedCustomizations = [];
+
             function renderCustomizations(customizations) {
-                const list = (Array.isArray(customizations) && customizations.length > 0) ? customizations : DEFAULT_CUSTOMIZATIONS;
+                loadedCustomizations = (Array.isArray(customizations) && customizations.length > 0) ? customizations : DEFAULT_CUSTOMIZATIONS;
+                const list = loadedCustomizations;
                 const secFlavor = document.getElementById('sec-flavor');
                 if (!secFlavor) return;
 
