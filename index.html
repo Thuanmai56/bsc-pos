@@ -342,22 +342,26 @@
                         throw new Error(`API returned status ${res.status}`);
                     }
 
-                    if (typeof liff !== 'undefined' && liff && liff.isInClient && liff.isInClient() && liff.isApiAvailable && liff.isApiAvailable('sendMessages')) {
-                        try {
-                            await liff.sendMessages([{ type: 'text', text: msg }]);
-                        } catch (e) {
-                            console.error("liff.sendMessages failed:", e);
-                        }
-                    }
-
-                    // Reset cart upon successful submission
+                    // Reset cart upon successful API creation
                     cart = {};
                     updateTotal();
                     document.querySelectorAll('.qty-text').forEach(el => el.innerText = '0');
 
+                    // Best-effort: try sending LINE message inside LINE client (isolated catch)
+                    try {
+                        if (typeof liff !== 'undefined' && liff && typeof liff.isInClient === 'function' && liff.isInClient()) {
+                            if (typeof liff.sendMessages === 'function') {
+                                await liff.sendMessages([{ type: 'text', text: msg }]);
+                            }
+                        }
+                    } catch (liffMsgErr) {
+                        console.warn("LIFF sendMessages skipped or failed:", liffMsgErr);
+                    }
+
+                    // Display Success Modal unconditionally since API creation succeeded
                     customAlert('<div style="margin-bottom: 15px;"><svg width="64" height="64" viewBox="0 0 24 24" fill="#10b981"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div><div style="font-size: 18px; line-height: 1.4; color: #111;">感謝您的訂單！餐點製作完成後，我們會再次通知您前來取餐，謝謝！</div>', () => {
-                        if (typeof liff !== 'undefined' && liff && liff.closeWindow) {
-                            liff.closeWindow();
+                        if (typeof liff !== 'undefined' && liff && typeof liff.closeWindow === 'function') {
+                            try { liff.closeWindow(); } catch (e) {}
                         }
                     });
 
@@ -365,10 +369,10 @@
                     console.warn("Primary API flow failed, trying LIFF sendMessages fallback:", err);
 
                     try {
-                        if (typeof liff !== 'undefined' && liff && liff.sendMessages) {
+                        if (typeof liff !== 'undefined' && liff && typeof liff.sendMessages === 'function') {
                             await liff.sendMessages([{ type: 'text', text: msg }]);
                             customAlert('<div style="margin-bottom: 15px;"><svg width="64" height="64" viewBox="0 0 24 24" fill="#10b981"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div><div style="font-size: 18px; line-height: 1.4; color: #111;">感謝您的訂單！餐點製作完成後，我們會再次通知您前來取餐，謝謝！</div>', () => {
-                                if (liff.closeWindow) liff.closeWindow();
+                                if (typeof liff.closeWindow === 'function') try { liff.closeWindow(); } catch (e) {}
                             });
                         } else {
                             throw err;
