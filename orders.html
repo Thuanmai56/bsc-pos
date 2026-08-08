@@ -432,7 +432,11 @@
 
         const response = await fetch(`${WORKER_BASE}/api/orders`, { headers });
         if (response.status === 304) {
-          // No order updates since last poll
+          // No order changes on server, but still re-evaluate pending NEW alerts & continuous alarm
+          if (Array.isArray(latestOrders)) {
+            pendingNewOrders = latestOrders.filter(o => o && o.status === "NEW").slice().sort(sortByPickupTimeAsc);
+            updateNewAlert();
+          }
           return;
         }
         if (!response.ok) throw new Error(`fetch failed: ${response.status}`);
