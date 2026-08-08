@@ -840,6 +840,21 @@
                 document.querySelectorAll('.section-container').forEach(sec => observer.observe(sec));
             }
 
+            // --- CART LOGIC ---
+            function updateQty(category, origName, change) {
+                const key = category + '_' + origName;
+                cart[key] = (cart[key] || 0) + change;
+                if (cart[key] < 0) cart[key] = 0;
+
+                const qtySpan = document.getElementById('qty-' + category + '-' + origName);
+                if (qtySpan) {
+                    qtySpan.innerText = cart[key];
+                    qtySpan.style.color = cart[key] > 0 ? 'var(--primary)' : 'inherit';
+                }
+
+                updateTotal();
+            }
+
             function updateTotal() {
                 let total = 0;
                 let totalQty = 0;
