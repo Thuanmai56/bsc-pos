@@ -206,6 +206,18 @@
                 const hasItem = Object.values(cart).some(q => q > 0);
                 if (!hasItem) return customAlert('請選擇品項');
 
+                const secCheckout = document.getElementById('sec-checkout');
+                if (secCheckout) {
+                    const rect = secCheckout.getBoundingClientRect();
+                    if (rect.top > 120) {
+                        secCheckout.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        secCheckout.style.outline = '3px solid var(--primary)';
+                        secCheckout.style.borderRadius = '16px';
+                        setTimeout(() => { secCheckout.style.outline = 'none'; }, 2000);
+                        return customAlert('請先確認下方訂單明細與取餐日期 ↓');
+                    }
+                }
+
                 const dateInput = document.getElementById('pickup-date') ? document.getElementById('pickup-date').value : '';
 
                 if (!dateInput) {
