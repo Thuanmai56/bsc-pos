@@ -206,16 +206,7 @@
                 const hasItem = Object.values(cart).some(q => q > 0);
                 if (!hasItem) return customAlert('請選擇品項');
 
-                const secCheckout = document.getElementById('sec-checkout');
-                if (secCheckout) {
-                    const rect = secCheckout.getBoundingClientRect();
-                    if (rect.top > 100) {
-                        secCheckout.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        return;
-                    }
-                }
-
-                const dateInput = document.getElementById('pickup-date').value;
+                const dateInput = document.getElementById('pickup-date') ? document.getElementById('pickup-date').value : '';
 
                 if (!dateInput) {
                     const timeSection = document.getElementById('sec-checkout');
@@ -226,7 +217,8 @@
                         setTimeout(() => { timeSection.style.outline = 'none'; }, 2000);
                     }
                     setTimeout(() => {
-                        document.getElementById('pickup-date').focus();
+                        const pInput = document.getElementById('pickup-date');
+                        if (pInput) pInput.focus();
                     }, 400);
                     return customAlert('請先選取取餐日期 ↓');
                 }
@@ -256,77 +248,79 @@
 
                 isSubmitting = true;
                 const submitBtn = document.getElementById('btn-submit');
-                submitBtn.disabled = true;
-                submitBtn.innerText = '處理中...';
-
-                const currentTotal = updateTotal();
-                const orderNum = generateOrderNumber();
-
-                const flavorRadio = document.querySelector('input[name="opt-flavor"]:checked');
-                const flavor = flavorRadio ? flavorRadio.value : '特調胡椒';
-
-                let flavorDetails = '';
-                const activeSubContainer = document.querySelector(`.sub-option-container[data-parent-flavor="${flavor}"]`);
-                if (activeSubContainer) {
-                    let subOpts = [];
-                    activeSubContainer.querySelectorAll('input[type="checkbox"]:checked').forEach(chk => {
-                        subOpts.push(chk.value);
-                    });
-                    if (subOpts.length > 0) {
-                        flavorDetails = ` (${subOpts.join('、')})`;
-                    }
-                }
-
-                const saltRadio = document.querySelector('input[name="opt-salt"]:checked');
-                const salt = saltRadio ? saltRadio.value : '正常';
-
-                const spicyRadio = document.querySelector('input[name="opt-spicy"]:checked');
-                const spicy = spicyRadio ? spicyRadio.value : '不辣';
-
-                let configStr = `鹹度：${salt} | 辣度：${spicy}`;
-
-                let exclusions = [];
-                document.querySelectorAll('input[name="opt-ingredients"]:checked').forEach(chk => {
-                    exclusions.push(chk.value);
-                });
-                let exclusionsStr = exclusions.length > 0 ? `配料調整：${exclusions.join('、')}` : '';
-
-                let addOns = [];
-                if (document.getElementById('chk-coriander')?.checked) addOns.push('加香菜(+$15)');
-                if (document.getElementById('chk-lemon')?.checked) addOns.push('加檸檬汁(+$20)');
-                let addOnsStr = addOns.length > 0 ? `加價配料：${addOns.join('、')}` : '';
-
-                let msg = `訂單編號：${orderNum}\n📦 訂單內容：\n`;
-
-                for (let key in cart) {
-                    if (cart[key] > 0) {
-                        let [cat, origName] = key.split('_');
-                        msg += `\n${cart[key]}份 x ${origName}`;
-                    }
-                }
-
-                msg += `\n\n⚙️ 客製化設定：`;
-                msg += `\n- 口味：${flavor}${flavorDetails}`;
-                msg += `\n- ${configStr}`;
-                if (exclusionsStr) msg += `\n- ${exclusionsStr}`;
-                if (addOnsStr) msg += `\n- ${addOnsStr}`;
-
-                msg += `\n\n🕒 取餐日期：${dateInput}`;
-                const mainNote = document.getElementById('note').value;
-                if (mainNote) msg += `\n📝 總備註：${mainNote}`;
-                msg += `\n💰 總金額：$${currentTotal}`;
-
-                let profile = { userId: "", displayName: "Khách (Web)" };
-                if (liff.isLoggedIn()) {
-                    try {
-                        const p = await liff.getProfile();
-                        if (p && p.userId) profile = p;
-                    } catch (pErr) {
-                        console.warn("Could not fetch LIFF profile:", pErr);
-                    }
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerText = '處理中...';
                 }
 
                 try {
+                    const currentTotal = updateTotal();
+                    const orderNum = generateOrderNumber();
+
+                    const flavorRadio = document.querySelector('input[name="opt-flavor"]:checked');
+                    const flavor = flavorRadio ? flavorRadio.value : '特調胡椒';
+
+                    let flavorDetails = '';
+                    const activeSubContainer = document.querySelector(`.sub-option-container[data-parent-flavor="${flavor}"]`);
+                    if (activeSubContainer) {
+                        let subOpts = [];
+                        activeSubContainer.querySelectorAll('input[type="checkbox"]:checked').forEach(chk => {
+                            subOpts.push(chk.value);
+                        });
+                        if (subOpts.length > 0) {
+                            flavorDetails = ` (${subOpts.join('、')})`;
+                        }
+                    }
+
+                    const saltRadio = document.querySelector('input[name="opt-salt"]:checked');
+                    const salt = saltRadio ? saltRadio.value : '正常';
+
+                    const spicyRadio = document.querySelector('input[name="opt-spicy"]:checked');
+                    const spicy = spicyRadio ? spicyRadio.value : '不辣';
+
+                    let configStr = `鹹度：${salt} | 辣度：${spicy}`;
+
+                    let exclusions = [];
+                    document.querySelectorAll('input[name="opt-ingredients"]:checked').forEach(chk => {
+                        exclusions.push(chk.value);
+                    });
+                    let exclusionsStr = exclusions.length > 0 ? `配料調整：${exclusions.join('、')}` : '';
+
+                    let addOns = [];
+                    if (document.getElementById('chk-coriander')?.checked) addOns.push('加香菜(+$15)');
+                    if (document.getElementById('chk-lemon')?.checked) addOns.push('加檸檬汁(+$20)');
+                    let addOnsStr = addOns.length > 0 ? `加價配料：${addOns.join('、')}` : '';
+
+                    let msg = `訂單編號：${orderNum}\n📦 訂單內容：\n`;
+
+                    for (let key in cart) {
+                        if (cart[key] > 0) {
+                            let [cat, origName] = key.split('_');
+                            msg += `\n${cart[key]}份 x ${origName}`;
+                        }
+                    }
+
+                    msg += `\n\n⚙️ 客製化設定：`;
+                    msg += `\n- 口味：${flavor}${flavorDetails}`;
+                    msg += `\n- ${configStr}`;
+                    if (exclusionsStr) msg += `\n- ${exclusionsStr}`;
+                    if (addOnsStr) msg += `\n- ${addOnsStr}`;
+
+                    msg += `\n\n🕒 取餐日期：${dateInput}`;
+                    const mainNote = document.getElementById('note')?.value || '';
+                    if (mainNote) msg += `\n📝 總備註：${mainNote}`;
+                    msg += `\n💰 總金額：$${currentTotal}`;
+
+                    let profile = { userId: "", displayName: "Khách (Web)" };
+                    if (typeof liff !== 'undefined' && liff && liff.isLoggedIn && liff.isLoggedIn()) {
+                        try {
+                            const p = await liff.getProfile();
+                            if (p && p.userId) profile = p;
+                        } catch (pErr) {
+                            console.warn("Could not fetch LIFF profile:", pErr);
+                        }
+                    }
+
                     const orderPayload = {
                         key: orderNum,
                         userId: profile.userId,
@@ -348,7 +342,7 @@
                         throw new Error(`API returned status ${res.status}`);
                     }
 
-                    if (typeof liff !== 'undefined' && liff.isInClient && liff.isInClient() && liff.isApiAvailable && liff.isApiAvailable('sendMessages')) {
+                    if (typeof liff !== 'undefined' && liff && liff.isInClient && liff.isInClient() && liff.isApiAvailable && liff.isApiAvailable('sendMessages')) {
                         try {
                             await liff.sendMessages([{ type: 'text', text: msg }]);
                         } catch (e) {
@@ -356,26 +350,36 @@
                         }
                     }
 
+                    // Reset cart upon successful submission
+                    cart = {};
+                    updateTotal();
+                    document.querySelectorAll('.qty-text').forEach(el => el.innerText = '0');
+
                     customAlert('<div style="margin-bottom: 15px;"><svg width="64" height="64" viewBox="0 0 24 24" fill="#10b981"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div><div style="font-size: 18px; line-height: 1.4; color: #111;">感謝您的訂單！餐點製作完成後，我們會再次通知您前來取餐，謝謝！</div>', () => {
-                        if (typeof liff !== 'undefined' && liff.closeWindow) {
+                        if (typeof liff !== 'undefined' && liff && liff.closeWindow) {
                             liff.closeWindow();
                         }
                     });
-
-                    return;
 
                 } catch (err) {
                     console.warn("Primary API flow failed, trying LIFF sendMessages fallback:", err);
 
                     try {
-                        await liff.sendMessages([{ type: 'text', text: msg }]);
-                        customAlert('<div style="margin-bottom: 15px;"><svg width="64" height="64" viewBox="0 0 24 24" fill="#10b981"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div><div style="font-size: 18px; line-height: 1.4; color: #111;">感謝您的訂單！餐點製作完成後，我們會再次通知您前來取餐，謝謝！</div>', () => {
-                            liff.closeWindow();
-                        });
+                        if (typeof liff !== 'undefined' && liff && liff.sendMessages) {
+                            await liff.sendMessages([{ type: 'text', text: msg }]);
+                            customAlert('<div style="margin-bottom: 15px;"><svg width="64" height="64" viewBox="0 0 24 24" fill="#10b981"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div><div style="font-size: 18px; line-height: 1.4; color: #111;">感謝您的訂單！餐點製作完成後，我們會再次通知您前來取餐，謝謝！</div>', () => {
+                                if (liff.closeWindow) liff.closeWindow();
+                            });
+                        } else {
+                            throw err;
+                        }
                     } catch (liffErr) {
                         console.error("LIFF sendMessages fallback failed:", liffErr);
                         customAlert('傳送失敗，請重試或向店員反應。');
-                        isSubmitting = false;
+                    }
+                } finally {
+                    isSubmitting = false;
+                    if (submitBtn) {
                         submitBtn.disabled = false;
                         submitBtn.innerText = '確認下單';
                     }
