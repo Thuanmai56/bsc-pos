@@ -324,7 +324,7 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
 
       await saveOrder(env, orderData);
 
-      if (!existingRaw && replyToken) {
+      if (!existingOrder && replyToken) {
         try {
           await replyText(replyToken, "感謝您的訂單！餐點製作完成後，我們會再次通知您前來取餐，謝謝！", env);
         } catch (e) {
@@ -494,21 +494,6 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
             continue; // KẾT THÚC LUỒNG XỬ LÝ RIÊNG
           }
 
-          // CÁC TRƯỜNG HỢP KHÁC (ví dụ: Hết món, Đổi món): DÙNG AI ĐỂ XỬ LÝ
-          let aiSaysNo = false;
-          const isExplicitSwapKeyword = lowerText.includes("換") || lowerText.includes("改");
-
-          if (questionText && !isExplicitSwapKeyword) {
-            const prompt = `店家詢問顧客：「${questionText}」\n顧客的回覆是：「${userText}」\n請問顧客的回覆是否提出了更換品項、選擇口味或確認決定？\n- 如果顧客明確選擇了替換品項（例如：「換雞肉」、「改成高麗菜」、「換成紅茶」等），請嚴格回覆 YES。\n- 如果顧客只是反問或無關訊息，請回覆 NO。\n請只回覆 YES 或 NO。`;
-            const aiRes = await callAI(prompt, env);
-            if (aiRes) {
-              const up = aiRes.toUpperCase();
-              if (up.includes("NO") && !up.includes("YES")) {
-                aiSaysNo = true;
-              }
-            }
-          }
-
           if (pendingType === "CHANGE") {
             const isCancel = lowerText.includes("不要了") || lowerText.includes("取消") || lowerText.includes("不用了") || lowerText === "不要";
 
@@ -520,14 +505,54 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
               continue;
             }
 
-            if (aiSaysNo) {
+            // DÙNG AI XÁC NHẬN (BUSINESS REQUIREMENT): Phân tích tin nhắn của khách dựa trên câu hỏi của quán
+            let aiSaysYes = false;
+            const isExplicitSwapKeyword = lowerText.includes("換") || lowerText.includes("改");
+
+            if (isExplicitSwapKeyword) {
+              aiSaysYes = true;
+            } else if (questionText) {
+              // Lấy danh sách tên món từ D1 để cung cấp context cho AI
+              let menuItemNames: string[] = [];
+              try {
+                if (env.DB) {
+                  const { results } = await env.DB.prepare(
+                    "SELECT name FROM menu_items WHERE tenant_id = ? ORDER BY sort_order ASC"
+                  ).bind("bsc").all<{ name: string }>();
+                  menuItemNames = (results || []).map(r => r.name);
+                }
+              } catch (e) {
+                console.error("[LINE] Failed to fetch menu items for AI prompt:", e);
+              }
+
+              const menuContext = menuItemNames.length > 0
+                ? `\n本店目前的菜單品項有：${menuItemNames.join("、")}。\n`
+                : "";
+
+              const prompt = `店家剛才詢問顧客：「${questionText}」\n顧客的回覆是：「${userText}」\n${menuContext}\n請分析顧客的回覆是否在回答店家的問題（例如：選擇替換的餐點/食材/口味、直接回答食材名稱、表達更換意願或確認決定）？\n- 如果顧客給出了餐點/食材/口味選擇、指定了替換品項、或表達同意 → 請嚴格回覆 YES。\n- 如果顧客是在發問無關事項、純聊天或離題 → 請回覆 NO。\n請只回覆 YES 或 NO。`;
+              const aiRes = await callAI(prompt, env);
+              if (aiRes) {
+                const up = aiRes.toUpperCase();
+                if (up.includes("YES")) {
+                  aiSaysYes = true;
+                }
+              } else {
+                // Fallback nếu AI lỗi/timeout để tránh gián đoạn trải nghiệm của khách
+                aiSaysYes = true;
+              }
+            } else {
+              aiSaysYes = true;
+            }
+
+            if (!aiSaysYes) {
               await replyText(replyToken, `請您明確告訴我們想換什麼品項，或者回覆「取消」直接取消訂單。`, env);
               continue; // Yêu cầu khách nhập rõ ràng
             }
 
-            const isItemSwap = currentReason === "口味售完" || currentReason === "品項售完" || currentReason === "今日已售完" || isExplicitSwapKeyword || (pendingType === "CHANGE" && !aiSaysNo);
+            // AI xác nhận YES -> Thực hiện đổi món
+            const isItemSwap = currentReason === "口味售完" || currentReason === "品項售完" || currentReason === "今日已售完" || isExplicitSwapKeyword || aiSaysYes;
             if (isItemSwap) {
-              order.content = `【顧客換單】：${userText}\n----原本訂單/Đơn cũ 👇----\n${order.content}`;
+              order.content = `【顧客換單】：${userText}\n----原本訂單 👇----\n${order.content}`;
               order.reason = "";
               order.note = "";
               order.status = "NEW";

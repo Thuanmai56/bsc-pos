@@ -1,8 +1,20 @@
 import { Env } from '../types/env';
 import { Order } from '../types/index';
-import { json } from '../utils/http';
+import { corsHeaders, json } from '../utils/http';
 import { syncToGoogleSheets } from '../integrations/googleSheets';
 import { pushLineMessage } from './line';
+
+function jsonWithETag(data: any, version: string, status: number = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      ...corsHeaders(),
+      "Content-Type": "application/json",
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "ETag": `"${version}"`,
+    },
+  });
+}
 
 export const MAX_INDEX = 200;
 
@@ -283,44 +295,70 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
   return json({ success: true });
 }
 
-// In-Memory Cache (RAM) trong Worker Isolate (TTL: 2000ms)
-interface MemoryOrdersCache {
-  orders: Order[];
-  timestamp: number;
-}
-const memoryOrdersCache = new Map<string, MemoryOrdersCache>();
-const MEMORY_CACHE_TTL_MS = 2000; // 2 giây
-
-export async function getOrders(env: Env): Promise<Response> {
+export async function getWaitingCount(request: Request, env: Env): Promise<Response> {
   const tenantId = "bsc";
-  const cacheKey = `tenant:${tenantId}:orders_cache`;
 
-  // 1. Kiểm tra RAM Cache trước (0ms latency, 0 KV reads, 0 D1 reads)
-  const memCached = memoryOrdersCache.get(tenantId);
-  if (memCached && Date.now() - memCached.timestamp < MEMORY_CACHE_TTL_MS) {
-    return json(memCached.orders);
-  }
+  if (!env.DB) return jsonWithETag({ waitingCount: 0 }, "0");
 
-  // 2. RAM Cache Miss -> Kiểm tra KV Cache
-  if (env.ORDER_STATE) {
-    try {
-      const cached = await env.ORDER_STATE.get(cacheKey);
-      if (cached) {
-        const parsedOrders: Order[] = JSON.parse(cached);
-        memoryOrdersCache.set(tenantId, { orders: parsedOrders, timestamp: Date.now() });
-        return json(parsedOrders);
-      }
-    } catch (e) {
-      console.error("[getOrders] KV Cache read error:", e);
-    }
-  }
-
-  if (!env.DB) return json([]);
-
-  // 3. RAM & KV Cache Miss -> Truy vấn từ D1 Database
   try {
+    const row = await env.DB.prepare(
+      `SELECT COUNT(*) as cnt, MAX(updated_at) as last_updated FROM orders 
+       WHERE tenant_id = ? 
+         AND status = 'ACCEPTED'
+         AND created_at >= DATETIME('now', '-24 hours')`
+    ).bind(tenantId).first<{ cnt: number; last_updated: string | null }>();
+
+    const waitingCount = row?.cnt || 0;
+    const lastUpdated = row?.last_updated || "0";
+    const currentVersion = `${waitingCount}_${lastUpdated}`;
+
+    const clientETag = request.headers.get("if-none-match")?.replace(/^W\//, '').replace(/"/g, '');
+    if (clientETag && clientETag === currentVersion) {
+      return new Response(null, {
+        status: 304,
+        headers: {
+          "ETag": `"${currentVersion}"`,
+          ...corsHeaders(),
+        },
+      });
+    }
+
+    return jsonWithETag({ waitingCount }, currentVersion);
+  } catch (e: any) {
+    console.error("[getWaitingCount] D1 error:", e);
+    return jsonWithETag({ waitingCount: 0 }, "0");
+  }
+}
+
+export async function getOrders(request: Request, env: Env): Promise<Response> {
+  const tenantId = "bsc";
+
+  if (!env.DB) return jsonWithETag([], "0");
+
+  try {
+    // 1. Lấy version từ D1 (strongly consistent, không dùng KV)
+    const versionRow = await env.DB.prepare(
+      "SELECT MAX(updated_at) as version FROM orders WHERE tenant_id = ?"
+    ).bind(tenantId).first<{ version: string | null }>();
+
+    const currentVersion = versionRow?.version || Date.now().toString();
+
+    // 2. So sánh ETag → 304 nếu chưa có thay đổi
+    const clientETag = request.headers.get("if-none-match")?.replace(/^W\//, '').replace(/"/g, '');
+    if (clientETag && clientETag === currentVersion) {
+      return new Response(null, {
+        status: 304,
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "ETag": `"${currentVersion}"`,
+          ...corsHeaders(),
+        },
+      });
+    }
+
+    // 3. Truy vấn trực tiếp từ D1 Database
     const { results } = await env.DB.prepare(
-      "SELECT * FROM orders WHERE tenant_id = ? ORDER BY created_at DESC LIMIT 200"
+      "SELECT key, customer_name, pickup_time, status, total_amount, order_content, reason, note, created_at FROM orders WHERE tenant_id = ? ORDER BY created_at DESC LIMIT 200"
     ).bind(tenantId).all<any>();
 
     const orders: Order[] = (results || []).map(row => {
@@ -344,19 +382,7 @@ export async function getOrders(env: Env): Promise<Response> {
       };
     });
 
-    // Cập nhật RAM Cache
-    memoryOrdersCache.set(tenantId, { orders, timestamp: Date.now() });
-
-    // Cập nhật KV Cache (TTL 60s)
-    if (env.ORDER_STATE) {
-      try {
-        await env.ORDER_STATE.put(cacheKey, JSON.stringify(orders), { expirationTtl: 60 });
-      } catch (e) {
-        console.error("[getOrders] KV Cache write error:", e);
-      }
-    }
-
-    return json(orders);
+    return jsonWithETag(orders, currentVersion);
   } catch (e: any) {
     console.error("[getOrders] D1 error:", e);
     return json({ error: "Failed to fetch orders", details: e.message }, 500);
@@ -369,14 +395,14 @@ export async function saveOrder(env: Env, order: Order): Promise<void> {
 
   await env.DB.prepare(
     `INSERT INTO orders (key, tenant_id, user_id, customer_name, pickup_time, status, total_amount, order_content, reason, note, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime(?, 'unixepoch'), datetime('now'))
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime(?, 'unixepoch'), strftime('%Y-%m-%d %H:%M:%f', 'now'))
      ON CONFLICT(key) DO UPDATE SET
        status = excluded.status,
        total_amount = excluded.total_amount,
        order_content = excluded.order_content,
        reason = excluded.reason,
        note = excluded.note,
-       updated_at = datetime('now')`
+       updated_at = strftime('%Y-%m-%d %H:%M:%f', 'now')`
   ).bind(
     order.key,
     tenantId,
@@ -390,16 +416,6 @@ export async function saveOrder(env: Env, order: Order): Promise<void> {
     order.note || "",
     Math.floor((order.createdAt || Date.now()) / 1000)
   ).run();
-
-  // Invalidate RAM Cache & KV Cache cho tenant "bsc"
-  memoryOrdersCache.delete(tenantId);
-  if (env.ORDER_STATE) {
-    try {
-      await env.ORDER_STATE.delete(`tenant:${tenantId}:orders_cache`);
-    } catch (e) {
-      console.error("[saveOrder] KV Cache invalidate error:", e);
-    }
-  }
 }
 
 export async function handleOrdersMigration(request: Request, env: Env): Promise<Response> {
@@ -466,5 +482,41 @@ export async function handleOrdersMigration(request: Request, env: Env): Promise
     });
   } catch (err: any) {
     return json({ success: false, error: err.message, logs }, 500);
+  }
+}
+
+export async function getPendingActionsApi(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const userId = url.searchParams.get("userId");
+  if (!userId) return json({ pending: [] });
+
+  const map = await getPendingMap(env, userId);
+  const list = Object.values(map);
+  return json({ pending: list });
+}
+
+export async function cleanupExpiredPendingActions(env: Env): Promise<void> {
+  if (!env.DB) return;
+  try {
+    const { results } = await env.DB.prepare(
+      `SELECT tenant_id, user_id, order_key FROM pending_actions 
+       WHERE tenant_id = 'bsc' AND created_at < DATETIME('now', '-15 minutes')`
+    ).all<any>();
+
+    if (results && results.length > 0) {
+      for (const row of results as any[]) {
+        const order = await getOrder(env, row.order_key);
+        if (order) {
+          order.status = "REJECTED";
+          await saveOrder(env, order);
+        }
+        await env.DB.prepare(
+          "DELETE FROM pending_actions WHERE tenant_id = ? AND user_id = ? AND order_key = ?"
+        ).bind("bsc", row.user_id, row.order_key).run();
+      }
+      console.log(`[PendingActions] Cleaned up ${results.length} expired pending actions`);
+    }
+  } catch (e) {
+    console.error("[PendingActions] cleanup error:", e);
   }
 }
