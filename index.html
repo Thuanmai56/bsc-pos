@@ -567,7 +567,7 @@
                     if (badge) {
                         const count = data.waitingCount || 0;
                         if (count > 0) {
-                            badge.innerText = `目前前方等待單數：${count} 單`;
+                            badge.innerHTML = `<span class="waiting-badge-count">目前前方等待單數：${count} 單</span><span class="waiting-badge-sub">製作時間平均每單10分鐘</span>`;
                             badge.style.display = "inline-flex";
                         } else {
                             badge.style.display = "none";
