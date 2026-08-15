@@ -509,6 +509,18 @@
       document.getElementById("count-left").innerText = String(leftOrders.length);
       document.getElementById("count-right").innerText = String(rightOrders.length);
 
+      // Auto update or close open review modal if order changed state
+      if (reviewingOrder && document.getElementById("reviewModal") && document.getElementById("reviewModal").style.display === "flex") {
+        const updated = currentOrders.find(o => o && o.key === reviewingOrder.key);
+        if (updated && updated.status !== reviewingOrder.status) {
+          if (["REJECTED", "PICKED_UP"].includes(updated.status)) {
+            closeModal();
+          } else {
+            openReview(updated.key);
+          }
+        }
+      }
+
       if (activeTab === "live") {
         renderListLeft(leftOrders);
         renderListRight(rightOrders);

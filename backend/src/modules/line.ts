@@ -550,7 +550,6 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
 
     // 1) Pending flow priority
     const pMap = await getPendingMap(env, userId);
-    // Find latest pending entry for this user
     let pKeys = Object.keys(pMap).sort((a, b) => (pMap[b].createdAt || 0) - (pMap[a].createdAt || 0));
 
     // Filter out stale pending keys whose orders are already in a final or active state
@@ -574,229 +573,247 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
 
     pKeys = activeKeys;
 
+    let targetOrder: Order | null = null;
+    let pendingType = "";
+    let questionText = "";
+    let currentReason = "";
+    let currentNote = "";
+    let orderKey = "";
+
     if (pKeys.length > 0) {
-      const orderKey = pKeys[0]; // Respond to the most recent one
+      orderKey = pKeys[0];
       const pending = pMap[orderKey];
-      const questionText = pending?.questionText || "";
-      const lowerText = userText.trim().toLowerCase();
-
-      if (orderKey) {
-        const order = await getOrder(env, orderKey);
-        if (order) {
-          const pendingType = pending?.type;
-
-          // If handled:
-          const finishPending = async () => {
-            if (env.DB) {
-              try {
-                await env.DB.prepare(
-                  "DELETE FROM pending_actions WHERE tenant_id = ? AND user_id = ? AND order_key = ?"
-                ).bind("bsc", userId, orderKey).run();
-              } catch (e) {
-                console.error("[finishPending] failed:", e);
-              }
-            }
-          };
-
-          // Xử lý độ trễ lan truyền của Cloudflare KV
-          const currentReason = pending?.reason || order.reason || "";
-          const currentNote = pending?.note || order.note || "";
-
-          // TÁCH RIÊNG TRƯỜNG HỢP "ĐỔI GIỜ NHẬN HÀNG" KHÔNG DÙNG AI
-          if (pendingType === "CHANGE" && currentReason === "時間需調整") {
-            const exactMatch = lowerText === "好" || lowerText === "同意" || lowerText === "ok" || lowerText === "可以" || lowerText === "好的";
-            const isCancel = lowerText.includes("不要") || lowerText.includes("取消") || lowerText.includes("不用");
-
-            if (isCancel) {
-              order.status = "REJECTED"; // Tự động huỷ
-              await replyText(replyToken, `收到，謝謝您！`, env);
-              const cleanup = async () => { await saveOrder(env, order); await finishPending(); await syncToGoogleSheets(order, env); };
-              if (ctx && ctx.waitUntil) ctx.waitUntil(cleanup()); else await cleanup();
-            }
-            else if (exactMatch) {
-              const timeParts = (order.time || "").split(" ");
-              const oldDate = timeParts[0] || "";
-              const newSuggestedTime = currentNote;
-
-              if (oldDate && oldDate.includes("-")) {
-                order.time = `${oldDate} ${newSuggestedTime}`;
-              } else {
-                order.time = newSuggestedTime;
-              }
-              order.reason = "";
-              order.note = "";
-              order.status = "NEW"; // Tái xuất hiện thông báo đơn mới trên Dashboard
-              await replyText(replyToken, `收到您的同意！取餐時間已為您更改為 ${newSuggestedTime}`, env);
-              const cleanup = async () => { await saveOrder(env, order); await finishPending(); };
-              if (ctx && ctx.waitUntil) ctx.waitUntil(cleanup()); else await cleanup();
-            }
-            else {
-              await replyText(replyToken, `請簡單回覆「好 / 同意」以確認，或回覆「不要了 / 取消」取消訂單。`, env);
-            }
-            continue; // KẾT THÚC LUỒNG XỬ LÝ RIÊNG
-          }
-
-          if (pendingType === "CHANGE") {
-            const isCancel = lowerText.includes("不要了") || lowerText.includes("取消") || lowerText.includes("不用了") || lowerText === "不要";
-
-            if (isCancel) {
-              order.status = "REJECTED"; // Tự động huỷ
-              await replyText(replyToken, `好的，已為您取消訂單 #${orderKey}。`, env);
-              const cleanup = async () => { await saveOrder(env, order); await finishPending(); await syncToGoogleSheets(order, env); };
-              if (ctx && ctx.waitUntil) ctx.waitUntil(cleanup()); else await cleanup();
-              continue;
-            }
-
-            // DÙNG AI XÁC NHẬN (BUSINESS REQUIREMENT): Phân tích tin nhắn của khách dựa trên câu hỏi của quán
-            let aiSaysYes = false;
-            const isExplicitSwapKeyword = lowerText.includes("換") || lowerText.includes("改");
-
-            if (isExplicitSwapKeyword) {
-              aiSaysYes = true;
-            } else if (questionText) {
-              // Lấy danh sách tên món từ D1 để cung cấp context cho AI
-              let menuItemNames: string[] = [];
-              try {
-                if (env.DB) {
-                  const { results } = await env.DB.prepare(
-                    "SELECT name FROM menu_items WHERE tenant_id = ? ORDER BY sort_order ASC"
-                  ).bind("bsc").all<{ name: string }>();
-                  menuItemNames = (results || []).map(r => r.name);
-                }
-              } catch (e) {
-                console.error("[LINE] Failed to fetch menu items for AI prompt:", e);
-              }
-
-              const menuContext = menuItemNames.length > 0
-                ? `\n本店目前的菜單品項有：${menuItemNames.join("、")}。\n`
-                : "";
-
-              const prompt = `店家剛才詢問顧客：「${questionText}」\n顧客的回覆是：「${userText}」\n${menuContext}\n請分析顧客的回覆是否在回答店家的問題（例如：選擇替換的餐點/食材/口味、直接回答食材名稱、表達更換意願或確認決定）？\n- 如果顧客給出了餐點/食材/口味選擇、指定了替換品項、或表達同意 → 請嚴格回覆 YES。\n- 如果顧客是在發問無關事項、純聊天或離題 → 請回覆 NO。\n請只回覆 YES 或 NO。`;
-              const aiRes = await callAI(prompt, env);
-              if (aiRes) {
-                const up = aiRes.toUpperCase();
-                if (up.includes("YES")) {
-                  aiSaysYes = true;
-                }
-              } else {
-                // Fallback nếu AI lỗi/timeout để tránh gián đoạn trải nghiệm của khách
-                aiSaysYes = true;
-              }
-            } else {
-              aiSaysYes = true;
-            }
-
-            if (!aiSaysYes) {
-              await replyText(replyToken, `請您明確告訴我們想換什麼品項，或者回覆「取消」直接取消訂單。`, env);
-              continue; // Yêu cầu khách nhập rõ ràng
-            }
-
-            // AI xác nhận YES -> Thực hiện đổi món
-            const isItemSwap = currentReason === "口味售完" || currentReason === "品項售完" || currentReason === "今日已售完" || isExplicitSwapKeyword || aiSaysYes;
-            if (isItemSwap) {
-              order.content = `【顧客換單】：${userText}\n----原本訂單 👇----\n${order.content}`;
-              order.reason = "";
-              order.note = "";
-              order.status = "NEW";
-              await replyText(replyToken, `收到您的回覆！我們會依您的需求修改訂單。`, env);
-              const cleanup = async () => { await saveOrder(env, order); await finishPending(); };
-              if (ctx && ctx.waitUntil) ctx.waitUntil(cleanup()); else await cleanup();
-              continue;
-            }
-
-            // Fallback for explicitly agreed non-flavor changes
-            const isAgree = (lowerText.includes("同意") && !lowerText.includes("不同意")) || lowerText === "好" || lowerText === "ok" || lowerText === "可以" || lowerText === "好的";
-            if (isAgree) {
-              order.status = "ACCEPTED";
-              await replyText(replyToken, `干城鹹水雞 收到您的同意！我們會開始準備您的訂單 #${orderKey}。`, env);
-              const cleanup = async () => { await saveOrder(env, order); await finishPending(); };
-              if (ctx && ctx.waitUntil) ctx.waitUntil(cleanup()); else await cleanup();
-              continue;
-            }
-
-            await replyText(replyToken, `請再明確回覆您的決定。`, env);
-            continue;
-          }
-
-          if (pendingType === "REJECT") {
-            const isExplicitDisagree =
-              lowerText.includes("不同意") ||
-              lowerText.includes("不要取消") ||
-              lowerText.includes("不想取消") ||
-              lowerText.includes("請勿取消") ||
-              lowerText.includes("請不要取消") ||
-              lowerText.includes("別取消") ||
-              lowerText.includes("disagree");
-
-            if (isExplicitDisagree) {
-              order.status = "NEW";
-              await replyText(
-                replyToken,
-                `謝謝您的回覆！我已將訂單 #${orderKey} 回到「等待店家接單」狀態，店家會再為您確認。`,
-                env
-              );
-              const cleanup = async () => { await saveOrder(env, order); await finishPending(); };
-              if (ctx && ctx.waitUntil) ctx.waitUntil(cleanup()); else await cleanup();
-              continue;
-            }
-
-            const isAgree =
-              lowerText.includes("同意") ||
-              lowerText.includes("好") ||
-              lowerText.includes("ok") ||
-              lowerText.includes("可以") ||
-              lowerText.includes("行") ||
-              lowerText.includes("取消") ||
-              lowerText.includes("不要了") ||
-              lowerText.includes("不用了") ||
-              lowerText.includes("不要") ||
-              lowerText.includes("不用") ||
-              lowerText.includes("算了吧") ||
-              lowerText.includes("算了") ||
-              lowerText.includes("沒關係") ||
-              lowerText.includes("沒事") ||
-              lowerText.includes("收到") ||
-              lowerText.includes("知道") ||
-              lowerText.includes("了解") ||
-              lowerText.includes("謝") ||
-              lowerText.includes("辛苦") ||
-              lowerText.includes("yes");
-
-            let aiSaysAgree = false;
-            if (!isAgree) {
-              const aiPrompt = `店家剛才通知顧客因故無法接單並詢問是否同意取消訂單：「${questionText}」\n顧客的回覆是：「${userText}」\n請分析顧客是否同意/理解並接受取消訂單？\n- 如果顧客表達同意、取消、沒關係、理解、感謝或接受取消 → 請回覆 YES。\n- 如果顧客明確反對取消或要求繼續做餐 → 請回覆 NO。\n請只回覆 YES 或 NO。`;
-              const aiRes = await callAI(aiPrompt, env);
-              if (aiRes && aiRes.toUpperCase().includes("YES")) {
-                aiSaysAgree = true;
-              }
-            }
-
-            if (isAgree || aiSaysAgree) {
-              order.status = "REJECTED";
-              await replyText(
-                replyToken,
-                `好的，干城鹹水雞 已收到您的確認，訂單 #${orderKey} 已為您取消。\n非常抱歉造成您的不便，感謝您的體諒，期待下次再為您服務！`,
-                env
-              );
-              const cleanup = async () => { await saveOrder(env, order); await finishPending(); await syncToGoogleSheets(order, env); };
-              if (ctx && ctx.waitUntil) ctx.waitUntil(cleanup()); else await cleanup();
-              continue;
-            }
-
-            await replyText(replyToken, `請點選按鈕或回覆「同意」取消訂單，或回覆「不同意」。`, env);
-            continue;
+      pendingType = pending?.type || "";
+      questionText = pending?.questionText || "";
+      currentReason = pending?.reason || "";
+      currentNote = pending?.note || "";
+      targetOrder = await getOrder(env, orderKey);
+    } else {
+      // Fallback: Query directly from orders table for any waiting orders for this user
+      try {
+        if (env.DB) {
+          const waitingRow = await env.DB.prepare(
+            `SELECT key, status, reason, note FROM orders 
+             WHERE tenant_id = 'bsc' AND user_id = ? AND status IN ('WAITING_CUSTOMER_REJECT', 'WAITING_CUSTOMER_CHANGE') 
+             ORDER BY updated_at DESC LIMIT 1`
+          ).bind(userId).first<any>();
+          if (waitingRow) {
+            orderKey = waitingRow.key;
+            pendingType = waitingRow.status === "WAITING_CUSTOMER_REJECT" ? "REJECT" : "CHANGE";
+            currentReason = waitingRow.reason || "";
+            currentNote = waitingRow.note || "";
+            targetOrder = await getOrder(env, orderKey);
           }
         }
+      } catch (e) {
+        console.error("[LINE Webhook] Fallback waiting order lookup error:", e);
+      }
+    }
+
+    if (targetOrder && orderKey) {
+      const order = targetOrder;
+      const lowerText = userText.trim().toLowerCase();
+
+      const finishPending = async () => {
+        if (env.DB) {
+          try {
+            await env.DB.prepare(
+              "DELETE FROM pending_actions WHERE tenant_id = ? AND user_id = ? AND order_key = ?"
+            ).bind("bsc", userId, orderKey).run();
+          } catch (e) {
+            console.error("[finishPending] failed:", e);
+          }
+        }
+      };
+
+      if (!currentReason) currentReason = order.reason || "";
+      if (!currentNote) currentNote = order.note || "";
+
+      // TÁCH RIÊNG TRƯỜNG HỢP "ĐỔI GIỜ NHẬN HÀNG" KHÔNG DÙNG AI
+      if (pendingType === "CHANGE" && currentReason === "時間需調整") {
+        const exactMatch = lowerText === "好" || lowerText === "同意" || lowerText === "ok" || lowerText === "可以" || lowerText === "好的";
+        const isCancel = lowerText.includes("不要") || lowerText.includes("取消") || lowerText.includes("不用");
+
+        if (isCancel) {
+          order.status = "REJECTED"; // Tự động huỷ
+          await saveOrder(env, order);
+          await finishPending();
+          await replyText(replyToken, `收到，謝謝您！`, env);
+          if (ctx && ctx.waitUntil) ctx.waitUntil(syncToGoogleSheets(order, env));
+          else await syncToGoogleSheets(order, env);
+        }
+        else if (exactMatch) {
+          const timeParts = (order.time || "").split(" ");
+          const oldDate = timeParts[0] || "";
+          const newSuggestedTime = currentNote;
+
+          if (oldDate && oldDate.includes("-")) {
+            order.time = `${oldDate} ${newSuggestedTime}`;
+          } else {
+            order.time = newSuggestedTime;
+          }
+          order.reason = "";
+          order.note = "";
+          order.status = "NEW"; // Tái xuất hiện thông báo đơn mới trên Dashboard
+          await saveOrder(env, order);
+          await finishPending();
+          await replyText(replyToken, `收到您的同意！取餐時間已為您更改為 ${newSuggestedTime}`, env);
+        }
+        else {
+          await replyText(replyToken, `請簡單回覆「好 / 同意」以確認，或回覆「不要了 / 取消」取消訂單。`, env);
+        }
+        continue;
       }
 
-      // pending exists but invalid state
-      try {
-        await env.DB.prepare(
-          "DELETE FROM pending_actions WHERE tenant_id = ? AND user_id = ?"
-        ).bind("bsc", userId).run();
-      } catch { }
-      await replyText(replyToken, `目前有點狀況，請稍後再確認一次。`, env);
-      continue;
+      if (pendingType === "CHANGE") {
+        const isCancel = lowerText.includes("不要了") || lowerText.includes("取消") || lowerText.includes("不用了") || lowerText === "不要";
+
+        if (isCancel) {
+          order.status = "REJECTED"; // Tự động huỷ
+          await saveOrder(env, order);
+          await finishPending();
+          await replyText(replyToken, `好的，已為您取消訂單 #${orderKey}。`, env);
+          if (ctx && ctx.waitUntil) ctx.waitUntil(syncToGoogleSheets(order, env));
+          else await syncToGoogleSheets(order, env);
+          continue;
+        }
+
+        // DÙNG AI XÁC NHẬN: Phân tích tin nhắn của khách dựa trên câu hỏi của quán
+        let aiSaysYes = false;
+        const isExplicitSwapKeyword = lowerText.includes("換") || lowerText.includes("改");
+
+        if (isExplicitSwapKeyword) {
+          aiSaysYes = true;
+        } else if (questionText) {
+          let menuItemNames: string[] = [];
+          try {
+            if (env.DB) {
+              const { results } = await env.DB.prepare(
+                "SELECT name FROM menu_items WHERE tenant_id = ? ORDER BY sort_order ASC"
+              ).bind("bsc").all<{ name: string }>();
+              menuItemNames = (results || []).map(r => r.name);
+            }
+          } catch (e) {
+            console.error("[LINE] Failed to fetch menu items for AI prompt:", e);
+          }
+
+          const menuContext = menuItemNames.length > 0
+            ? `\n本店目前的菜單品項有：${menuItemNames.join("、")}。\n`
+            : "";
+
+          const prompt = `店家剛才詢問顧客：「${questionText}」\n顧客的回覆是：「${userText}」\n${menuContext}\n請分析顧客的回覆是否在回答店家的問題（例如：選擇替換的餐點/食材/口味、直接回答食材名稱、表達更換意願或確認決定）？\n- 如果顧客給出了餐點/食材/口味選擇、指定了替換品項、或表達同意 → 請嚴格回覆 YES。\n- 如果顧客是在發問無關事項、純聊天或離題 → 請回覆 NO。\n請只回覆 YES 或 NO。`;
+          const aiRes = await callAI(prompt, env);
+          if (aiRes && aiRes.toUpperCase().includes("YES")) {
+            aiSaysYes = true;
+          } else if (!aiRes) {
+            aiSaysYes = true;
+          }
+        } else {
+          aiSaysYes = true;
+        }
+
+        if (!aiSaysYes) {
+          await replyText(replyToken, `請您明確告訴我們想換什麼品項，或者回覆「取消」直接取消訂單。`, env);
+          continue;
+        }
+
+        // AI xác nhận YES -> Thực hiện đổi món
+        const isItemSwap = currentReason === "口味售完" || currentReason === "品項售完" || currentReason === "今日已售完" || isExplicitSwapKeyword || aiSaysYes;
+        if (isItemSwap) {
+          order.content = `【顧客換單】：${userText}\n----原本訂單 👇----\n${order.content}`;
+          order.reason = "";
+          order.note = "";
+          order.status = "NEW";
+          await saveOrder(env, order);
+          await finishPending();
+          await replyText(replyToken, `收到您的回覆！我們會依您的需求修改訂單。`, env);
+          continue;
+        }
+
+        // Fallback for explicitly agreed non-flavor changes
+        const isAgree = (lowerText.includes("同意") && !lowerText.includes("不同意")) || lowerText === "好" || lowerText === "ok" || lowerText === "可以" || lowerText === "好的";
+        if (isAgree) {
+          order.status = "ACCEPTED";
+          await saveOrder(env, order);
+          await finishPending();
+          await replyText(replyToken, `干城鹹水雞 收到您的同意！我們會開始準備您的訂單 #${orderKey}。`, env);
+          continue;
+        }
+
+        await replyText(replyToken, `請再明確回覆您的決定。`, env);
+        continue;
+      }
+
+      if (pendingType === "REJECT") {
+        const isExplicitDisagree =
+          lowerText.includes("不同意") ||
+          lowerText.includes("不要取消") ||
+          lowerText.includes("不想取消") ||
+          lowerText.includes("請勿取消") ||
+          lowerText.includes("請不要取消") ||
+          lowerText.includes("別取消") ||
+          lowerText.includes("disagree");
+
+        if (isExplicitDisagree) {
+          order.status = "NEW";
+          await saveOrder(env, order);
+          await finishPending();
+          await replyText(
+            replyToken,
+            `謝謝您的回覆！我已將訂單 #${orderKey} 回到「等待店家接單」狀態，店家會再為您確認。`,
+            env
+          );
+          continue;
+        }
+
+        const isAgree =
+          lowerText.includes("同意") ||
+          lowerText.includes("好") ||
+          lowerText.includes("ok") ||
+          lowerText.includes("可以") ||
+          lowerText.includes("行") ||
+          lowerText.includes("取消") ||
+          lowerText.includes("不要了") ||
+          lowerText.includes("不用了") ||
+          lowerText.includes("不要") ||
+          lowerText.includes("不用") ||
+          lowerText.includes("算了吧") ||
+          lowerText.includes("算了") ||
+          lowerText.includes("沒關係") ||
+          lowerText.includes("沒事") ||
+          lowerText.includes("收到") ||
+          lowerText.includes("知道") ||
+          lowerText.includes("了解") ||
+          lowerText.includes("謝") ||
+          lowerText.includes("辛苦") ||
+          lowerText.includes("yes");
+
+        let aiSaysAgree = false;
+        if (!isAgree) {
+          const aiPrompt = `店家剛才通知顧客因故無法接單並詢問是否同意取消訂單：「${questionText}」\n顧客的回覆是：「${userText}」\n請分析顧客是否同意/理解並接受取消訂單？\n- 如果顧客表達同意、取消、沒關係、理解、感謝或接受取消 → 請回覆 YES。\n- 如果顧客明確反對取消或要求繼續做餐 → 請回覆 NO。\n請只回覆 YES 或 NO。`;
+          const aiRes = await callAI(aiPrompt, env);
+          if (aiRes && aiRes.toUpperCase().includes("YES")) {
+            aiSaysAgree = true;
+          }
+        }
+
+        if (isAgree || aiSaysAgree) {
+          order.status = "REJECTED";
+          await saveOrder(env, order);
+          await finishPending();
+          await replyText(
+            replyToken,
+            `好的，干城鹹水雞 已收到您的確認，訂單 #${orderKey} 已為您取消。\n非常抱歉造成您的不便，感謝您的體諒，期待下次再為您服務！`,
+            env
+          );
+          if (ctx && ctx.waitUntil) ctx.waitUntil(syncToGoogleSheets(order, env));
+          else await syncToGoogleSheets(order, env);
+          continue;
+        }
+
+        await replyText(replyToken, `請點選按鈕或回覆「同意」取消訂單，或回覆「不同意」。`, env);
+        continue;
+      }
     }
 
     // 2) Quick reply
