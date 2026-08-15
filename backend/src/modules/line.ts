@@ -6,10 +6,53 @@ import { callAI } from '../integrations/groq';
 import { syncToGoogleSheets } from '../integrations/googleSheets';
 import { resolveSecret } from '../utils/secrets';
 
-export async function pushLineMessage(userId: string, text: string, env: Env): Promise<void> {
+export async function pushLineMessage(userId: string, text: string, env: Env, quickReplies?: Array<{ label: string; text: string }>): Promise<void> {
   const token = await resolveSecret(env.LINE_CHANNEL_TOKEN);
-  if (!token) { console.error("[Benmi] pushLineMessage: LINE_CHANNEL_TOKEN missing"); return; }
-  if (!userId) { console.error("[Benmi] pushLineMessage: userId is empty, cannot push"); return; }
+  if (!token) { console.error("[BSC] pushLineMessage: LINE_CHANNEL_TOKEN missing"); return; }
+  if (!userId) { console.error("[BSC] pushLineMessage: userId is empty, cannot push"); return; }
+
+  try {
+    const messageObj: any = { type: "text", text };
+    if (quickReplies && quickReplies.length > 0) {
+      messageObj.quickReply = {
+        items: quickReplies.map(qr => ({
+          type: "action",
+          action: {
+            type: "message",
+            label: qr.label,
+            text: qr.text,
+          }
+        }))
+      };
+    }
+
+    const res = await fetch("https://api.line.me/v2/bot/message/push", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        to: userId,
+        messages: [messageObj],
+      }),
+    });
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => "(unreadable)");
+      console.error(`[BSC] pushLineMessage FAILED: status=${res.status} userId=${userId} body=${body}`);
+    } else {
+      console.log(`[BSC] pushLineMessage OK: userId=${userId}`);
+    }
+  } catch (e: any) {
+    console.error(`[BSC] pushLineMessage EXCEPTION: userId=${userId} error=${e.message}`);
+  }
+}
+
+export async function pushLineFlexMessage(userId: string, altText: string, flexContents: any, env: Env): Promise<void> {
+  const token = await resolveSecret(env.LINE_CHANNEL_TOKEN);
+  if (!token) { console.error("[BSC] pushLineFlexMessage: LINE_CHANNEL_TOKEN missing"); return; }
+  if (!userId) { console.error("[BSC] pushLineFlexMessage: userId is empty, cannot push"); return; }
 
   try {
     const res = await fetch("https://api.line.me/v2/bot/message/push", {
@@ -20,19 +63,118 @@ export async function pushLineMessage(userId: string, text: string, env: Env): P
       },
       body: JSON.stringify({
         to: userId,
-        messages: [{ type: "text", text }],
+        messages: [
+          {
+            type: "flex",
+            altText,
+            contents: flexContents,
+          }
+        ],
       }),
     });
 
     if (!res.ok) {
       const body = await res.text().catch(() => "(unreadable)");
-      console.error(`[Benmi] pushLineMessage FAILED: status=${res.status} userId=${userId} body=${body}`);
+      console.error(`[BSC] pushLineFlexMessage FAILED: status=${res.status} userId=${userId} body=${body}`);
     } else {
-      console.log(`[Benmi] pushLineMessage OK: userId=${userId}`);
+      console.log(`[BSC] pushLineFlexMessage OK: userId=${userId}`);
     }
   } catch (e: any) {
-    console.error(`[Benmi] pushLineMessage EXCEPTION: userId=${userId} error=${e.message}`);
+    console.error(`[BSC] pushLineFlexMessage EXCEPTION: userId=${userId} error=${e.message}`);
   }
+}
+
+export function createRejectFlexBubble(orderKey: string, reason: string): any {
+  return {
+    type: "bubble",
+    size: "mega",
+    header: {
+      type: "box",
+      layout: "vertical",
+      backgroundColor: "#DC2626",
+      paddingAll: "18px",
+      contents: [
+        {
+          type: "box",
+          layout: "horizontal",
+          spacing: "md",
+          alignItems: "center",
+          contents: [
+            { type: "text", text: "⚠️", size: "xxl", flex: 0 },
+            {
+              type: "box",
+              layout: "vertical",
+              contents: [
+                { type: "text", text: "無法接單通知", weight: "bold", size: "xl", color: "#ffffff" },
+                { type: "text", text: "Order Cancel Request", size: "xs", color: "#FEE2E2" }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    body: {
+      type: "box",
+      layout: "vertical",
+      paddingAll: "20px",
+      spacing: "md",
+      contents: [
+        {
+          type: "box",
+          layout: "horizontal",
+          contents: [
+            { type: "text", text: "訂單編號", size: "sm", color: "#888888", flex: 3 },
+            { type: "text", text: `#${orderKey}`, size: "md", weight: "bold", color: "#111111", flex: 6 }
+          ]
+        },
+        {
+          type: "box",
+          layout: "horizontal",
+          contents: [
+            { type: "text", text: "取消原因", size: "sm", color: "#888888", flex: 3 },
+            { type: "text", text: reason || "商品已售完 / 目前無法接單", size: "sm", weight: "bold", color: "#DC2626", flex: 6, wrap: true }
+          ]
+        },
+        { type: "separator", margin: "md", color: "#EEEEEE" },
+        {
+          type: "text",
+          text: "非常抱歉！店家目前無法為您製作餐點。請點擊下方按鈕確認是否同意取消訂單：",
+          wrap: true,
+          color: "#4B5563",
+          size: "sm"
+        }
+      ]
+    },
+    footer: {
+      type: "box",
+      layout: "vertical",
+      paddingAll: "16px",
+      spacing: "sm",
+      contents: [
+        {
+          type: "button",
+          style: "primary",
+          color: "#DC2626",
+          height: "sm",
+          action: {
+            type: "message",
+            label: "🔴 同意取消訂單",
+            text: "同意"
+          }
+        },
+        {
+          type: "button",
+          style: "secondary",
+          height: "sm",
+          action: {
+            type: "message",
+            label: "⚪ 不同意",
+            text: "不同意"
+          }
+        }
+      ]
+    }
+  };
 }
 
 export async function replyText(replyToken: string, text: string, env: Env): Promise<void> {
@@ -291,11 +433,11 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
         }
       }
 
-      let custName = "Khách (Web)";
+      let custName = "顧客 (Web)";
 
       // Check if order already exists to preserve customer name
       const existingOrder = await getOrder(env, orderKey);
-      if (existingOrder && existingOrder.customer && existingOrder.customer !== "Khách (Web)") {
+      if (existingOrder && existingOrder.customer && existingOrder.customer !== "顧客 (Web)" && existingOrder.customer !== "Khách (Web)") {
         custName = existingOrder.customer;
       }
 
@@ -577,22 +719,16 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
           }
 
           if (pendingType === "REJECT") {
-            const isAgree = (lowerText.includes("同意") && !lowerText.includes("不同意")) || lowerText === "好" || lowerText === "ok" || lowerText === "可以" || lowerText === "好的";
-            const isDifferent = lowerText.includes("不同意") || lowerText.includes("不要") || lowerText === "取消";
+            const isExplicitDisagree =
+              lowerText.includes("不同意") ||
+              lowerText.includes("不要取消") ||
+              lowerText.includes("不想取消") ||
+              lowerText.includes("請勿取消") ||
+              lowerText.includes("請不要取消") ||
+              lowerText.includes("別取消") ||
+              lowerText.includes("disagree");
 
-            if (isAgree) {
-              order.status = "REJECTED";
-              await replyText(
-                replyToken,
-                `非常抱歉！干城鹹水雞 無法接下您的訂單 #${orderKey}。\n感謝您訂購 干城鹹水雞，歡迎您下次再訂購。`,
-                env
-              );
-              const cleanup = async () => { await saveOrder(env, order); await finishPending(); await syncToGoogleSheets(order, env); };
-              if (ctx && ctx.waitUntil) ctx.waitUntil(cleanup()); else await cleanup();
-              continue;
-            }
-
-            if (isDifferent) {
+            if (isExplicitDisagree) {
               order.status = "NEW";
               await replyText(
                 replyToken,
@@ -604,7 +740,50 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
               continue;
             }
 
-            await replyText(replyToken, `請回覆「同意」或「不同意」。`, env);
+            const isAgree =
+              lowerText.includes("同意") ||
+              lowerText.includes("好") ||
+              lowerText.includes("ok") ||
+              lowerText.includes("可以") ||
+              lowerText.includes("行") ||
+              lowerText.includes("取消") ||
+              lowerText.includes("不要了") ||
+              lowerText.includes("不用了") ||
+              lowerText.includes("不要") ||
+              lowerText.includes("不用") ||
+              lowerText.includes("算了吧") ||
+              lowerText.includes("算了") ||
+              lowerText.includes("沒關係") ||
+              lowerText.includes("沒事") ||
+              lowerText.includes("收到") ||
+              lowerText.includes("知道") ||
+              lowerText.includes("了解") ||
+              lowerText.includes("謝") ||
+              lowerText.includes("辛苦") ||
+              lowerText.includes("yes");
+
+            let aiSaysAgree = false;
+            if (!isAgree) {
+              const aiPrompt = `店家剛才通知顧客因故無法接單並詢問是否同意取消訂單：「${questionText}」\n顧客的回覆是：「${userText}」\n請分析顧客是否同意/理解並接受取消訂單？\n- 如果顧客表達同意、取消、沒關係、理解、感謝或接受取消 → 請回覆 YES。\n- 如果顧客明確反對取消或要求繼續做餐 → 請回覆 NO。\n請只回覆 YES 或 NO。`;
+              const aiRes = await callAI(aiPrompt, env);
+              if (aiRes && aiRes.toUpperCase().includes("YES")) {
+                aiSaysAgree = true;
+              }
+            }
+
+            if (isAgree || aiSaysAgree) {
+              order.status = "REJECTED";
+              await replyText(
+                replyToken,
+                `好的，干城鹹水雞 已收到您的確認，訂單 #${orderKey} 已為您取消。\n非常抱歉造成您的不便，感謝您的體諒，期待下次再為您服務！`,
+                env
+              );
+              const cleanup = async () => { await saveOrder(env, order); await finishPending(); await syncToGoogleSheets(order, env); };
+              if (ctx && ctx.waitUntil) ctx.waitUntil(cleanup()); else await cleanup();
+              continue;
+            }
+
+            await replyText(replyToken, `請點選按鈕或回覆「同意」取消訂單，或回覆「不同意」。`, env);
             continue;
           }
         }

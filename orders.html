@@ -481,7 +481,7 @@
       const currentOrders = latestOrders.map(o => {
         const override = localOverrides[o.key];
         if (override) {
-          // Xóa override ngay khi server đã cập nhật đúng status hoặc chuyển sang trạng thái mới/kết thúc
+          // 當伺服器狀態已更新或已結束時，立即清除 override
           if (o.status === override.status || ["REJECTED", "PICKED_UP", "DONE"].includes(o.status) || (now - override.time >= 15000)) {
             delete localOverrides[o.key];
             return o;
@@ -691,7 +691,7 @@
         return;
       }
 
-      // Kiểm tra xem có BẤT KỲ bảng nào liên quan đến Review đang mở không
+      // 檢查是否有任何與審核相關的彈窗開啟中
       const isReviewing =
         document.getElementById("reviewModal").style.display === "flex" ||
         document.getElementById("changeModal").style.display === "flex" ||
@@ -1712,14 +1712,14 @@
     let currentStockIidx = null;
 
     function openStockModal(cIdx, iIdx) {
-      // Lưu lại các thay đổi người dùng đang nhập dở trên input
+      // 同步 DOM 上的最新輸入資料
       syncMenuDataFromDOM();
 
       currentStockCidx = cIdx;
       currentStockIidx = iIdx;
 
       const item = currentMenuData[cIdx].items[iIdx];
-      document.getElementById("stock-modal-title").innerText = `庫存管理 (Kho): ${item.name}`;
+      document.getElementById("stock-modal-title").innerText = `庫存管理：${item.name}`;
 
       // Set values
       const statusSelect = document.getElementById("stock-status-select");
@@ -1766,7 +1766,7 @@
     async function saveStockStatus() {
       if (currentStockCidx === null || currentStockIidx === null) return;
 
-      // Đồng bộ dữ liệu hiện tại từ DOM
+      // 同步 DOM 上的最新輸入資料
       syncMenuDataFromDOM();
 
       const categorySlug = currentMenuData[currentStockCidx].id;
