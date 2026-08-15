@@ -386,9 +386,51 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
     // A) Handle LINE Postback Events (e.g. from Reject Flex Bubble)
     if (event.type === "postback") {
       const postbackData = event.postback?.data || "";
+      console.log(`[LINE Postback] userId=${userId} data=${postbackData}`);
       const params = new URLSearchParams(postbackData);
-      const action = params.get("action")?.trim();
-      const orderKey = params.get("orderKey")?.trim();
+      let action = params.get("action")?.trim() || "";
+      let orderKey = params.get("orderKey")?.trim() || "";
+
+      // 1. Fallback JSON parsing
+      if (!action || !orderKey) {
+        try {
+          const jsonObj = JSON.parse(postbackData);
+          if (jsonObj.action) action = jsonObj.action;
+          if (jsonObj.orderKey) orderKey = jsonObj.orderKey;
+        } catch { }
+      }
+
+      // 2. Fallback substring extraction
+      if (!action) {
+        if (postbackData.includes("reject_agree") || postbackData.includes("agree") || postbackData.includes("同意")) {
+          action = "reject_agree";
+        } else if (postbackData.includes("reject_disagree") || postbackData.includes("disagree") || postbackData.includes("不同意")) {
+          action = "reject_disagree";
+        }
+      }
+      if (!orderKey && postbackData.includes("orderKey=")) {
+        const match = postbackData.match(/orderKey=([A-Za-z0-9_-]+)/);
+        if (match) orderKey = match[1];
+      }
+
+      // 3. Fallback: Lookup latest pending or waiting order for this userId
+      if (!orderKey && env.DB) {
+        try {
+          const pRow = await env.DB.prepare(
+            "SELECT order_key FROM pending_actions WHERE tenant_id = 'bsc' AND user_id = ? ORDER BY created_at DESC LIMIT 1"
+          ).bind(userId).first<{ order_key: string }>();
+          if (pRow?.order_key) {
+            orderKey = pRow.order_key;
+          } else {
+            const wRow = await env.DB.prepare(
+              "SELECT key FROM orders WHERE tenant_id = 'bsc' AND user_id = ? AND status IN ('WAITING_CUSTOMER_REJECT', 'WAITING_CUSTOMER_CHANGE') ORDER BY updated_at DESC LIMIT 1"
+            ).bind(userId).first<{ key: string }>();
+            if (wRow?.key) orderKey = wRow.key;
+          }
+        } catch (e) {
+          console.error("[postback fallback orderKey error]:", e);
+        }
+      }
 
       if (action && orderKey) {
         if (action === "reject_agree") {
