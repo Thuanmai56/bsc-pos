@@ -30,7 +30,7 @@
           <div class="panel-header">
             <div>
               <div class="panel-title">準備中</div>
-              <div class="panel-sub">依取餐時間（由近到遠）</div>
+              <div class="panel-sub" id="sub-left">依取餐時間（由近到遠）</div>
             </div>
             <div class="badge wait" id="count-left">0</div>
           </div>
@@ -43,7 +43,7 @@
           <div class="panel-header">
             <div>
               <div class="panel-title">待取餐</div>
-              <div class="panel-sub">已準備完成</div>
+              <div class="panel-sub" id="sub-right">已準備完成</div>
             </div>
             <div class="badge done" id="count-right">0</div>
           </div>
@@ -59,8 +59,9 @@
         <div class="panel-header">
           <div>
             <div class="panel-title">歷史訂單</div>
-            <div class="panel-sub">依日期篩選</div>
+            <div class="panel-sub" id="sub-history">依日期篩選</div>
           </div>
+          <div class="badge" id="total-history-badge" style="font-weight: 1000; font-size: 15px; color: var(--primary); background: rgba(0, 185, 0, 0.1);">總額: $0</div>
         </div>
         <div class="panel-body" id="list-history">
           <div style="text-align:center; padding: 22px; color:#999;">載入中...</div>
@@ -162,6 +163,10 @@
         <div class="detail-box">
           <div class="detail-label">顧客名稱</div>
           <div class="detail-value" id="review-customer">-</div>
+        </div>
+        <div class="detail-box">
+          <div class="detail-label">總金額</div>
+          <div class="detail-value" id="review-total" style="color: var(--primary); font-weight: 1000;">$0</div>
         </div>
         <div class="detail-box">
           <div class="detail-label">取餐日期</div>
@@ -410,6 +415,22 @@
       return lines.slice(0, 6).join("\n");
     }
 
+    function getOrderTotal(order) {
+      if (order && typeof order.total === "number" && order.total > 0) {
+        return order.total;
+      }
+      if (order && order.total && !isNaN(Number(order.total)) && Number(order.total) > 0) {
+        return Number(order.total);
+      }
+      if (order && order.content) {
+        const m = String(order.content).match(/(?:總金額|總計)[：:\s]*\$?(\d+)/);
+        if (m && m[1]) {
+          return parseInt(m[1], 10);
+        }
+      }
+      return Number(order?.total) || 0;
+    }
+
     function switchTab(tab) {
       activeTab = tab;
       document.getElementById("tab-live").classList.toggle("active", tab === "live");
@@ -509,6 +530,22 @@
       document.getElementById("count-left").innerText = String(leftOrders.length);
       document.getElementById("count-right").innerText = String(rightOrders.length);
 
+      const leftTotal = leftOrders.reduce((sum, o) => sum + getOrderTotal(o), 0);
+      const rightTotal = rightOrders.reduce((sum, o) => sum + getOrderTotal(o), 0);
+      const subLeftEl = document.getElementById("sub-left");
+      if (subLeftEl) {
+        subLeftEl.innerText = leftOrders.length > 0 ? `依取餐時間 · 總計 $${leftTotal.toLocaleString()}` : `依取餐時間（由近到遠）`;
+      }
+      const subRightEl = document.getElementById("sub-right");
+      if (subRightEl) {
+        subRightEl.innerText = rightOrders.length > 0 ? `已準備完成 · 總計 $${rightTotal.toLocaleString()}` : `已準備完成`;
+      }
+      const historyTotal = historyOrders.reduce((sum, o) => sum + getOrderTotal(o), 0);
+      const totalHistoryBadge = document.getElementById("total-history-badge");
+      if (totalHistoryBadge) {
+        totalHistoryBadge.innerText = `總額: $${historyTotal.toLocaleString()} (${historyOrders.length} 筆)`;
+      }
+
       // Auto update or close open review modal if order changed state
       if (reviewingOrder && document.getElementById("reviewModal") && document.getElementById("reviewModal").style.display === "flex") {
         const updated = currentOrders.find(o => o && o.key === reviewingOrder.key);
@@ -540,6 +577,7 @@
       orders.forEach(order => {
         const isNew = order.status === "NEW";
         const eta = formatEta(order.time);
+        const total = getOrderTotal(order);
 
         const tile = document.createElement("div");
         tile.className = `tile ${isNew ? "new" : ""}`;
@@ -565,6 +603,7 @@
               <span class="tile-customer">${escapeHtml(order.customer || "顧客")}</span>
               ${badge}
               <span class="tile-meta">#${escapeHtml(order.key)}</span>
+              <span class="tile-price">$${total.toLocaleString()}</span>
             </div>
             <div class="tile-top" style="margin-top: 6px;">
               <span class="tile-meta">取餐: ${escapeHtml(order.time || "-")}</span>
@@ -591,6 +630,7 @@
 
       orders.forEach(order => {
         const eta = formatEta(order.time);
+        const total = getOrderTotal(order);
         const tile = document.createElement("div");
         tile.className = "tile";
         tile.onclick = () => openReview(order.key);
@@ -601,6 +641,7 @@
               <span class="tile-customer">${escapeHtml(order.customer || "顧客")}</span>
               <span class="badge done">READY</span>
               <span class="tile-meta">#${escapeHtml(order.key)}</span>
+              <span class="tile-price">$${total.toLocaleString()}</span>
             </div>
             <div class="tile-top" style="margin-top: 6px;">
               <span class="tile-meta">取餐: ${escapeHtml(order.time || "-")}</span>
@@ -657,14 +698,20 @@
           return timeB - timeA;
         });
 
+        const dayTotal = items.reduce((sum, o) => sum + getOrderTotal(o), 0);
         const header = document.createElement("div");
-        header.style.padding = "10px 8px 2px";
-        header.style.fontWeight = "1100";
-        header.style.color = "#111827";
-        header.innerText = `${date} (${items.length})`;
+        header.style.padding = "10px 8px 4px";
+        header.style.display = "flex";
+        header.style.justifyContent = "space-between";
+        header.style.alignItems = "center";
+        header.innerHTML = `
+          <span style="font-weight: 1100; color: #111827; font-size: 16px;">📅 ${escapeHtml(date)} (${items.length} 筆)</span>
+          <span style="font-weight: 1100; color: var(--primary); font-size: 15px; background: rgba(0, 185, 0, 0.1); padding: 3px 10px; border-radius: 8px;">當日總計：$${dayTotal.toLocaleString()}</span>
+        `;
         container.appendChild(header);
 
         items.forEach(order => {
+          const total = getOrderTotal(order);
           const tile = document.createElement("div");
           tile.className = "tile";
           tile.onclick = () => openReview(order.key);
@@ -678,6 +725,7 @@
                 <span class="tile-customer">${escapeHtml(order.customer || "顧客")}</span>
                 ${badge}
                 <span class="tile-meta">#${escapeHtml(order.key)}</span>
+                <span class="tile-price">$${total.toLocaleString()}</span>
               </div>
               <div class="tile-items">${escapeHtml(shortItems(order.content))}</div>
             </div>
@@ -748,6 +796,8 @@
 
       document.getElementById("review-order-key").innerText = order.key || "-";
       document.getElementById("review-customer").innerText = order.customer || "-";
+      const totalAmount = getOrderTotal(order);
+      document.getElementById("review-total").innerText = `$${totalAmount.toLocaleString()}`;
       document.getElementById("review-pickup").innerText = order.time || "-";
       document.getElementById("review-status").innerText = order.status || "-";
       document.getElementById("review-content").innerHTML = formatContentHtml(order);

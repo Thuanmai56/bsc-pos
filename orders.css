@@ -207,6 +207,19 @@ body {
   font-weight: 900;
 }
 
+.tile-price {
+  font-weight: 900;
+  font-size: 15px;
+  color: #047857;
+  background: rgba(0, 185, 0, 0.1);
+  border: 1px solid rgba(0, 185, 0, 0.22);
+  padding: 2px 8px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
 .tile-items {
   margin-top: 8px;
   color: #111827;
