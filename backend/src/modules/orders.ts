@@ -91,15 +91,24 @@ export async function getOrder(env: Env, orderKey: string): Promise<Order | null
       "SELECT * FROM orders WHERE key = ?"
     ).bind(orderKey).first<any>();
     if (!row) return null;
+
+    let parsedCreatedAt = Date.now();
+    if (row.created_at) {
+      const rawStr = String(row.created_at).trim();
+      const isoStr = rawStr.includes("T") ? (rawStr.endsWith("Z") ? rawStr : rawStr + "Z") : rawStr.replace(" ", "T") + "Z";
+      const t = new Date(isoStr).getTime();
+      if (!isNaN(t)) parsedCreatedAt = t;
+    }
+
     return {
       key: row.key,
-      customer: row.customer_name,
-      time: row.pickup_time,
-      content: row.order_content,
-      status: row.status,
-      createdAt: new Date(row.created_at + "Z").getTime(),
+      customer: row.customer_name || "顧客",
+      time: row.pickup_time || "",
+      content: row.order_content || "",
+      status: row.status || "NEW",
+      createdAt: parsedCreatedAt,
       userId: row.user_id || undefined,
-      total: row.total_amount,
+      total: Number(row.total_amount) || 0,
       reason: row.reason || "",
       note: row.note || ""
     };
@@ -373,7 +382,9 @@ export async function getOrders(request: Request, env: Env): Promise<Response> {
     const orders: Order[] = (results || []).map(row => {
       let parsedCreatedAt = Date.now();
       if (row.created_at) {
-        const t = new Date(row.created_at.includes("Z") ? row.created_at : row.created_at + "Z").getTime();
+        const rawStr = String(row.created_at).trim();
+        const isoStr = rawStr.includes("T") ? (rawStr.endsWith("Z") ? rawStr : rawStr + "Z") : rawStr.replace(" ", "T") + "Z";
+        const t = new Date(isoStr).getTime();
         if (!isNaN(t)) parsedCreatedAt = t;
       }
 
@@ -385,7 +396,7 @@ export async function getOrders(request: Request, env: Env): Promise<Response> {
         status: row.status || "NEW",
         createdAt: parsedCreatedAt,
         userId: row.user_id || undefined,
-        total: row.total_amount || 0,
+        total: Number(row.total_amount) || 0,
         reason: row.reason || "",
         note: row.note || ""
       };
@@ -401,6 +412,10 @@ export async function getOrders(request: Request, env: Env): Promise<Response> {
 export async function saveOrder(env: Env, order: Order): Promise<void> {
   if (!env.DB) return;
   const tenantId = "bsc";
+
+  const safeCreatedAt = Number(order.createdAt) && !isNaN(Number(order.createdAt))
+    ? Math.floor(Number(order.createdAt) / 1000)
+    : Math.floor(Date.now() / 1000);
 
   await env.DB.prepare(
     `INSERT INTO orders (key, tenant_id, user_id, customer_name, pickup_time, status, total_amount, order_content, reason, note, created_at, updated_at)
@@ -418,14 +433,14 @@ export async function saveOrder(env: Env, order: Order): Promise<void> {
     order.key,
     tenantId,
     order.userId || null,
-    order.customer,
-    order.time,
-    order.status,
-    order.total,
-    order.content,
+    order.customer || "顧客",
+    order.time || "",
+    order.status || "NEW",
+    Number(order.total) || 0,
+    order.content || "",
     order.reason || "",
     order.note || "",
-    Math.floor((order.createdAt || Date.now()) / 1000)
+    safeCreatedAt
   ).run();
 }
 

@@ -387,53 +387,59 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
     if (event.type === "postback") {
       const postbackData = event.postback?.data || "";
       const params = new URLSearchParams(postbackData);
-      const action = params.get("action");
-      const orderKey = params.get("orderKey");
+      const action = params.get("action")?.trim();
+      const orderKey = params.get("orderKey")?.trim();
 
       if (action && orderKey) {
-        const order = await getOrder(env, orderKey);
-        if (order) {
-          const finishPending = async () => {
-            if (env.DB) {
-              try {
-                await env.DB.prepare(
-                  "DELETE FROM pending_actions WHERE tenant_id = ? AND user_id = ? AND order_key = ?"
-                ).bind("bsc", userId, orderKey).run();
-              } catch (e) {
-                console.error("[finishPending postback] failed:", e);
-              }
+        if (action === "reject_agree") {
+          if (env.DB) {
+            try {
+              await env.DB.prepare(
+                "UPDATE orders SET status = 'REJECTED', updated_at = strftime('%Y-%m-%d %H:%M:%f', 'now') WHERE tenant_id = 'bsc' AND key = ?"
+              ).bind(orderKey).run();
+              await env.DB.prepare(
+                "DELETE FROM pending_actions WHERE tenant_id = 'bsc' AND (order_key = ? OR user_id = ?)"
+              ).bind(orderKey, userId).run();
+            } catch (e) {
+              console.error("[postback reject_agree DB error]:", e);
             }
-          };
-
-          if (action === "reject_agree") {
-            order.status = "REJECTED";
-            await saveOrder(env, order);
-            await finishPending();
-            if (replyToken) {
-              await replyText(
-                replyToken,
-                `好的，干城鹹水雞 已收到您的確認，訂單 #${orderKey} 已為您取消。\n非常抱歉造成您的不便，感謝您的體諒，期待下次再為您服務！`,
-                env
-              );
-            }
-            if (ctx && ctx.waitUntil) ctx.waitUntil(syncToGoogleSheets(order, env));
-            else await syncToGoogleSheets(order, env);
-            continue;
           }
-
-          if (action === "reject_disagree") {
-            order.status = "NEW";
-            await saveOrder(env, order);
-            await finishPending();
-            if (replyToken) {
-              await replyText(
-                replyToken,
-                `謝謝您的回覆！我已將訂單 #${orderKey} 回到「等待店家接單」狀態，店家會再為您確認。`,
-                env
-              );
-            }
-            continue;
+          if (replyToken) {
+            await replyText(
+              replyToken,
+              `好的，干城鹹水雞 已收到您的確認，訂單 #${orderKey} 已為您取消。\n非常抱歉造成您的不便，感謝您的體諒，期待下次再為您服務！`,
+              env
+            );
           }
+          const updatedOrder = await getOrder(env, orderKey);
+          if (updatedOrder) {
+            if (ctx && ctx.waitUntil) ctx.waitUntil(syncToGoogleSheets(updatedOrder, env));
+            else await syncToGoogleSheets(updatedOrder, env);
+          }
+          continue;
+        }
+
+        if (action === "reject_disagree") {
+          if (env.DB) {
+            try {
+              await env.DB.prepare(
+                "UPDATE orders SET status = 'NEW', updated_at = strftime('%Y-%m-%d %H:%M:%f', 'now') WHERE tenant_id = 'bsc' AND key = ?"
+              ).bind(orderKey).run();
+              await env.DB.prepare(
+                "DELETE FROM pending_actions WHERE tenant_id = 'bsc' AND (order_key = ? OR user_id = ?)"
+              ).bind(orderKey, userId).run();
+            } catch (e) {
+              console.error("[postback reject_disagree DB error]:", e);
+            }
+          }
+          if (replyToken) {
+            await replyText(
+              replyToken,
+              `謝謝您的回覆！我已將訂單 #${orderKey} 回到「等待店家接單」狀態，店家會再為您確認。`,
+              env
+            );
+          }
+          continue;
         }
       }
       continue;
@@ -774,9 +780,18 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
           lowerText.includes("disagree");
 
         if (isExplicitDisagree) {
-          order.status = "NEW";
-          await saveOrder(env, order);
-          await finishPending();
+          if (env.DB) {
+            try {
+              await env.DB.prepare(
+                "UPDATE orders SET status = 'NEW', updated_at = strftime('%Y-%m-%d %H:%M:%f', 'now') WHERE tenant_id = 'bsc' AND key = ?"
+              ).bind(orderKey).run();
+              await env.DB.prepare(
+                "DELETE FROM pending_actions WHERE tenant_id = 'bsc' AND (order_key = ? OR user_id = ?)"
+              ).bind(orderKey, userId).run();
+            } catch (e) {
+              console.error("[text reject_disagree DB error]:", e);
+            }
+          }
           await replyText(
             replyToken,
             `謝謝您的回覆！我已將訂單 #${orderKey} 回到「等待店家接單」狀態，店家會再為您確認。`,
@@ -817,16 +832,28 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
         }
 
         if (isAgree || aiSaysAgree) {
-          order.status = "REJECTED";
-          await saveOrder(env, order);
-          await finishPending();
+          if (env.DB) {
+            try {
+              await env.DB.prepare(
+                "UPDATE orders SET status = 'REJECTED', updated_at = strftime('%Y-%m-%d %H:%M:%f', 'now') WHERE tenant_id = 'bsc' AND key = ?"
+              ).bind(orderKey).run();
+              await env.DB.prepare(
+                "DELETE FROM pending_actions WHERE tenant_id = 'bsc' AND (order_key = ? OR user_id = ?)"
+              ).bind(orderKey, userId).run();
+            } catch (e) {
+              console.error("[text reject_agree DB error]:", e);
+            }
+          }
           await replyText(
             replyToken,
             `好的，干城鹹水雞 已收到您的確認，訂單 #${orderKey} 已為您取消。\n非常抱歉造成您的不便，感謝您的體諒，期待下次再為您服務！`,
             env
           );
-          if (ctx && ctx.waitUntil) ctx.waitUntil(syncToGoogleSheets(order, env));
-          else await syncToGoogleSheets(order, env);
+          const updated = await getOrder(env, orderKey);
+          if (updated) {
+            if (ctx && ctx.waitUntil) ctx.waitUntil(syncToGoogleSheets(updated, env));
+            else await syncToGoogleSheets(updated, env);
+          }
           continue;
         }
 
