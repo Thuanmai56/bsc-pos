@@ -59,10 +59,18 @@ export async function getPendingMap(env: Env, userId: string): Promise<Record<st
     const map: Record<string, any> = {};
     if (results && Array.isArray(results)) {
       for (const row of results as any[]) {
+        let parsedCreatedAt = Date.now();
+        if (row.created_at) {
+          const rawStr = String(row.created_at).trim();
+          const isoStr = rawStr.includes("T") ? (rawStr.endsWith("Z") ? rawStr : rawStr + "Z") : rawStr.replace(" ", "T") + "Z";
+          const t = new Date(isoStr).getTime();
+          if (!isNaN(t)) parsedCreatedAt = t;
+        }
+
         map[row.order_key] = {
           orderKey: row.order_key,
           type: row.action_type,
-          createdAt: row.created_at ? new Date(row.created_at + "Z").getTime() : Date.now(),
+          createdAt: parsedCreatedAt,
           questionText: row.question_text,
           reason: row.reason || "",
           note: row.note || ""
@@ -399,6 +407,8 @@ export async function saveOrder(env: Env, order: Order): Promise<void> {
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime(?, 'unixepoch'), strftime('%Y-%m-%d %H:%M:%f', 'now'))
      ON CONFLICT(key) DO UPDATE SET
        status = excluded.status,
+       user_id = COALESCE(excluded.user_id, orders.user_id),
+       customer_name = COALESCE(NULLIF(excluded.customer_name, ''), orders.customer_name),
        total_amount = excluded.total_amount,
        order_content = excluded.order_content,
        reason = excluded.reason,

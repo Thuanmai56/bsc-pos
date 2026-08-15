@@ -157,9 +157,10 @@ export function createRejectFlexBubble(orderKey: string, reason: string): any {
           color: "#DC2626",
           height: "sm",
           action: {
-            type: "message",
+            type: "postback",
             label: "🔴 同意取消訂單",
-            text: "同意"
+            data: `action=reject_agree&orderKey=${orderKey}`,
+            displayText: "同意"
           }
         },
         {
@@ -167,9 +168,10 @@ export function createRejectFlexBubble(orderKey: string, reason: string): any {
           style: "secondary",
           height: "sm",
           action: {
-            type: "message",
+            type: "postback",
             label: "⚪ 不同意",
-            text: "不同意"
+            data: `action=reject_disagree&orderKey=${orderKey}`,
+            displayText: "不同意"
           }
         }
       ]
@@ -372,18 +374,77 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
   const events = Array.isArray(body.events) ? body.events : [];
 
   for (const event of events) {
-    if (!event || event.type !== "message") continue;
-    const message = event.message || {};
-    if (message.type !== "text") continue;
+    if (!event) continue;
 
     const replyToken = event.replyToken;
     const source = event.source || {};
     const userId = source.userId;
     if (!userId) continue;
 
-    const userText = message.text || "";
-    const pendingKey = `pending:${userId}`;
     const draftKey = `draft:${userId}`;
+
+    // A) Handle LINE Postback Events (e.g. from Reject Flex Bubble)
+    if (event.type === "postback") {
+      const postbackData = event.postback?.data || "";
+      const params = new URLSearchParams(postbackData);
+      const action = params.get("action");
+      const orderKey = params.get("orderKey");
+
+      if (action && orderKey) {
+        const order = await getOrder(env, orderKey);
+        if (order) {
+          const finishPending = async () => {
+            if (env.DB) {
+              try {
+                await env.DB.prepare(
+                  "DELETE FROM pending_actions WHERE tenant_id = ? AND user_id = ? AND order_key = ?"
+                ).bind("bsc", userId, orderKey).run();
+              } catch (e) {
+                console.error("[finishPending postback] failed:", e);
+              }
+            }
+          };
+
+          if (action === "reject_agree") {
+            order.status = "REJECTED";
+            await saveOrder(env, order);
+            await finishPending();
+            if (replyToken) {
+              await replyText(
+                replyToken,
+                `好的，干城鹹水雞 已收到您的確認，訂單 #${orderKey} 已為您取消。\n非常抱歉造成您的不便，感謝您的體諒，期待下次再為您服務！`,
+                env
+              );
+            }
+            if (ctx && ctx.waitUntil) ctx.waitUntil(syncToGoogleSheets(order, env));
+            else await syncToGoogleSheets(order, env);
+            continue;
+          }
+
+          if (action === "reject_disagree") {
+            order.status = "NEW";
+            await saveOrder(env, order);
+            await finishPending();
+            if (replyToken) {
+              await replyText(
+                replyToken,
+                `謝謝您的回覆！我已將訂單 #${orderKey} 回到「等待店家接單」狀態，店家會再為您確認。`,
+                env
+              );
+            }
+            continue;
+          }
+        }
+      }
+      continue;
+    }
+
+    // B) Handle LINE Text Message Events
+    if (event.type !== "message") continue;
+    const message = event.message || {};
+    if (message.type !== "text") continue;
+
+    const userText = message.text || "";
 
     // 0) Priority Catch new order from LIFF text message (Bypasses pending states)
     if (userText.includes("訂單編號：") && userText.includes("📦 訂單內容：")) {
@@ -506,49 +567,7 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
       continue;
     }
 
-    // 0.5) If stale draft exists, check intent and redirect to LIFF or stay silent
-    const draftRaw = await env.ORDER_STATE.get(draftKey);
-    if (draftRaw) {
-      let draft: any = {};
-      try { draft = JSON.parse(draftRaw); } catch { }
-
-      // Auto-expire drafts older than 2 hours
-      const draftAge = Date.now() - (draft.lastUpdate || 0);
-      if (draftAge > 2 * 60 * 60 * 1000) {
-        await env.ORDER_STATE.delete(draftKey);
-        // Fall through to normal handling below
-      } else {
-        const processDraft = async () => {
-          // If already redirected once in the last 30 min, stay silent
-          const alreadySent = await env.ORDER_STATE.get(`liff_redirected:${userId}`);
-          if (alreadySent) {
-            // Clear the stuck draft so it won't interfere next time
-            try { await env.ORDER_STATE.delete(draftKey); } catch { }
-            return;
-          }
-
-          const ctxPrompt = `顧客之前的草稿訂單：「${draft.text || '（空）'}」\n顧客剛剛傳來：「${userText}」\n\n請問顧客這句話是：在【繼續點餐/追加餐點/回答取餐時間/確認訂單】嗎？\n如果是 → 回覆「ORDER」\n如果不是（在發問、聊天、詢問食材等）→ 回覆「IGNORE」\n請只回覆 ORDER 或 IGNORE。`;
-          const ctxRes = await callAI(ctxPrompt, env);
-          const upper = (ctxRes || "").toUpperCase();
-          if (upper.includes("ORDER") || !ctxRes) {
-            // ORDER intent detected, or AI failed → redirect to LIFF as safe fallback
-            try { await env.ORDER_STATE.delete(draftKey); } catch { }
-            await replyWithLiffRedirect(replyToken, userId, env);
-          } else {
-            // IGNORE: clear draft so bot doesn't trap future messages
-            try { await env.ORDER_STATE.delete(draftKey); } catch { }
-          }
-        };
-        if (ctx && ctx.waitUntil) {
-          ctx.waitUntil(processDraft());
-        } else {
-          await processDraft();
-        }
-        continue;
-      }
-    }
-
-    // 1) Pending flow priority
+    // 1) Pending flow priority (Always check pending questions/orders BEFORE draft to prevent draft hijacking)
     const pMap = await getPendingMap(env, userId);
     let pKeys = Object.keys(pMap).sort((a, b) => (pMap[b].createdAt || 0) - (pMap[a].createdAt || 0));
 
@@ -567,8 +586,8 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
           }
           continue;
         }
+        activeKeys.push(key);
       }
-      activeKeys.push(key);
     }
 
     pKeys = activeKeys;
@@ -816,14 +835,56 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
       }
     }
 
-    // 2) Quick reply
+    // 2) If stale draft exists, check intent and redirect to LIFF or stay silent (Handled only after pending flow)
+    const draftRaw = await env.ORDER_STATE.get(draftKey);
+    if (draftRaw) {
+      let draft: any = {};
+      try { draft = JSON.parse(draftRaw); } catch { }
+
+      // Auto-expire drafts older than 2 hours
+      const draftAge = Date.now() - (draft.lastUpdate || 0);
+      if (draftAge > 2 * 60 * 60 * 1000) {
+        await env.ORDER_STATE.delete(draftKey);
+        // Fall through to normal handling below
+      } else {
+        const processDraft = async () => {
+          // If already redirected once in the last 30 min, stay silent
+          const alreadySent = await env.ORDER_STATE.get(`liff_redirected:${userId}`);
+          if (alreadySent) {
+            // Clear the stuck draft so it won't interfere next time
+            try { await env.ORDER_STATE.delete(draftKey); } catch { }
+            return;
+          }
+
+          const ctxPrompt = `顧客之前的草稿訂單：「${draft.text || '（空）'}」\n顧客剛剛傳來：「${userText}」\n\n請問顧客這句話是：在【繼續點餐/追加餐點/回答取餐時間/確認訂單】嗎？\n如果是 → 回覆「ORDER」\n如果不是（在發問、聊天、詢問食材等）→ 回覆「IGNORE」\n請只回覆 ORDER 或 IGNORE。`;
+          const ctxRes = await callAI(ctxPrompt, env);
+          const upper = (ctxRes || "").toUpperCase();
+          if (upper.includes("ORDER") || !ctxRes) {
+            // ORDER intent detected, or AI failed → redirect to LIFF as safe fallback
+            try { await env.ORDER_STATE.delete(draftKey); } catch { }
+            await replyWithLiffRedirect(replyToken, userId, env);
+          } else {
+            // IGNORE: clear draft so bot doesn't trap future messages
+            try { await env.ORDER_STATE.delete(draftKey); } catch { }
+          }
+        };
+        if (ctx && ctx.waitUntil) {
+          ctx.waitUntil(processDraft());
+        } else {
+          await processDraft();
+        }
+        continue;
+      }
+    }
+
+    // 3) Quick reply
     const quick = handleQuickReply(userText);
     if (quick) {
       await replyText(replyToken, quick, env);
       continue;
     }
 
-    // 3) AI fallback - Detect ordering intent and redirect to LIFF (once per 30 min)
+    // 4) AI fallback - Detect ordering intent and redirect to LIFF (once per 30 min)
     const aiPromise = async () => {
       // If already redirected once in the last 30 min, stay silent — let human staff handle
       const alreadySent = await env.ORDER_STATE.get(`liff_redirected:${userId}`);
