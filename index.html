@@ -14,7 +14,7 @@
         <div class="store-header-content">
             <div class="store-header-top">
                 <div class="store-logo-wrapper">
-                    <!-- Vui lòng đảm bảo file benmi_logo.png nằm cùng thư mục -->
+                    <!-- 請確認 logo.png 位於相同目錄 -->
                     <img src="./logo.png" alt="Gancheng Logo" class="store-logo">
                 </div>
                 <div class="store-info">
@@ -332,7 +332,7 @@
                     if (mainNote) msg += `\n📝 總備註：${mainNote}`;
                     msg += `\n💰 總金額：$${currentTotal}`;
 
-                    let profile = { userId: "", displayName: "Khách (Web)" };
+                    let profile = { userId: "", displayName: "顧客 (Web)" };
                     if (typeof liff !== 'undefined' && liff && liff.isLoggedIn && liff.isLoggedIn()) {
                         try {
                             const p = await liff.getProfile();

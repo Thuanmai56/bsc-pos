@@ -2,7 +2,7 @@ import { Env } from '../types/env';
 import { Order } from '../types/index';
 import { corsHeaders, json } from '../utils/http';
 import { syncToGoogleSheets } from '../integrations/googleSheets';
-import { pushLineMessage } from './line';
+import { pushLineMessage, pushLineFlexMessage, createRejectFlexBubble } from './line';
 
 function jsonWithETag(data: any, version: string, status: number = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -234,7 +234,7 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
       const notifyText =
         `非常抱歉！干城鹹水雞 目前無法接下您的訂單 #${order.key}。\n` +
         `原因：${reason}\n` +
-        `\n請回覆「同意」以取消訂單，或回覆「不同意」以重新確認。`;
+        `\n請點選下方按鈕確認是否取消訂單：`;
 
       if (env.DB) {
         await env.DB.prepare(
@@ -249,7 +249,8 @@ export async function updateOrder(request: Request, env: Env, ctx: ExecutionCont
         ).bind("bsc", order.userId, order.key, "REJECT", notifyText, order.reason || "", order.note || "").run();
       }
 
-      await pushLineMessage(order.userId, notifyText, env);
+      const flexBubble = createRejectFlexBubble(order.key, reason);
+      await pushLineFlexMessage(order.userId, `⚠️ 訂單無法接單通知 #${order.key}`, flexBubble, env);
     }
 
     return json({ success: true });
