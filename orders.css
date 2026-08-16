@@ -564,3 +564,74 @@ body {
   gap: 10px;
 }
 
+/* Older Data Card (BLAB Contact) */
+.history-older-card {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.history-older-card:hover {
+  border-color: var(--primary);
+  background: #f7fee7;
+}
+
+.history-older-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.history-older-icon {
+  font-size: 28px;
+}
+
+.history-older-title {
+  font-size: 15px;
+  font-weight: 1000;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.history-older-sub {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.history-older-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .history-older-card {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: left;
+  }
+  .history-older-btn {
+    justify-content: center;
+  }
+}
+

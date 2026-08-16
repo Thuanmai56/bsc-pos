@@ -342,6 +342,51 @@
     </div>
   </div>
 
+  <!-- Modal Tra Cứu Lịch Sử Nâng Cao / Liên Hệ BLAB -->
+  <div class="modal" id="blabContactModal">
+    <div class="modal-content" style="max-width: 520px;">
+      <div class="modal-title">
+        <h3 style="display:flex; align-items:center; gap: 8px; font-size: 20px;">
+          <span>📦</span>
+          <span>歷史訂單進階調閱</span>
+        </h3>
+        <div class="modal-close" onclick="closeBlabContactModal()">✕</div>
+      </div>
+      <div class="modal-body" style="padding: 10px 0; display:flex; flex-direction:column; gap: 14px;">
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; font-size: 15px; line-height: 1.6; color: #334155;">
+          系統預設提供近 30 天即時訂單記錄。超過 30 天之歷史資料封存於雲端資料庫，如需查詢或匯出完整財務報表，請聯繫 BLAB 支援團隊為您處理。
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap: 10px;">
+          <a href="https://line.me/ti/p/8k-DsB-f5Y" target="_blank" rel="noopener noreferrer" style="text-decoration:none; display:flex; align-items:center; justify-content:space-between; background:#fff; border: 1.5px solid #86efac; padding: 14px 16px; border-radius: 12px; transition: all 0.15s ease; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div style="display:flex; align-items:center; gap: 12px;">
+              <span style="font-size: 28px; line-height: 1;">💬</span>
+              <div>
+                <div style="font-weight: 900; font-size: 15px; color: #111827;">BLAB Customer Support</div>
+                <div style="font-size: 13px; color: #16a34a; font-weight: 600; margin-top: 2px;">LINE Official / Online Support</div>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="padding: 8px 16px; font-size: 14px; pointer-events:none;">開啟 LINE</button>
+          </a>
+
+          <a href="https://line.me/ti/p/8k-DsB-f5Y" target="_blank" rel="noopener noreferrer" style="text-decoration:none; display:flex; align-items:center; justify-content:space-between; background:#fff; border: 1px solid var(--border); padding: 14px 16px; border-radius: 12px; transition: all 0.15s ease; cursor: pointer;">
+            <div style="display:flex; align-items:center; gap: 12px;">
+              <span style="font-size: 28px; line-height: 1;">📊</span>
+              <div>
+                <div style="font-weight: 900; font-size: 15px; color: #111827;">月度報表 / 雲端匯出服務</div>
+                <div style="font-size: 13px; color: var(--muted); margin-top: 2px;">請聯繫 BLAB 團隊協助調閱歷史資料</div>
+              </div>
+            </div>
+            <button class="btn btn-ghost" style="padding: 8px 16px; font-size: 14px; pointer-events:none;">聯絡 BLAB</button>
+          </a>
+        </div>
+      </div>
+      <div class="modal-actions" style="margin-top: 8px; padding-top: 8px;">
+        <button class="btn btn-primary btn-block" onclick="closeBlabContactModal()">我知道了</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const WORKER_BASE = "https://bsc-worker-production.thuanmnc.workers.dev";
 
@@ -851,6 +896,37 @@
         groupEl.appendChild(body);
         container.appendChild(groupEl);
       }
+
+      // Footer Banner: Older Data / Contact BLAB
+      const olderCard = document.createElement("div");
+      olderCard.className = "history-older-card";
+      olderCard.onclick = openBlabContactModal;
+      olderCard.innerHTML = `
+        <div class="history-older-left">
+          <div class="history-older-icon">📦</div>
+          <div>
+            <div class="history-older-title">
+              <span>查看 30 天前的歷史訂單</span>
+            </div>
+            <div class="history-older-sub">如需調閱更早歷史紀錄或匯出月報表，請聯繫 BLAB 團隊</div>
+          </div>
+        </div>
+        <button class="btn btn-primary history-older-btn" onclick="event.stopPropagation(); openBlabContactModal()">
+          <span>💬</span>
+          <span>聯繫 BLAB</span>
+        </button>
+      `;
+      container.appendChild(olderCard);
+    }
+
+    function openBlabContactModal() {
+      const modal = document.getElementById("blabContactModal");
+      if (modal) modal.style.display = "flex";
+    }
+
+    function closeBlabContactModal() {
+      const modal = document.getElementById("blabContactModal");
+      if (modal) modal.style.display = "none";
     }
 
     async function toggleHistoryDateGroup(date) {
