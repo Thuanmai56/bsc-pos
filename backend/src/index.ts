@@ -1,7 +1,7 @@
 import { Env } from './types/env';
 import { corsHeaders, json } from './utils/http';
 import { handleLineWebhook } from './modules/line';
-import { createOrder, updateOrder, getOrders, getWaitingCount, handleOrdersMigration, getPendingActionsApi, cleanupExpiredPendingActions } from './modules/orders';
+import { createOrder, updateOrder, getOrders, getWaitingCount, getHistorySummary, getOrdersByDate, getHistoryAll, handleOrdersMigration, getPendingActionsApi, cleanupExpiredPendingActions } from './modules/orders';
 import { getConfig, updateConfig } from './modules/config';
 import { getMenu, updateMenu, updateStockStatus } from './modules/menu';
 import { handleAuth, handleAuthChange, handleCreateTempLink, handleVerifyTempLink } from './modules/auth';
@@ -28,6 +28,9 @@ export default {
       if (request.method === "POST" && path === "/api/create") return await createOrder(request, env, ctx);
       if (request.method === "POST" && path === "/api/update") return await updateOrder(request, env, ctx);
       if (request.method === "GET" && path === "/api/orders") return await getOrders(request, env);
+      if (request.method === "GET" && path === "/api/orders/history-summary") return await getHistorySummary(request, env);
+      if (request.method === "GET" && path === "/api/orders/by-date") return await getOrdersByDate(request, env);
+      if (request.method === "GET" && path === "/api/orders/history-all") return await getHistoryAll(request, env);
       if (request.method === "GET" && path === "/api/orders/waiting-count") return await getWaitingCount(request, env);
       if (request.method === "GET" && path === "/api/pending-actions") return await getPendingActionsApi(request, env);
       if (request.method === "GET" && path === "/api/migrate-orders") return await handleOrdersMigration(request, env);

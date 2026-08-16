@@ -348,6 +348,31 @@ export async function getWaitingCount(request: Request, env: Env): Promise<Respo
   }
 }
 
+function mapOrderRows(results: any[]): Order[] {
+  return results.map(row => {
+    let parsedCreatedAt = Date.now();
+    if (row.created_at) {
+      const rawStr = String(row.created_at).trim();
+      const isoStr = rawStr.includes("T") ? (rawStr.endsWith("Z") ? rawStr : rawStr + "Z") : rawStr.replace(" ", "T") + "Z";
+      const t = new Date(isoStr).getTime();
+      if (!isNaN(t)) parsedCreatedAt = t;
+    }
+
+    return {
+      key: row.key,
+      customer: row.customer_name || "顧客",
+      time: row.pickup_time || "",
+      content: row.order_content || "",
+      status: row.status || "NEW",
+      createdAt: parsedCreatedAt,
+      userId: row.user_id || undefined,
+      total: Number(row.total_amount) || 0,
+      reason: row.reason || "",
+      note: row.note || ""
+    };
+  });
+}
+
 export async function getOrders(request: Request, env: Env): Promise<Response> {
   const tenantId = "bsc";
 
@@ -374,38 +399,112 @@ export async function getOrders(request: Request, env: Env): Promise<Response> {
       });
     }
 
-    // 3. Truy vấn trực tiếp từ D1 Database
+    // 3. Live Query: Lấy các đơn active + đơn hôm nay (UTC+8)
+    const nowTw = new Date(Date.now() + 8 * 3600000);
+    const todayTwStr = `${nowTw.getUTCFullYear()}-${String(nowTw.getUTCMonth() + 1).padStart(2, "0")}-${String(nowTw.getUTCDate()).padStart(2, "0")}`;
+    const startOfTodayUTC = new Date(new Date(`${todayTwStr}T00:00:00+08:00`).getTime()).toISOString().replace("T", " ").replace(/\.\d+Z$/, "");
+
     const { results } = await env.DB.prepare(
-      "SELECT key, customer_name, pickup_time, status, total_amount, order_content, reason, note, created_at FROM orders WHERE tenant_id = ? ORDER BY created_at DESC LIMIT 200"
-    ).bind(tenantId).all<any>();
+      `SELECT key, customer_name, pickup_time, status, total_amount, order_content, reason, note, created_at 
+       FROM orders 
+       WHERE tenant_id = ? 
+         AND (status IN ('NEW', 'ACCEPTED', 'WAITING_CUSTOMER_CHANGE', 'WAITING_CUSTOMER_REJECT', 'DONE') 
+              OR created_at >= ?)
+       ORDER BY created_at DESC LIMIT 500`
+    ).bind(tenantId, startOfTodayUTC).all<any>();
 
-    const orders: Order[] = (results || []).map(row => {
-      let parsedCreatedAt = Date.now();
-      if (row.created_at) {
-        const rawStr = String(row.created_at).trim();
-        const isoStr = rawStr.includes("T") ? (rawStr.endsWith("Z") ? rawStr : rawStr + "Z") : rawStr.replace(" ", "T") + "Z";
-        const t = new Date(isoStr).getTime();
-        if (!isNaN(t)) parsedCreatedAt = t;
-      }
-
-      return {
-        key: row.key,
-        customer: row.customer_name || "顧客",
-        time: row.pickup_time || "",
-        content: row.order_content || "",
-        status: row.status || "NEW",
-        createdAt: parsedCreatedAt,
-        userId: row.user_id || undefined,
-        total: Number(row.total_amount) || 0,
-        reason: row.reason || "",
-        note: row.note || ""
-      };
-    });
-
+    const orders = mapOrderRows(results || []);
     return jsonWithETag(orders, currentVersion);
   } catch (e: any) {
     console.error("[getOrders] D1 error:", e);
     return json({ error: "Failed to fetch orders", details: e.message }, 500);
+  }
+}
+
+export async function getHistorySummary(request: Request, env: Env): Promise<Response> {
+  const tenantId = "bsc";
+  if (!env.DB) return json([]);
+
+  try {
+    const { results } = await env.DB.prepare(
+      `SELECT 
+         DATE(DATETIME(created_at, '+8 hours')) as date_group,
+         COUNT(*) as total_orders,
+         SUM(total_amount) as total_revenue
+       FROM orders
+       WHERE tenant_id = ? 
+         AND status IN ('PICKED_UP', 'REJECTED')
+         AND created_at >= DATETIME('now', '-30 days')
+       GROUP BY date_group
+       ORDER BY date_group DESC`
+    ).bind(tenantId).all<any>();
+
+    const summary = (results || []).map(r => ({
+      date: r.date_group,
+      count: Number(r.total_orders) || 0,
+      total: Number(r.total_revenue) || 0
+    }));
+
+    return json(summary);
+  } catch (e: any) {
+    console.error("[getHistorySummary] D1 error:", e);
+    return json({ error: "Failed to fetch history summary", details: e.message }, 500);
+  }
+}
+
+export async function getOrdersByDate(request: Request, env: Env): Promise<Response> {
+  const tenantId = "bsc";
+  if (!env.DB) return json([]);
+
+  const url = new URL(request.url);
+  const dateStr = url.searchParams.get("date");
+  if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return json({ error: "Invalid date parameter. Format: YYYY-MM-DD" }, 400);
+  }
+
+  try {
+    const startDate = new Date(`${dateStr}T00:00:00+08:00`);
+    const endDate = new Date(startDate.getTime() + 24 * 3600000);
+
+    const startUTC = startDate.toISOString().replace("T", " ").replace(/\.\d+Z$/, "");
+    const endUTC = endDate.toISOString().replace("T", " ").replace(/\.\d+Z$/, "");
+
+    const { results } = await env.DB.prepare(
+      `SELECT key, customer_name, pickup_time, status, total_amount, order_content, reason, note, created_at 
+       FROM orders 
+       WHERE tenant_id = ? 
+         AND created_at >= ? AND created_at < ?
+         AND status IN ('PICKED_UP', 'REJECTED')
+       ORDER BY created_at DESC`
+    ).bind(tenantId, startUTC, endUTC).all<any>();
+
+    const orders = mapOrderRows(results || []);
+    return json(orders);
+  } catch (e: any) {
+    console.error("[getOrdersByDate] D1 error:", e);
+    return json({ error: "Failed to fetch orders by date", details: e.message }, 500);
+  }
+}
+
+export async function getHistoryAll(request: Request, env: Env): Promise<Response> {
+  const tenantId = "bsc";
+  if (!env.DB) return json([]);
+
+  try {
+    const { results } = await env.DB.prepare(
+      `SELECT key, customer_name, pickup_time, status, total_amount, order_content, reason, note, created_at 
+       FROM orders 
+       WHERE tenant_id = ? 
+         AND status IN ('PICKED_UP', 'REJECTED')
+         AND created_at >= DATETIME('now', '-30 days')
+       ORDER BY created_at DESC LIMIT 3000`
+    ).bind(tenantId).all<any>();
+
+    const orders = mapOrderRows(results || []);
+    return json(orders);
+  } catch (e: any) {
+    console.error("[getHistoryAll] D1 error:", e);
+    return json({ error: "Failed to fetch all history orders", details: e.message }, 500);
   }
 }
 
