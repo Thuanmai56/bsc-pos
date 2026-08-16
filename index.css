@@ -676,6 +676,22 @@ select:focus {
     color: var(--primary-dark);
 }
 
+/* Subtle & Professional BLAB Footer Credit */
+.powered-by-blab-link {
+    transition: all 0.2s ease;
+}
+
+.powered-by-blab-link:hover {
+    background: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.12);
+    color: #1e293b;
+    transform: translateY(-1px);
+}
+
+.powered-by-blab-link:active {
+    transform: scale(0.98);
+}
+
 /* Responsive Desktop Layout */
 @media (min-width: 992px) {
     .store-header-content {
