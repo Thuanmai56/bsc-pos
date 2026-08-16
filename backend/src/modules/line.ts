@@ -205,148 +205,6 @@ export async function replyText(replyToken: string, text: string, env: Env): Pro
   }
 }
 
-export async function replyWithLiffRedirect(replyToken: string, userId: string, env: Env): Promise<void> {
-  const token = await resolveSecret(env.LINE_CHANNEL_TOKEN);
-  if (!token || !replyToken) return;
-
-  const liffUrl = (await resolveSecret(env.LIFF_URL)) || "https://liff.line.me/";
-
-  const flexBubble = {
-    type: "bubble",
-    size: "mega",
-    header: {
-      type: "box",
-      layout: "vertical",
-      backgroundColor: "#00b900",
-      paddingAll: "20px",
-      contents: [
-        {
-          type: "box",
-          layout: "horizontal",
-          spacing: "md",
-          contents: [
-            { type: "text", text: "📝", size: "3xl", flex: 0 },
-            {
-              type: "box",
-              layout: "vertical",
-              justifyContent: "center",
-              contents: [
-                { type: "text", text: "線上點餐", weight: "bold", size: "xl", color: "#ffffff" },
-                { type: "text", text: "Online Order", size: "sm", color: "#d4f5d4" }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    body: {
-      type: "box",
-      layout: "vertical",
-      paddingAll: "20px",
-      spacing: "md",
-      contents: [
-        {
-          type: "text",
-          text: "輕鬆選餐、自訂時間",
-          weight: "bold",
-          size: "lg",
-          color: "#111111"
-        },
-        {
-          type: "text",
-          text: "透過線上系統挑選餐點，確保每個細節都精準記錄 ✨",
-          wrap: true,
-          color: "#555555",
-          size: "sm"
-        },
-        { type: "separator", margin: "lg", color: "#eeeeee" },
-        {
-          type: "box",
-          layout: "vertical",
-          margin: "lg",
-          spacing: "sm",
-          contents: [
-            { type: "text", text: "✅ 自由選擇餐點 & 客製化", size: "sm", color: "#333333" },
-            { type: "text", text: "✅ 設定取餐日期 & 時間", size: "sm", color: "#333333" },
-            { type: "text", text: "✅ 快速 & 準確，不易出錯", size: "sm", color: "#333333" }
-          ]
-        }
-      ]
-    },
-    footer: {
-      type: "box",
-      layout: "vertical",
-      paddingAll: "20px",
-      backgroundColor: "#ffffff",
-      contents: [
-        {
-          type: "box",
-          layout: "vertical",
-          backgroundColor: "#06C755",
-          cornerRadius: "xxl",
-          paddingAll: "18px",
-          action: {
-            type: "uri",
-            label: "🛒 立即點餐",
-            uri: liffUrl
-          },
-          contents: [
-            {
-              type: "text",
-              text: "🛒 立即點餐",
-              color: "#ffffff",
-              weight: "bold",
-              size: "xl",
-              align: "center"
-            }
-          ]
-        },
-        {
-          type: "text",
-          text: "點擊按鈕即可開始選餐",
-          size: "xs",
-          color: "#888888",
-          align: "center",
-          margin: "md"
-        }
-      ]
-    }
-  };
-
-  try {
-    const resp = await fetch("https://api.line.me/v2/bot/message/reply", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        replyToken,
-        messages: [
-          {
-            type: "text",
-            text: "您好！為了確保您的訂單準確無誤，請點擊下方連結进入系統預訂 🙏"
-          },
-          {
-            type: "flex",
-            altText: "點擊進入線上點餐系統",
-            contents: flexBubble
-          }
-        ]
-      }),
-    });
-
-    if (resp.status === 200) {
-      await env.ORDER_STATE.put(`liff_redirected:${userId}`, "1", { expirationTtl: 1800 });
-    } else {
-      const errBody = await resp.text().catch(() => "(unreadable)");
-      console.error(`[Benmi] replyWithLiffRedirect FAILED: status=${resp.status} body=${errBody}`);
-    }
-  } catch (e: any) {
-    console.error(`[Benmi] replyWithLiffRedirect EXCEPTION: error=${e.message}`);
-  }
-}
-
 export function handleQuickReply(text: string): string | null {
   const msg = String(text || "").toLowerCase();
   if (msg.includes("營業時間"))
@@ -380,8 +238,6 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
     const source = event.source || {};
     const userId = source.userId;
     if (!userId) continue;
-
-    const draftKey = `draft:${userId}`;
 
     // A) Handle LINE Postback Events (e.g. from Reject Flex Bubble)
     if (event.type === "postback") {
@@ -504,7 +360,6 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
             "DELETE FROM pending_actions WHERE tenant_id = ? AND user_id = ?"
           ).bind("bsc", userId).run();
         } catch { }
-        try { await env.ORDER_STATE.delete(draftKey); } catch { }
         continue;
       }
 
@@ -904,80 +759,11 @@ export async function handleLineWebhook(request: Request, env: Env, ctx: Executi
       }
     }
 
-    // 2) If stale draft exists, check intent and redirect to LIFF or stay silent (Handled only after pending flow)
-    const draftRaw = await env.ORDER_STATE.get(draftKey);
-    if (draftRaw) {
-      let draft: any = {};
-      try { draft = JSON.parse(draftRaw); } catch { }
-
-      // Auto-expire drafts older than 2 hours
-      const draftAge = Date.now() - (draft.lastUpdate || 0);
-      if (draftAge > 2 * 60 * 60 * 1000) {
-        await env.ORDER_STATE.delete(draftKey);
-        // Fall through to normal handling below
-      } else {
-        const processDraft = async () => {
-          // If already redirected once in the last 30 min, stay silent
-          const alreadySent = await env.ORDER_STATE.get(`liff_redirected:${userId}`);
-          if (alreadySent) {
-            // Clear the stuck draft so it won't interfere next time
-            try { await env.ORDER_STATE.delete(draftKey); } catch { }
-            return;
-          }
-
-          const ctxPrompt = `顧客之前的草稿訂單：「${draft.text || '（空）'}」\n顧客剛剛傳來：「${userText}」\n\n請問顧客這句話是：在【繼續點餐/追加餐點/回答取餐時間/確認訂單】嗎？\n如果是 → 回覆「ORDER」\n如果不是（在發問、聊天、詢問食材等）→ 回覆「IGNORE」\n請只回覆 ORDER 或 IGNORE。`;
-          const ctxRes = await callAI(ctxPrompt, env);
-          const upper = (ctxRes || "").toUpperCase();
-          if (upper.includes("ORDER") || !ctxRes) {
-            // ORDER intent detected, or AI failed → redirect to LIFF as safe fallback
-            try { await env.ORDER_STATE.delete(draftKey); } catch { }
-            await replyWithLiffRedirect(replyToken, userId, env);
-          } else {
-            // IGNORE: clear draft so bot doesn't trap future messages
-            try { await env.ORDER_STATE.delete(draftKey); } catch { }
-          }
-        };
-        if (ctx && ctx.waitUntil) {
-          ctx.waitUntil(processDraft());
-        } else {
-          await processDraft();
-        }
-        continue;
-      }
-    }
-
-    // 3) Quick reply
+    // 2) Quick reply
     const quick = handleQuickReply(userText);
     if (quick) {
       await replyText(replyToken, quick, env);
       continue;
-    }
-
-    // 4) AI fallback - Detect ordering intent and redirect to LIFF (once per 30 min)
-    const aiPromise = async () => {
-      // If already redirected once in the last 30 min, stay silent — let human staff handle
-      const alreadySent = await env.ORDER_STATE.get(`liff_redirected:${userId}`);
-      if (alreadySent) return;
-
-      const intentPrompt = `顧客傳來：「${userText}」\n這句話是在向店家「下訂單點餐」嗎（包含提到想要某個餐點、詢問如何點餐、說要訂餐等）？\n如果是 → 回覆「YES」\n如果不是（單純發問、聊天、抱怨等）→ 回覆「NO」\n請只回覆 YES 或 NO。`;
-      const intentRes = await callAI(intentPrompt, env);
-      const resUpper = (intentRes || "").toUpperCase();
-
-      if (resUpper.includes("YES")) {
-        await replyWithLiffRedirect(replyToken, userId, env);
-        return;
-      }
-
-      // If AI explicitly said NO: stay silent, let human staff handle
-      if (resUpper.includes("NO")) return;
-
-      // If AI failed (null/error/empty): send LIFF redirect as safe fallback
-      await replyWithLiffRedirect(replyToken, userId, env);
-    };
-    if (ctx && ctx.waitUntil) {
-      ctx.waitUntil(aiPromise());
-    } else {
-      await aiPromise();
     }
   }
 

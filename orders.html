@@ -62,8 +62,12 @@
             <div class="panel-sub" id="sub-history">近 30 天訂單紀錄 (依日期分組)</div>
           </div>
           <div style="display: flex; align-items: center; gap: 10px;">
-            <div class="badge" id="total-history-badge" style="font-weight: 1000; font-size: 15px; color: var(--primary); background: rgba(0, 185, 0, 0.1);">0 筆</div>
-            <button class="btn btn-ghost" id="btn-toggle-all-history" style="padding: 8px 14px; font-size: 14px; border-radius: 10px; display: flex; align-items: center; gap: 6px; font-weight: 900; background: #fff; border: 1px solid var(--border);" onclick="toggleAllHistoryGroups()">
+            <div class="badge" id="total-history-badge"
+              style="font-weight: 1000; font-size: 15px; color: var(--primary); background: rgba(0, 185, 0, 0.1);">0 筆
+            </div>
+            <button class="btn btn-ghost" id="btn-toggle-all-history"
+              style="padding: 8px 14px; font-size: 14px; border-radius: 10px; display: flex; align-items: center; gap: 6px; font-weight: 900; background: #fff; border: 1px solid var(--border);"
+              onclick="toggleAllHistoryGroups()">
               <span id="btn-toggle-all-icon">📂</span>
               <span id="btn-toggle-all-text">展開全部</span>
             </button>
@@ -353,23 +357,28 @@
         <div class="modal-close" onclick="closeBlabContactModal()">✕</div>
       </div>
       <div class="modal-body" style="padding: 10px 0; display:flex; flex-direction:column; gap: 14px;">
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; font-size: 15px; line-height: 1.6; color: #334155;">
+        <div
+          style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; font-size: 15px; line-height: 1.6; color: #334155;">
           系統預設提供近 30 天即時訂單記錄。超過 30 天之歷史資料封存於雲端資料庫，如需查詢或匯出完整財務報表，請聯繫 BLAB 支援團隊為您處理。
         </div>
 
         <div style="display:flex; flex-direction:column; gap: 10px;">
-          <a href="https://line.me/ti/p/8k-DsB-f5Y" target="_blank" rel="noopener noreferrer" style="text-decoration:none; display:flex; align-items:center; justify-content:space-between; background:#fff; border: 1.5px solid #86efac; padding: 14px 16px; border-radius: 12px; transition: all 0.15s ease; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          <a href="https://line.me/ti/p/8k-DsB-f5Y" target="_blank" rel="noopener noreferrer"
+            style="text-decoration:none; display:flex; align-items:center; justify-content:space-between; background:#fff; border: 1.5px solid #86efac; padding: 14px 16px; border-radius: 12px; transition: all 0.15s ease; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
             <div style="display:flex; align-items:center; gap: 12px;">
               <span style="font-size: 28px; line-height: 1;">💬</span>
               <div>
                 <div style="font-weight: 900; font-size: 15px; color: #111827;">BLAB Customer Support</div>
-                <div style="font-size: 13px; color: #16a34a; font-weight: 600; margin-top: 2px;">LINE Official / Online Support</div>
+                <div style="font-size: 13px; color: #16a34a; font-weight: 600; margin-top: 2px;">LINE Official / Online
+                  Support</div>
               </div>
             </div>
-            <button class="btn btn-primary" style="padding: 8px 16px; font-size: 14px; pointer-events:none;">開啟 LINE</button>
+            <button class="btn btn-primary" style="padding: 8px 16px; font-size: 14px; pointer-events:none;">開啟
+              LINE</button>
           </a>
 
-          <a href="https://line.me/ti/p/8k-DsB-f5Y" target="_blank" rel="noopener noreferrer" style="text-decoration:none; display:flex; align-items:center; justify-content:space-between; background:#fff; border: 1px solid var(--border); padding: 14px 16px; border-radius: 12px; transition: all 0.15s ease; cursor: pointer;">
+          <a href="https://line.me/ti/p/8k-DsB-f5Y" target="_blank" rel="noopener noreferrer"
+            style="text-decoration:none; display:flex; align-items:center; justify-content:space-between; background:#fff; border: 1px solid var(--border); padding: 14px 16px; border-radius: 12px; transition: all 0.15s ease; cursor: pointer;">
             <div style="display:flex; align-items:center; gap: 12px;">
               <span style="font-size: 28px; line-height: 1;">📊</span>
               <div>
@@ -377,7 +386,8 @@
                 <div style="font-size: 13px; color: var(--muted); margin-top: 2px;">請聯繫 BLAB 團隊協助調閱歷史資料</div>
               </div>
             </div>
-            <button class="btn btn-ghost" style="padding: 8px 16px; font-size: 14px; pointer-events:none;">聯絡 BLAB</button>
+            <button class="btn btn-ghost" style="padding: 8px 16px; font-size: 14px; pointer-events:none;">聯絡
+              BLAB</button>
           </a>
         </div>
       </div>
@@ -1478,7 +1488,7 @@
         const res = await fetch(`${WORKER_BASE}/api/menu?_t=${Date.now()}`);
         if (!res.ok) throw new Error("Failed to load");
         rawMenuData = await res.json();
-        
+
         // Convert object format to editable array format
         currentMenuData = BENMI_CATS.map(cat => ({
           id: cat.id,
@@ -1493,37 +1503,37 @@
         const customGroups = (Array.isArray(rawMenuData.customizations) && rawMenuData.customizations.length > 0)
           ? rawMenuData.customizations
           : [
-          {
-            key: "flavor",
-            title: "✦ 口味選擇",
-            type: "radio",
-            options: [
-              { name: "特調胡椒" },
-              { name: "泰式酸辣" },
-              { name: "清爽檸檬", sub_options: ["不加香油", "不加鹽巴"] },
-              { name: "檸檬香菜", sub_options: ["不加香油", "不加鹽巴"] },
-              { name: "原味客製", sub_options: ["不加香油", "不加胡椒", "不加胡椒加鹽巴"] }
-            ]
-          },
-          {
-            key: "salt",
-            title: "✦ 鹹度調整",
-            type: "radio",
-            options: [{ name: "正常" }, { name: "調味重" }, { name: "調味清淡" }]
-          },
-          {
-            key: "spicy",
-            title: "✦ 辣度選擇 (朝天椒)",
-            type: "radio",
-            options: [{ name: "不辣" }, { name: "微辣" }, { name: "小辣" }, { name: "中辣" }, { name: "大辣" }, { name: "辣椒放餐盒角落" }]
-          },
-          {
-            key: "ingredients",
-            title: "✦ 配料調整",
-            type: "checkbox",
-            options: [{ name: "不加蔥花" }, { name: "不加蒜頭" }, { name: "不加洋蔥" }]
-          }
-        ];
+            {
+              key: "flavor",
+              title: "✦ 口味選擇",
+              type: "radio",
+              options: [
+                { name: "特調胡椒" },
+                { name: "泰式酸辣" },
+                { name: "清爽檸檬", sub_options: ["不加香油", "不加鹽巴"] },
+                { name: "檸檬香菜", sub_options: ["不加香油", "不加鹽巴"] },
+                { name: "原味客製", sub_options: ["不加香油", "不加胡椒", "不加胡椒加鹽巴"] }
+              ]
+            },
+            {
+              key: "salt",
+              title: "✦ 鹹度調整",
+              type: "radio",
+              options: [{ name: "正常" }, { name: "調味重" }, { name: "調味清淡" }]
+            },
+            {
+              key: "spicy",
+              title: "✦ 辣度選擇 (朝天椒)",
+              type: "radio",
+              options: [{ name: "不辣" }, { name: "微辣" }, { name: "小辣" }, { name: "中辣" }, { name: "大辣" }, { name: "辣椒放餐盒角落" }]
+            },
+            {
+              key: "ingredients",
+              title: "✦ 配料調整",
+              type: "checkbox",
+              options: [{ name: "不加蔥花" }, { name: "不加蒜頭" }, { name: "不加洋蔥" }]
+            }
+          ];
 
         currentMenuData.unshift({
           id: "customizations",
