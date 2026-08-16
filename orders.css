@@ -482,3 +482,81 @@ body {
     min-width: 140px;
   }
 }
+
+/* History Accordion & Date Groups */
+.history-date-group {
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.history-date-header {
+  padding: 14px 18px;
+  background: #f9fafb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.history-date-header:hover {
+  background: #f3f4f6;
+}
+
+.history-date-header.expanded {
+  background: #f3f4f6;
+  border-bottom-color: var(--border);
+}
+
+.history-date-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.history-date-icon {
+  font-size: 16px;
+}
+
+.history-date-text {
+  font-weight: 1000;
+  color: #111827;
+  font-size: 16px;
+}
+
+.history-today-tag {
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.history-date-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.history-chevron {
+  transition: transform 0.2s ease;
+  color: var(--muted);
+}
+
+.history-chevron.open {
+  transform: rotate(180deg);
+}
+
+.history-date-body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+

@@ -59,9 +59,15 @@
         <div class="panel-header">
           <div>
             <div class="panel-title">歷史訂單</div>
-            <div class="panel-sub" id="sub-history">依日期篩選</div>
+            <div class="panel-sub" id="sub-history">近 30 天訂單紀錄 (依日期分組)</div>
           </div>
-          <div class="badge" id="total-history-badge" style="font-weight: 1000; font-size: 15px; color: var(--primary); background: rgba(0, 185, 0, 0.1);">總額: $0</div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="badge" id="total-history-badge" style="font-weight: 1000; font-size: 15px; color: var(--primary); background: rgba(0, 185, 0, 0.1);">0 筆</div>
+            <button class="btn btn-ghost" id="btn-toggle-all-history" style="padding: 8px 14px; font-size: 14px; border-radius: 10px; display: flex; align-items: center; gap: 6px; font-weight: 900; background: #fff; border: 1px solid var(--border);" onclick="toggleAllHistoryGroups()">
+              <span id="btn-toggle-all-icon">📂</span>
+              <span id="btn-toggle-all-text">展開全部</span>
+            </button>
+          </div>
         </div>
         <div class="panel-body" id="list-history">
           <div style="text-align:center; padding: 22px; color:#999;">載入中...</div>
@@ -540,10 +546,9 @@
       if (subRightEl) {
         subRightEl.innerText = rightOrders.length > 0 ? `已準備完成 · 總計 $${rightTotal.toLocaleString()}` : `已準備完成`;
       }
-      const historyTotal = historyOrders.reduce((sum, o) => sum + getOrderTotal(o), 0);
       const totalHistoryBadge = document.getElementById("total-history-badge");
       if (totalHistoryBadge) {
-        totalHistoryBadge.innerText = `總額: $${historyTotal.toLocaleString()} (${historyOrders.length} 筆)`;
+        totalHistoryBadge.innerText = `${historyOrders.length} 筆`;
       }
 
       // Auto update or close open review modal if order changed state
@@ -587,14 +592,14 @@
         let rightActions = "";
 
         if (isNew) {
-          badge = `<span class="badge new">NEW</span>`;
-          rightActions = `<button class="btn btn-ghost btn-block" onclick="event.stopPropagation(); openReview('${escapeHtml(order.key)}')">Review</button>`;
+          badge = `<span class="badge new">新訂單</span>`;
+          rightActions = `<button class="btn btn-ghost btn-block" onclick="event.stopPropagation(); openReview('${escapeHtml(order.key)}')">Review 訂單</button>`;
         } else if (order.status === "ACCEPTED") {
-          badge = `<span class="badge wait">DOING</span>`;
-          rightActions = `<button class="btn btn-primary btn-block" onclick="event.stopPropagation(); updateStatus('${escapeHtml(order.key)}','DONE', {}, this)">准备好了</button>`;
+          badge = `<span class="badge wait">製作中</span>`;
+          rightActions = `<button class="btn btn-primary btn-block" onclick="event.stopPropagation(); updateStatus('${escapeHtml(order.key)}','DONE', {}, this)">準備好了</button>`;
         } else {
           badge = `<span class="badge wait" style="background:#e5e7eb; color:#4b5563;">等客戶確認</span>`;
-          rightActions = `<button class="btn btn-block" style="background:#f3f4f6; color:#9ca3af; cursor:not-allowed;" disabled>等待回覆</button>`;
+          rightActions = `<button class="btn btn-block" style="background:#f3f4f6; color:#9ca3af; cursor:not-allowed;" disabled>等待客戶回覆</button>`;
         }
 
         tile.innerHTML = `
@@ -639,7 +644,7 @@
           <div>
             <div class="tile-top">
               <span class="tile-customer">${escapeHtml(order.customer || "顧客")}</span>
-              <span class="badge done">READY</span>
+              <span class="badge done">已完成</span>
               <span class="tile-meta">#${escapeHtml(order.key)}</span>
               <span class="tile-price">$${total.toLocaleString()}</span>
             </div>
@@ -657,19 +662,32 @@
       });
     }
 
+    let lastHistoryOrders = [];
+    let expandedHistoryDates = new Set();
+    let isHistoryStateInitialized = false;
+
+    function getTaiwanTodayStr() {
+      const nowTw = new Date(Date.now() + 8 * 3600000);
+      const yyyy = nowTw.getUTCFullYear();
+      const mm = String(nowTw.getUTCMonth() + 1).padStart(2, "0");
+      const dd = String(nowTw.getUTCDate()).padStart(2, "0");
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
     function groupByDate(orders) {
       const map = new Map();
       orders.forEach(o => {
         let d = "Unknown";
-        if (o.createdAt) {
+        if (o?.time && typeof o.time === "string" && o.time.match(/\d{4}-\d{2}-\d{2}/)) {
+          const m = o.time.match(/\d{4}-\d{2}-\d{2}/);
+          d = m[0];
+        } else if (o?.createdAt) {
           const dt = new Date(o.createdAt);
           const nowTaiwan = new Date(dt.getTime() + 8 * 3600000);
           const yyyy = nowTaiwan.getUTCFullYear();
           const mm = String(nowTaiwan.getUTCMonth() + 1).padStart(2, "0");
           const dd = String(nowTaiwan.getUTCDate()).padStart(2, "0");
           d = `${yyyy}-${mm}-${dd}`;
-        } else if (o?.time && typeof o.time === "string" && o.time.match(/^\d{4}-\d{2}-\d{2}/)) {
-          d = o.time.slice(0, 10);
         }
         if (!map.has(d)) map.set(d, []);
         map.get(d).push(o);
@@ -678,19 +696,44 @@
     }
 
     function renderHistory(orders) {
+      lastHistoryOrders = orders;
       const container = document.getElementById("list-history");
+      if (!container) return;
       container.innerHTML = "";
+
+      const todayStr = getTaiwanTodayStr();
+
+      // Mặc định khởi tạo: chỉ mở ngày hôm nay, các ngày cũ thu gọn
+      if (!isHistoryStateInitialized) {
+        expandedHistoryDates = new Set([todayStr]);
+        isHistoryStateInitialized = true;
+      }
+
       if (orders.length === 0) {
         container.innerHTML = `<div style="text-align:center; padding: 22px; color:#999;">無歷史紀錄</div>`;
+        const totalHistoryBadge = document.getElementById("total-history-badge");
+        if (totalHistoryBadge) totalHistoryBadge.innerText = `0 筆`;
         return;
+      }
+
+      const totalHistoryBadge = document.getElementById("total-history-badge");
+      if (totalHistoryBadge) {
+        totalHistoryBadge.innerText = `${orders.length} 筆`;
       }
 
       const grouped = groupByDate(orders);
       // Sort groups by date descending
       const sortedDates = Array.from(grouped.keys()).sort((a, b) => b.localeCompare(a));
 
+      // Cập nhật trạng thái nút "展開全部 / 收合全部"
+      const isAllExpanded = sortedDates.length > 0 && sortedDates.every(d => expandedHistoryDates.has(d));
+      const toggleAllText = document.getElementById("btn-toggle-all-text");
+      const toggleAllIcon = document.getElementById("btn-toggle-all-icon");
+      if (toggleAllText) toggleAllText.innerText = isAllExpanded ? "收合全部" : "展開全部";
+      if (toggleAllIcon) toggleAllIcon.innerText = isAllExpanded ? "📁" : "📂";
+
       for (const date of sortedDates) {
-        let items = grouped.get(date);
+        let items = grouped.get(date) || [];
         // Sort items: newest picked up at top (descending), fallback to newest created at top
         items.sort((a, b) => {
           const timeA = a.pickedUpAt || a.createdAt || 0;
@@ -698,17 +741,39 @@
           return timeB - timeA;
         });
 
+        const isToday = (date === todayStr);
+        const isExpanded = expandedHistoryDates.has(date);
         const dayTotal = items.reduce((sum, o) => sum + getOrderTotal(o), 0);
+
+        const groupEl = document.createElement("div");
+        groupEl.className = "history-date-group";
+        groupEl.id = `history-group-${date}`;
+
+        // Header (Accordion Toggle)
         const header = document.createElement("div");
-        header.style.padding = "10px 8px 4px";
-        header.style.display = "flex";
-        header.style.justifyContent = "space-between";
-        header.style.alignItems = "center";
+        header.className = `history-date-header ${isExpanded ? 'expanded' : ''}`;
+        header.onclick = () => toggleHistoryDateGroup(date);
         header.innerHTML = `
-          <span style="font-weight: 1100; color: #111827; font-size: 16px;">📅 ${escapeHtml(date)} (${items.length} 筆)</span>
-          <span style="font-weight: 1100; color: var(--primary); font-size: 15px; background: rgba(0, 185, 0, 0.1); padding: 3px 10px; border-radius: 8px;">當日總計：$${dayTotal.toLocaleString()}</span>
+          <div class="history-date-left">
+            <span class="history-date-icon">📅</span>
+            <span class="history-date-text">${escapeHtml(date)}</span>
+            ${isToday ? `<span class="history-today-tag">今天</span>` : ''}
+          </div>
+          <div class="history-date-right">
+            <span class="badge" style="background:#f3f4f6; color:#374151; font-weight:800; font-size:13px;">${items.length} 筆</span>
+            <span class="badge" style="background:rgba(0,185,0,0.1); color:var(--primary); font-weight:1000; font-size:14px;">當日總計: $${dayTotal.toLocaleString()}</span>
+            <svg class="history-chevron ${isExpanded ? 'open' : ''}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
         `;
-        container.appendChild(header);
+        groupEl.appendChild(header);
+
+        // Body (Order Tiles)
+        const body = document.createElement("div");
+        body.className = "history-date-body";
+        body.id = `history-body-${date}`;
+        body.style.display = isExpanded ? "flex" : "none";
 
         items.forEach(order => {
           const total = getOrderTotal(order);
@@ -733,9 +798,33 @@
               <button class="btn btn-ghost btn-block" onclick="event.stopPropagation(); openReview('${escapeHtml(order.key)}')">查看</button>
             </div>
           `;
-          container.appendChild(tile);
+          body.appendChild(tile);
         });
+
+        groupEl.appendChild(body);
+        container.appendChild(groupEl);
       }
+    }
+
+    function toggleHistoryDateGroup(date) {
+      if (expandedHistoryDates.has(date)) {
+        expandedHistoryDates.delete(date);
+      } else {
+        expandedHistoryDates.add(date);
+      }
+      renderHistory(lastHistoryOrders);
+    }
+
+    function toggleAllHistoryGroups() {
+      const grouped = groupByDate(lastHistoryOrders);
+      const allDates = Array.from(grouped.keys());
+      const isAllExpanded = allDates.length > 0 && allDates.every(d => expandedHistoryDates.has(d));
+      if (isAllExpanded) {
+        expandedHistoryDates.clear();
+      } else {
+        expandedHistoryDates = new Set(allDates);
+      }
+      renderHistory(lastHistoryOrders);
     }
 
     function updateNewAlert() {
