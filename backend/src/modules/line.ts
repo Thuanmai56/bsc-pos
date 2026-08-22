@@ -209,8 +209,6 @@ export function handleQuickReply(text: string): string | null {
   const msg = String(text || "").toLowerCase();
   if (msg.includes("營業時間"))
     return "我們的營業時間：11:00-21:00（一到五），7:30-21:00（六日）。";
-  if (msg.includes("地址") || msg.includes("在哪"))
-    return "新北市土城區中央路二段135號";
   if (msg.includes("外送嗎"))
     return "土城區金額滿$2000可以外送的";
   return null;
